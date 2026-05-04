@@ -1,0 +1,90 @@
+BUILD A RULE-BASED AUTO JOB PARSER SYSTEM (NO AI)
+
+GOAL:
+Allow admin to paste full government job notification text and automatically generate structured job sections.
+This system must NOT use AI or external APIs. Use only keyword-based parsing and rules.
+
+ADMIN FLOW:
+1. In admin panel, add a large textarea named:
+   "Paste Official Job Notification Text"
+2. Admin pastes full job text (copied from Sarkari Result or official site)
+3. System parses text and auto-fills job sections
+4. Admin can preview, edit, and publish
+
+STRICT GOLDEN RULE:
+- ONLY show data that exists in pasted text
+- DO NOT add any extra field, row, category, or assumption
+- If something is missing in text, it must NOT appear on site
+
+SECTIONS TO AUTO-GENERATE:
+
+A) JOB TITLE & SUMMARY
+- Detect first main heading or recruitment title
+- Generate short summary using:
+  Organization, Post Name, Total Posts, Qualification (only if mentioned)
+
+B) IMPORTANT DATES (DYNAMIC TABLE)
+- Detect section headers like:
+  "IMPORTANT DATES", "Important Dates"
+- Under this section, create table rows dynamically for:
+  Application Start, Last Date, Late Fee Date, Exam Date, Admit Card, Result
+- If "Late Fee Date" exists in text → add row
+- If not → do NOT create it
+
+C) APPLICATION FEE (DYNAMIC TABLE)
+- Detect "APPLICATION FEE"
+- Create rows only for categories mentioned:
+  General, OBC, EWS, SC, ST, Female, PH
+- Do NOT auto-add missing categories
+
+D) AGE LIMIT (CATEGORY-WISE TABLE)
+- Detect "AGE LIMIT" or "Age Limit"
+- If text includes:
+  General / OBC / SC / ST age limits
+  → create category-wise table
+- If only single age range exists → show single row
+- Do NOT guess age relaxation
+
+E) PHYSICAL ELIGIBILITY (ONLY IF PRESENT)
+- Detect keywords:
+  Physical Eligibility, Height, Chest, Weight
+- Create table with Male / Female columns ONLY if mentioned
+- If chest or height is not mentioned → leave blank or NA
+- If physical section does not exist → hide entire section
+
+F) EDUCATIONAL QUALIFICATION
+- Detect "Educational Qualification"
+- Display text exactly as provided
+- Do NOT auto-add 10th/12th/Graduate labels unless written
+
+G) VACANCY DETAILS
+- Detect "Vacancy Details" or "Post Wise Vacancy"
+- Convert listed posts into table format
+- Only rows present in text should appear
+
+H) IMPORTANT LINKS
+- Detect "IMPORTANT LINKS"
+- Auto-detect URLs for:
+  Apply Online, Download Notification, Official Website
+- Only show links that exist in text
+
+DISPLAY RULES:
+- Each section should appear only if data exists
+- Use clean Sarkari Result–style tables
+- Mobile and desktop friendly
+- No hardcoded values
+
+SECURITY & PERFORMANCE:
+- No AI usage
+- No external API calls
+- Pure backend logic (regex / keyword parsing)
+- Fast execution
+
+DO NOT:
+- Add sample data
+- Add placeholder text
+- Modify public UI design
+- Change admin authentication
+
+AFTER COMPLETION REPLY ONLY:
+"Rule-based auto job parser implemented successfully"

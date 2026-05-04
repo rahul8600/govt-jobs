@@ -1,0 +1,80 @@
+You are now working in FULL STACK MODE.
+
+GOAL:
+Make this website function like a real Sarkari Result–style portal.
+Fix ONLY broken functionality. Do NOT redesign UI.
+
+CRITICAL RULES:
+- Do NOT change colors, spacing, fonts, or layout
+- Do NOT add new features
+- Do NOT remove existing pages
+- Fix logic only
+- Every fix must be production-ready
+
+BACKEND (MANDATORY):
+1. Create a real database table: posts
+   Fields:
+   - id
+   - title
+   - department
+   - post_type (job | admit_card | result | answer_key)
+   - state
+   - qualification
+   - important_dates (JSON)
+   - fees (JSON)
+   - age_limit (JSON)
+   - vacancy_details (JSON)
+   - physical_details (JSON)
+   - selection_process (TEXT)
+   - how_to_apply (TEXT)
+   - apply_url
+   - notification_url
+   - created_at
+
+2. Data MUST persist after:
+   - page refresh
+   - new tab
+   - browser close
+
+ADMIN PANEL (FIX COMPLETELY):
+- Add / Edit / Delete must work
+- Editing a post must NOT delete old data
+- Mandatory Post Type selector:
+  Job | Admit Card | Result | Answer Key
+
+ADMIN FIELD LOGIC:
+- Job → show Apply URL
+- Admit Card → show Download Admit Card URL
+- Result → show Download Result URL
+- Answer Key → show Download Answer Key URL
+- Hide irrelevant fields automatically
+
+FRONTEND ACTION LOGIC:
+- Job → show “Apply Online”
+- Admit Card → show “Download Admit Card”
+- Result → show “Download Result”
+- Answer Key → show “Download Answer Key”
+- NEVER show Apply button for non-job posts
+
+SEARCH & FILTER (MUST WORK):
+- Search by title, department, state
+- Filters must work together:
+  qualification + state + post_type
+- Results must update instantly
+
+JOB DETAILS PAGE:
+- Convert raw notification text into clean sections:
+  Important Dates (table)
+  Application Fee (table)
+  Age Limit (table)
+  Vacancy Details (table)
+  Physical Eligibility (table)
+  Selection Process
+  How to Apply
+  Important Links
+- NO long paragraphs
+- Sarkari Result–style clarity
+
+CONFIRMATION:
+After completion respond ONLY with:
+“Phase 3 full-stack functionality completed”

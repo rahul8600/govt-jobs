@@ -1,0 +1,63 @@
+Create a full-stack government job portal website like Sarkari Result with a simple admin panel.
+
+TECH STACK:
+- Frontend: HTML, CSS, JavaScript (mobile-first, very simple)
+- Backend: Node.js + Express
+- Database: MongoDB (real database, not localStorage)
+- Admin Panel: Protected by simple admin login
+
+MAIN REQUIREMENT (VERY IMPORTANT):
+Each job post must have SECTION-BASED CONTENT BOXES like Sarkari Result.
+NO structured date fields, NO individual inputs for dates or fees.
+
+ADMIN PANEL – JOB POST FORM:
+Create a job post form with the following TEXT / RICH TEXT BOXES (HTML paste allowed):
+
+1. Job Title
+2. Organization Name
+3. Post Name
+4. Total Vacancies
+5. Important Dates (textarea / rich text – admin will copy-paste content)
+6. Application Fee (textarea / rich text – copy-paste)
+7. Age Limit (textarea / rich text – copy-paste)
+8. Vacancy Details (textarea / rich text – tables allowed)
+9. Educational Qualification (textarea)
+10. Physical Standard Test (textarea)
+11. Physical Efficiency Test (textarea)
+12. Selection Process (textarea)
+13. Important Links (textarea – apply / download links)
+
+Admin should be able to:
+- Add job
+- Edit job
+- Delete job
+- View all posted jobs
+
+FRONTEND JOB PAGE REQUIREMENTS:
+- Show each section in a separate BOX
+- Each box must have a colored heading strip (like Sarkari Result)
+- Content under heading should render exactly as pasted (lists, tables, bold text)
+- No extra formatting or breaking pasted content
+- Fully mobile responsive
+- Clean, fast, government-style UI
+
+DESIGN:
+- White background
+- Dark maroon / green heading bars
+- Simple borders
+- No animations
+- No dark mode
+- Sarkari Result inspired but NOT copied word-for-word
+
+OTHER REQUIREMENTS:
+- SEO friendly URLs (/job/up-police-constable-2026)
+- No login/registration for users
+- Direct official apply links
+- Simple homepage with latest jobs list
+- Separate pages for Jobs / Admit Card / Result / Answer Key
+
+IMPORTANT:
+Admin will mostly COPY-PASTE content from official notifications or Sarkari Result.
+The system must support this without breaking layout.
+
+Build this as a production-ready project, not a demo.

@@ -1,0 +1,50 @@
+CRITICAL FIX REQUIRED – DATA & ANALYTICS SPLIT ISSUE
+
+My project currently has a serious production issue.
+
+PROBLEM:
+- Admin panel opened on Replit (.replit.dev) shows different jobs and analytics.
+- Admin panel opened from public URL (.replit.app / Google) shows different jobs and analytics.
+- Jobs added from Replit admin do NOT appear on public.
+- Jobs added from public admin do NOT appear on Replit.
+- Analytics counters (visitors, page views) are DIFFERENT in both places.
+
+This means DEVELOPMENT and PRODUCTION are using DIFFERENT DATABASES.
+
+GOAL (MANDATORY):
+- Development (.dev) and Production (.app) MUST use ONE SINGLE SHARED DATABASE.
+- Jobs, analytics, admin data must be IDENTICAL everywhere.
+- Any job added from ANY admin must instantly appear on ALL environments.
+- Analytics must be unified (single source of truth).
+
+TASKS YOU MUST DO:
+1. Audit the entire backend and REMOVE any environment-based or fallback database logic.
+2. Ensure MongoDB connection uses ONLY:
+   mongoose.connect(process.env.MONGODB_URI)
+3. Remove any:
+   - hardcoded MongoDB URIs
+   - localhost DB
+   - replit-db usage
+   - in-memory storage
+4. Ensure the SAME MONGODB_URI is used for:
+   - Replit development
+   - Replit production (Publishing)
+5. If production environment variables are missing, explicitly configure the backend
+   to FAIL loudly instead of silently using a different DB.
+6. Ensure ALL analytics (visitors, page views, job views) are stored in MongoDB,
+   not in variables, not in memory, not per-session.
+7. Ensure admin panel, public pages, and analytics dashboard
+   ALL fetch data from the SAME API endpoints.
+8. Add clear console logs showing:
+   - Connected MongoDB URI (masked)
+   - Database name in use
+9. Do NOT change UI or admin layout.
+10. Do NOT delete existing data.
+
+EXPECTED RESULT:
+- Replit admin and public admin show EXACT SAME jobs.
+- Analytics numbers are EXACT SAME everywhere.
+- Public site reflects admin changes instantly.
+- ONE DATABASE. NO SPLITS. NO FALLBACKS.
+
+This is a production-blocking bug. Fix it completely.

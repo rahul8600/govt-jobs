@@ -1,0 +1,84 @@
+TASK: UI / UX POLISH ONLY – DO NOT CHANGE ANY LOGIC OR BACKEND
+
+Project: Govt Job Alert website (already functional)
+
+IMPORTANT RULES (STRICT):
+- DO NOT change backend logic
+- DO NOT touch database, APIs, auth, admin panel logic
+- DO NOT remove or rename any existing feature
+- ONLY improve UI, text clarity, spacing, animations
+- Keep site lightweight and fast
+- Mobile-first friendly
+
+--------------------------------
+1️⃣ HEADER + NAV TEXT IMPROVEMENT
+--------------------------------
+- Increase font size slightly for:
+  Home, Latest Jobs, Admit Card, Results, Answer Key, Admission
+- Improve letter spacing and font weight (professional, Sarkari Result style)
+- Keep same layout, only visual improvement
+
+--------------------------------
+2️⃣ MOVING UPDATE / NOTICE BAR
+--------------------------------
+Current notices like:
+- NEW: SSC GD Constable Result 2024 Declared
+- UPDATE: Railway RPF Admit Card 2025 Available
+- APPLY: IBPS PO Online Form 2025 Started
+
+ISSUE:
+- Text is static
+
+FIX:
+- Convert notice bar into a smooth horizontal auto-scrolling ticker (left to right or right to left)
+- Pause on hover
+- Clean, professional animation
+- No JavaScript heavy library, simple CSS animation preferred
+
+--------------------------------
+3️⃣ FEATURED / LATEST / RESULT TEXT SIZE
+--------------------------------
+- Increase heading size for:
+  Featured Jobs
+  Latest Jobs
+  Admit Cards
+  Results
+- Improve card padding, border-radius, subtle shadow
+- Text should look bold, clean, and readable
+
+--------------------------------
+4️⃣ INFORMATION PORTAL FIX
+--------------------------------
+Section: INFORMATION PORTAL
+
+Issues:
+- "Syllabus" and "Contact" buttons not working
+- Text looks small and unclear
+
+Fix:
+- Make buttons clickable:
+  - Syllabus → /syllabus page
+  - Contact → /contact page
+- If pages don’t exist, create simple static pages (no backend)
+- Improve text size and alignment
+- Add small icons if suitable (optional)
+
+--------------------------------
+5️⃣ OVERALL LOOK & FEEL
+--------------------------------
+- Improve spacing between sections
+- Consistent blue theme
+- Clean white background
+- No flashy colors
+- Sarkari Result–like seriousness
+- Government exam aspirant friendly UI
+
+--------------------------------
+FINAL CHECK:
+- Site should look more premium
+- No feature should break
+- Admin panel must remain protected
+- Public users must NOT access admin
+
+After completion reply ONLY:
+"UI polished successfully – no logic changed"

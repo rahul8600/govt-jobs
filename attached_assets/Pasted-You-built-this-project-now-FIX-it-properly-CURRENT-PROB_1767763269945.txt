@@ -1,0 +1,82 @@
+You built this project, now FIX it properly.
+
+CURRENT PROBLEM:
+- Admin panel does NOT have Job Description / Full Details field
+- Jobs disappear on refresh (LocalStorage issue)
+- No edit / update option for posted jobs
+- Clicking Featured Jobs opens blank/black page
+- Cannot post Sarkari Result–style detailed jobs
+
+GOAL:
+This must work like a REAL Sarkari Result website.
+
+STEP 1: DATABASE (MANDATORY)
+- Create a real PostgreSQL database
+- Create a `jobs` table with these columns:
+
+id (primary key)
+slug (SEO friendly, unique)
+title
+department
+category (Latest Job / Admit Card / Result / Answer Key)
+featured (boolean)
+trending (boolean)
+application_start
+last_date
+apply_url
+notification_url
+job_description (LONG TEXT / HTML)
+created_at
+updated_at
+
+STOP using LocalStorage completely.
+
+STEP 2: ADMIN PANEL FIX (VERY IMPORTANT)
+In Admin Console:
+- Add a BIG "Job Description / Full Details" editor
+- This editor must support:
+  • headings
+  • bullet points
+  • tables
+  • links
+- Add EDIT and DELETE buttons for every job
+- After refresh or new tab, job must NOT disappear
+- Only admin can access this page (do NOT show to public)
+
+STEP 3: JOB POSTING FLOW
+- Admin fills form + job description
+- Click "Publish"
+- Job saves to database
+- Auto-generate SEO slug (example: /job/up-police-constable-2025)
+
+STEP 4: PUBLIC JOB DETAIL PAGE
+- Clicking any job card opens:
+  /job/{slug}
+- Show FULL job description exactly like Sarkari Result
+- Apply Online / Download Notification buttons must work
+
+STEP 5: FEATURED JOBS FIX
+- Clicking Featured Job cards must open correct job detail page
+- NO blank / black page
+
+STEP 6: PAGES TO CREATE
+- /latest-jobs
+- /admit-card
+- /results
+- /answer-key
+- /admission
+- /privacy-policy
+- /terms-of-service
+- /disclaimer
+
+STEP 7: SEO + PERFORMANCE
+- Server-side rendering
+- Clean URLs
+- Fast load
+- Google indexable pages
+
+IMPORTANT:
+Do NOT explain.
+Do NOT skip steps.
+Implement EVERYTHING fully.
+This must behave like a REAL production website.
