@@ -22,21 +22,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      {/* Live Scrolling Ticker */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 border-b border-blue-800 py-3 overflow-hidden whitespace-nowrap z-40">
-        <div className="inline-flex animate-marquee text-xs font-bold uppercase tracking-wide text-white">
-          <span className="mx-8 inline-flex items-center gap-2"><span className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></span> New: SSC GD Constable Result 2024 Declared</span>
-          <span className="mx-8 inline-flex items-center gap-2"><span className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></span> Update: Railway RPF Admit Card 2025 Available Now</span>
-          <span className="mx-8 inline-flex items-center gap-2"><span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span> Apply: IBPS PO Online Form 2025 Started</span>
-          <span className="mx-8 inline-flex items-center gap-2"><span className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></span> New: UP Police Constable Exam City Released</span>
-          <span className="mx-8 inline-flex items-center gap-2"><span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span> Alert: Navy SSR/MR 01/2025 Batch Result Out</span>
-          <span className="mx-8 inline-flex items-center gap-2"><span className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></span> New: SSC GD Constable Result 2024 Declared</span>
-          <span className="mx-8 inline-flex items-center gap-2"><span className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></span> Update: Railway RPF Admit Card 2025 Available Now</span>
-          <span className="mx-8 inline-flex items-center gap-2"><span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span> Apply: IBPS PO Online Form 2025 Started</span>
-          <span className="mx-8 inline-flex items-center gap-2"><span className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></span> New: UP Police Constable Exam City Released</span>
-          <span className="mx-8 inline-flex items-center gap-2"><span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span> Alert: Navy SSR/MR 01/2025 Batch Result Out</span>
-        </div>
-      </div>
+
 
       {/* Main Container */}
       <main className="flex-grow py-10 bg-gradient-to-b from-[#f1f4f7] to-[#e8ecf1]">
