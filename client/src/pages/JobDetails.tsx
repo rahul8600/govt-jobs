@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useRoute, Link } from "wouter";
 import { useJobs } from "@/lib/useJobs";
-import { Calendar, ExternalLink, ShieldCheck, MapPin, ChevronDown, ChevronUp } from "lucide-react";
+import { Calendar, ExternalLink, ShieldCheck, MapPin, ChevronDown, ChevronUp, Share2 } from "lucide-react";
 import { useSEO, generateJobMeta } from "@/components/SEO";
 import { usePageTracker } from "@/lib/usePageTracker";
 
@@ -139,6 +139,15 @@ export default function JobDetails() {
           </a>
           <a href={notifyLink} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 bg-slate-700 text-white w-full md:w-auto px-9 py-5 md:py-4 rounded-xl font-bold text-sm md:text-xs uppercase tracking-widest hover:bg-slate-800 transition-all duration-200 shadow-lg shadow-slate-700/25 hover:shadow-xl active:scale-[0.98]" data-testid="button-notification">
             Notification
+          </a>
+          {/* WhatsApp Share Button */}
+          <a
+            href={`https://wa.me/?text=${encodeURIComponent(`🔔 ${job.title}\n📅 Last Date: ${job.lastDate || 'N/A'}\n🔗 ${window.location.href}`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 bg-green-500 text-white w-full md:w-auto px-9 py-5 md:py-4 rounded-xl font-bold text-sm md:text-xs uppercase tracking-widest hover:bg-green-600 transition-all duration-200 shadow-lg shadow-green-500/25 hover:shadow-xl active:scale-[0.98]"
+          >
+            <Share2 className="w-5 h-5 md:w-4 md:h-4" /> WhatsApp Share
           </a>
           {hasText(job.rawJobContent) && (
             <button 
