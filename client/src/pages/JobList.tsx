@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { Link, useRoute, useSearch } from "wouter";
+import { useState, useEffect, useCallback } from "react";
+import { Link, useRoute, useSearch, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Filter, MapPin, Calendar, Search, ChevronRight } from "lucide-react";
+import { Filter, MapPin, Calendar, Search, ChevronRight, ChevronLeft } from "lucide-react";
 import { useSEO, generateListMeta } from "@/components/SEO";
 import { usePageTracker } from "@/lib/usePageTracker";
 import type { Post } from "@shared/schema";
@@ -34,21 +34,46 @@ function matchesQualification(job: Post, qual: string): boolean {
   return true;
 }
 
+// Check if last date is expiring soon (within 7 days)
+function isExpiringSoon(lastDate: string | null): boolean {
+  if (!lastDate) return false;
+  try {
+    const parts = lastDate.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+    if (!parts) return false;
+    const date = new Date(`${parts[3]}-${parts[2].padStart(2,'0')}-${parts[1].padStart(2,'0')}`);
+    const diff = (date.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+    return diff >= 0 && diff <= 7;
+  } catch { return false; }
+}
+
 const PAGE_COLORS: Record<string, { header: string; badge: string; border: string }> = {
-  "job":       { header: "bg-blue-700",   badge: "bg-blue-100 text-blue-700",   border: "border-blue-600" },
-  "admit-card":{ header: "bg-green-700",  badge: "bg-green-100 text-green-700", border: "border-green-600" },
-  "result":    { header: "bg-red-700",    badge: "bg-red-100 text-red-700",     border: "border-red-600" },
-  "answer-key":{ header: "bg-purple-700", badge: "bg-purple-100 text-purple-700",border: "border-purple-600" },
-  "admission": { header: "bg-orange-600", badge: "bg-orange-100 text-orange-700",border: "border-orange-600" },
-  "all":       { header: "bg-slate-700",  badge: "bg-slate-100 text-slate-700", border: "border-slate-600" },
+  "job":        { header: "bg-blue-700",   badge: "bg-blue-100 text-blue-700",    border: "border-blue-600" },
+  "admit-card": { header: "bg-green-700",  badge: "bg-green-100 text-green-700",  border: "border-green-600" },
+  "result":     { header: "bg-red-700",    badge: "bg-red-100 text-red-700",      border: "border-red-600" },
+  "answer-key": { header: "bg-purple-700", badge: "bg-purple-100 text-purple-700",border: "border-purple-600" },
+  "admission":  { header: "bg-orange-600", badge: "bg-orange-100 text-orange-700",border: "border-orange-600" },
+  "all":        { header: "bg-slate-700",  badge: "bg-slate-100 text-slate-700",  border: "border-slate-600" },
 };
+
+const ITEMS_PER_PAGE = 20;
 
 export default function JobList() {
   const searchParams = useSearch();
+  const [, navigate] = useLocation();
   const urlQuery = new URLSearchParams(searchParams).get("q") || "";
-  const [searchTerm, setSearchTerm] = useState(urlQuery);
+  const urlPage = parseInt(new URLSearchParams(searchParams).get("page") || "1");
 
-  useEffect(() => { setSearchTerm(urlQuery); }, [urlQuery]);
+  const [inputValue, setInputValue]     = useState(urlQuery);
+  const [debouncedSearch, setDebounced] = useState(urlQuery);
+  const [page, setPage]                 = useState(urlPage);
+
+  // Debounce search input — 350ms
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(inputValue), 350);
+    return () => clearTimeout(t);
+  }, [inputValue]);
+
+  useEffect(() => { setInputValue(urlQuery); setDebounced(urlQuery); setPage(1); }, [urlQuery]);
 
   const [matchSearch]    = useRoute("/search");
   const [matchLatest]    = useRoute("/latest-jobs");
@@ -77,10 +102,17 @@ export default function JobList() {
   useSEO(generateListMeta(config.type, urlQuery || undefined));
   usePageTracker(config.type === "all" ? "search" : config.type);
 
-  const apiUrl = config.type !== "all" ? `/api/posts?type=${config.type}` : "/api/posts";
+  // Use dedicated search API if search term exists, else use type filter
+  const isSearchMode = matchSearch && debouncedSearch.trim().length >= 2;
 
-  const { data: jobs = [], isLoading } = useQuery<Post[]>({
-    queryKey: ["posts", config.type],
+  const apiUrl = isSearchMode
+    ? `/api/search?q=${encodeURIComponent(debouncedSearch)}&page=${page}&limit=${ITEMS_PER_PAGE}`
+    : config.type !== "all"
+      ? `/api/posts?type=${config.type}&page=${page}&limit=${ITEMS_PER_PAGE}`
+      : `/api/posts?page=${page}&limit=${ITEMS_PER_PAGE}`;
+
+  const { data: response, isLoading } = useQuery<any>({
+    queryKey: ["posts", config.type, debouncedSearch, page],
     queryFn: async () => {
       const res = await fetch(apiUrl, { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to fetch");
@@ -89,12 +121,26 @@ export default function JobList() {
     staleTime: 0,
   });
 
+  // Handle both array (old) and paginated (new) response
+  const jobs: Post[] = Array.isArray(response) ? response : (response?.data || []);
+  const totalPages = response?.totalPages || Math.ceil(jobs.length / ITEMS_PER_PAGE) || 1;
+
   const filteredJobs = jobs.filter(job => {
-    const matchesSearch = !searchTerm ||
-      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.department.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = !debouncedSearch || isSearchMode ||
+      job.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      job.department.toLowerCase().includes(debouncedSearch.toLowerCase());
     return matchesSearch && matchesState(job, state) && matchesQualification(job, qualification);
   });
+
+  const handleSearchSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    if (inputValue.trim()) navigate(`/search?q=${encodeURIComponent(inputValue.trim())}`);
+  }, [inputValue, navigate]);
+
+  const goToPage = (p: number) => {
+    setPage(p);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   if (isLoading) {
     return (
@@ -135,19 +181,21 @@ export default function JobList() {
             </div>
 
             <div className="p-4 space-y-5">
-              {/* Search */}
+              {/* Search with debounce */}
               <div>
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-2">Search</label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                  <input
-                    type="text"
-                    placeholder="Search..."
-                    className="w-full pl-9 pr-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-400 bg-slate-50"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
+                <form onSubmit={handleSearchSubmit}>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                    <input
+                      type="text"
+                      placeholder="Search..."
+                      className="w-full pl-9 pr-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-400 bg-slate-50"
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                    />
+                  </div>
+                </form>
               </div>
 
               {/* Qualification Filter */}
@@ -156,13 +204,7 @@ export default function JobList() {
                 <div className="space-y-2">
                   {["All", "10th Pass", "12th Pass", "Graduation", "Post Graduate"].map(q => (
                     <label key={q} className="flex items-center gap-2.5 cursor-pointer group">
-                      <input
-                        type="radio"
-                        name="qualification"
-                        checked={qualification === q}
-                        onChange={() => setQualification(q)}
-                        className="w-4 h-4 accent-blue-600"
-                      />
+                      <input type="radio" name="qualification" checked={qualification === q} onChange={() => setQualification(q)} className="w-4 h-4 accent-blue-600" />
                       <span className={`text-sm font-medium transition-colors ${qualification === q ? "text-blue-700 font-bold" : "text-slate-600 group-hover:text-blue-600"}`}>{q}</span>
                     </label>
                   ))}
@@ -175,13 +217,7 @@ export default function JobList() {
                 <div className="space-y-2">
                   {["All", "All India", "Uttar Pradesh", "Bihar", "Rajasthan", "Haryana", "Delhi", "Madhya Pradesh", "Maharashtra"].map(s => (
                     <label key={s} className="flex items-center gap-2.5 cursor-pointer group">
-                      <input
-                        type="radio"
-                        name="state"
-                        checked={state === s}
-                        onChange={() => setState(s)}
-                        className="w-4 h-4 accent-blue-600"
-                      />
+                      <input type="radio" name="state" checked={state === s} onChange={() => setState(s)} className="w-4 h-4 accent-blue-600" />
                       <span className={`text-sm font-medium transition-colors ${state === s ? "text-blue-700 font-bold" : "text-slate-600 group-hover:text-blue-600"}`}>{s}</span>
                     </label>
                   ))}
@@ -189,9 +225,9 @@ export default function JobList() {
               </div>
 
               {/* Reset */}
-              {(qualification !== "All" || state !== "All" || searchTerm) && (
+              {(qualification !== "All" || state !== "All" || inputValue) && (
                 <button
-                  onClick={() => { setQualification("All"); setState("All"); setSearchTerm(""); }}
+                  onClick={() => { setQualification("All"); setState("All"); setInputValue(""); setDebounced(""); }}
                   className="w-full bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs py-2 rounded-lg transition-colors uppercase tracking-wide"
                 >
                   Reset Filters
@@ -207,75 +243,126 @@ export default function JobList() {
             <div className="bg-white border border-slate-200 rounded-xl p-16 text-center">
               <p className="text-slate-400 font-medium">No results found. Try different filters.</p>
               <button
-                onClick={() => { setQualification("All"); setState("All"); setSearchTerm(""); }}
+                onClick={() => { setQualification("All"); setState("All"); setInputValue(""); setDebounced(""); }}
                 className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-bold hover:bg-blue-700"
               >
                 Clear Filters
               </button>
             </div>
           ) : (
-            filteredJobs.map(job => (
-              <div key={job.id} className="bg-white border border-slate-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-md transition-all duration-200 group">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 space-y-2">
-                    {/* Badges */}
-                    <div className="flex flex-wrap gap-1.5">
-                      {job.qualification && (
-                        <span className="bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-blue-100 uppercase">
-                          {job.qualification}
+            filteredJobs.map(job => {
+              const expiringSoon = isExpiringSoon(job.lastDate);
+              return (
+                <div key={job.id} className="bg-white border border-slate-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-md transition-all duration-200 group">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 space-y-2">
+                      {/* Badges */}
+                      <div className="flex flex-wrap gap-1.5">
+                        {job.qualification && (
+                          <span className="bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-blue-100 uppercase">
+                            {job.qualification}
+                          </span>
+                        )}
+                        {job.trending && (
+                          <span className="bg-yellow-50 text-yellow-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-yellow-200 uppercase">
+                            🔥 Trending
+                          </span>
+                        )}
+                        {job.featured && (
+                          <span className="bg-green-50 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-green-200 uppercase">
+                            ⭐ Featured
+                          </span>
+                        )}
+                        {expiringSoon && (
+                          <span className="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-red-200 uppercase animate-pulse">
+                            ⚠️ Closing Soon!
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Title */}
+                      <Link href={`/job/${job.slug || job.id}`}>
+                        <h3 className="font-bold text-slate-800 text-base group-hover:text-blue-700 transition-colors cursor-pointer leading-snug">
+                          {job.title}
+                        </h3>
+                      </Link>
+
+                      {/* Meta */}
+                      <div className="flex flex-wrap gap-4 text-xs font-medium text-slate-500">
+                        <span className="flex items-center gap-1">
+                          <MapPin className="w-3.5 h-3.5" /> {job.department}
                         </span>
-                      )}
-                      {job.trending && (
-                        <span className="bg-yellow-50 text-yellow-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-yellow-200 uppercase">
-                          Trending
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3.5 h-3.5" /> Posted: {job.postDate}
                         </span>
-                      )}
-                      {job.featured && (
-                        <span className="bg-green-50 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-green-200 uppercase">
-                          Featured
-                        </span>
-                      )}
+                        {job.lastDate && (
+                          <span className={`flex items-center gap-1 font-bold ${expiringSoon ? 'text-red-600' : 'text-orange-600'}`}>
+                            <Calendar className="w-3.5 h-3.5" /> Last Date: {job.lastDate}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Title */}
+                    {/* Desktop Button */}
                     <Link href={`/job/${job.slug || job.id}`}>
-                      <h3 className="font-bold text-slate-800 text-base group-hover:text-blue-700 transition-colors cursor-pointer leading-snug">
-                        {job.title}
-                      </h3>
+                      <button className={`hidden md:flex items-center gap-1.5 ${colors.header} text-white px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wide hover:opacity-90 transition-opacity shadow-sm flex-shrink-0`}>
+                        View <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
                     </Link>
-
-                    {/* Meta */}
-                    <div className="flex flex-wrap gap-4 text-xs font-medium text-slate-500">
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5" /> {job.department}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5" /> Posted: {job.postDate}
-                      </span>
-                      {job.lastDate && (
-                        <span className="flex items-center gap-1 text-red-600 font-bold">
-                          <Calendar className="w-3.5 h-3.5" /> Last Date: {job.lastDate}
-                        </span>
-                      )}
-                    </div>
                   </div>
 
-                  {/* Button */}
+                  {/* Mobile View Button */}
                   <Link href={`/job/${job.slug || job.id}`}>
-                    <button className={`hidden md:flex items-center gap-1.5 ${colors.header} text-white px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wide hover:opacity-90 transition-opacity shadow-sm flex-shrink-0`}>
-                      View <ChevronRight className="w-3.5 h-3.5" />
+                    <button className={`md:hidden mt-3 w-full ${colors.header} text-white py-2 rounded-lg text-xs font-bold uppercase tracking-wide hover:opacity-90 transition-opacity`}>
+                      View Details
                     </button>
                   </Link>
                 </div>
+              );
+            })
+          )}
 
-                {/* Mobile View Button */}
-                <Link href={`/job/${job.slug || job.id}`}>
-                  <button className={`md:hidden mt-3 w-full ${colors.header} text-white py-2 rounded-lg text-xs font-bold uppercase tracking-wide hover:opacity-90 transition-opacity`}>
-                    View Details
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-4 pb-2">
+              <button
+                onClick={() => goToPage(page - 1)}
+                disabled={page <= 1}
+                className="flex items-center gap-1 px-3 py-2 rounded-lg border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" /> Prev
+              </button>
+
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let p = i + 1;
+                if (totalPages > 5) {
+                  if (page <= 3) p = i + 1;
+                  else if (page >= totalPages - 2) p = totalPages - 4 + i;
+                  else p = page - 2 + i;
+                }
+                return (
+                  <button
+                    key={p}
+                    onClick={() => goToPage(p)}
+                    className={`w-9 h-9 rounded-lg text-sm font-bold transition-colors ${
+                      p === page
+                        ? `${colors.header} text-white shadow-sm`
+                        : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    {p}
                   </button>
-                </Link>
-              </div>
-            ))
+                );
+              })}
+
+              <button
+                onClick={() => goToPage(page + 1)}
+                disabled={page >= totalPages}
+                className="flex items-center gap-1 px-3 py-2 rounded-lg border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Next <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           )}
         </div>
       </div>
