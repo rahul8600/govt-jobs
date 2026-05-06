@@ -1,6 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import bcrypt from "bcrypt";
+import rateLimit from "express-rate-limit";
 import OpenAI from "openai";
 import { storage } from "./storage";
 import { insertPostSchema } from "@shared/schema";
@@ -197,6 +198,24 @@ export async function registerRoutes(
     }
   });
 
+  // Search posts endpoint
+  app.get("/api/search", async (req, res) => {
+    try {
+      res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      const { q, page = '1', limit = '20' } = req.query;
+      if (!q || typeof q !== 'string' || q.trim().length < 2) {
+        return res.status(400).json({ error: "Query must be at least 2 characters" });
+      }
+      const pageNum = Math.max(1, parseInt(page as string) || 1);
+      const limitNum = Math.min(50, parseInt(limit as string) || 20);
+      const result = await storage.searchPosts(q.trim(), pageNum, limitNum);
+      res.json(result);
+    } catch (error) {
+      console.error("Error searching posts:", error);
+      res.status(500).json({ error: "Failed to search posts" });
+    }
+  });
+
   // Get all posts with optional filters
   app.get("/api/posts", async (req, res) => {
     try {
@@ -205,18 +224,20 @@ export async function registerRoutes(
       res.set('Expires', '0');
       res.set('Surrogate-Control', 'no-store');
       
-      const { type, qualification, state } = req.query;
+      const { type, qualification, state, page = '1', limit = '30' } = req.query;
+      const pageNum = Math.max(1, parseInt(page as string) || 1);
+      const limitNum = Math.min(100, parseInt(limit as string) || 30);
       
       if (qualification || state || type) {
         const filters: { type?: string; qualification?: string; state?: string } = {};
         if (type && typeof type === 'string') filters.type = type;
         if (qualification && typeof qualification === 'string') filters.qualification = qualification;
         if (state && typeof state === 'string') filters.state = state;
-        const posts = await storage.getFilteredPosts(filters);
+        const posts = await storage.getFilteredPosts(filters, pageNum, limitNum);
         return res.json(posts);
       }
       
-      const posts = await storage.getAllPosts();
+      const posts = await storage.getAllPosts(pageNum, limitNum);
       res.json(posts);
     } catch (error) {
       console.error("Error fetching posts:", error);
@@ -382,8 +403,8 @@ export async function registerRoutes(
     }
   });
 
-  // AI Job Parser endpoint (protected)
-  app.post("/api/parse-job", requireAuth, async (req, res) => {
+  // AI Job Parser endpoint (protected + rate limited)
+  app.post("/api/parse-job", requireAuth, rateLimit({ windowMs: 60 * 1000, max: 10, message: { error: 'Too many parse requests. Wait a minute.' } }), async (req, res) => {
     try {
       const { rawText } = req.body;
       
