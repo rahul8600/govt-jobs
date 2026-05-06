@@ -8,16 +8,25 @@ export interface PostFilters {
   state?: string;
 }
 
+export interface PaginatedResult<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   
-  getAllPosts(): Promise<Post[]>;
+  getAllPosts(page?: number, limit?: number): Promise<Post[]>;
   getPostsByType(type: string): Promise<Post[]>;
   getPostsByQualification(qualification: string): Promise<Post[]>;
   getPostsByState(state: string): Promise<Post[]>;
-  getFilteredPosts(filters: PostFilters): Promise<Post[]>;
+  getFilteredPosts(filters: PostFilters, page?: number, limit?: number): Promise<Post[]>;
+  searchPosts(query: string, page: number, limit: number): Promise<PaginatedResult<Post>>;
   getPost(id: number): Promise<Post | undefined>;
   getPostBySlug(slug: string): Promise<Post | undefined>;
   createPost(post: InsertPost): Promise<Post>;
@@ -53,42 +62,59 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getAllPosts(): Promise<Post[]> {
-    return db.select().from(posts).orderBy(desc(posts.createdAt));
+  async getAllPosts(page = 1, limit = 30): Promise<Post[]> {
+    const offset = (page - 1) * limit;
+    return db.select().from(posts).orderBy(desc(posts.createdAt)).limit(limit).offset(offset);
   }
 
   async getPostsByType(type: string): Promise<Post[]> {
-    return db.select().from(posts).where(eq(posts.type, type)).orderBy(desc(posts.createdAt));
+    return db.select().from(posts).where(eq(posts.type, type)).orderBy(desc(posts.createdAt)).limit(100);
   }
 
   async getPostsByQualification(qualification: string): Promise<Post[]> {
-    return db.select().from(posts).where(eq(posts.qualification, qualification)).orderBy(desc(posts.createdAt));
+    return db.select().from(posts).where(eq(posts.qualification, qualification)).orderBy(desc(posts.createdAt)).limit(100);
   }
 
   async getPostsByState(state: string): Promise<Post[]> {
-    return db.select().from(posts).where(eq(posts.state, state)).orderBy(desc(posts.createdAt));
+    return db.select().from(posts).where(eq(posts.state, state)).orderBy(desc(posts.createdAt)).limit(100);
   }
 
-  async getFilteredPosts(filters: PostFilters): Promise<Post[]> {
+  async getFilteredPosts(filters: PostFilters, page = 1, limit = 30): Promise<Post[]> {
     const conditions = [];
+    const offset = (page - 1) * limit;
     
-    if (filters.type) {
-      conditions.push(eq(posts.type, filters.type));
-    }
-    
-    if (filters.qualification) {
-      conditions.push(eq(posts.qualification, filters.qualification));
-    }
-    
-    if (filters.state) {
-      conditions.push(eq(posts.state, filters.state));
-    }
+    if (filters.type) conditions.push(eq(posts.type, filters.type));
+    if (filters.qualification) conditions.push(eq(posts.qualification, filters.qualification));
+    if (filters.state) conditions.push(eq(posts.state, filters.state));
     
     if (conditions.length === 0) {
-      return db.select().from(posts).orderBy(desc(posts.createdAt));
+      return db.select().from(posts).orderBy(desc(posts.createdAt)).limit(limit).offset(offset);
     }
     
-    return db.select().from(posts).where(and(...conditions)).orderBy(desc(posts.createdAt));
+    return db.select().from(posts).where(and(...conditions)).orderBy(desc(posts.createdAt)).limit(limit).offset(offset);
+  }
+
+  async searchPosts(query: string, page = 1, limit = 20): Promise<PaginatedResult<Post>> {
+    const offset = (page - 1) * limit;
+    const searchPattern = `%${query}%`;
+    
+    const where = sql`(
+      ${posts.title} ILIKE ${searchPattern} OR
+      ${posts.department} ILIKE ${searchPattern} OR
+      ${posts.shortInfo} ILIKE ${searchPattern} OR
+      ${posts.qualification} ILIKE ${searchPattern}
+    )`;
+    
+    const [{ total }] = await db.select({ total: count() }).from(posts).where(where);
+    const data = await db.select().from(posts).where(where).orderBy(desc(posts.createdAt)).limit(limit).offset(offset);
+    
+    return {
+      data,
+      total: Number(total),
+      page,
+      limit,
+      totalPages: Math.ceil(Number(total) / limit),
+    };
   }
 
   async getPost(id: number): Promise<Post | undefined> {
