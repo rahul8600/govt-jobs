@@ -3,53 +3,56 @@ import { useState } from "react";
 import { useJobs } from "@/lib/useJobs";
 import { useSEO, generateHomeMeta } from "@/components/SEO";
 import { usePageTracker } from "@/lib/usePageTracker";
+import { ChevronRight, Briefcase, FileText, CheckSquare, Key, GraduationCap } from "lucide-react";
 
-const categoryColors: Record<string, { header: string; badge: string; dot: string }> = {
-  "Latest Jobs":  { header: "bg-blue-700",  badge: "bg-blue-100 text-blue-700",  dot: "bg-blue-500" },
-  "Admit Cards":  { header: "bg-green-700", badge: "bg-green-100 text-green-700", dot: "bg-green-500" },
-  "Results":      { header: "bg-red-700",   badge: "bg-red-100 text-red-700",     dot: "bg-red-500" },
-  "Answer Key":   { header: "bg-purple-700",badge: "bg-purple-100 text-purple-700",dot: "bg-purple-500" },
-  "Admission":    { header: "bg-orange-600",badge: "bg-orange-100 text-orange-700",dot: "bg-orange-500" },
-};
+const CATEGORIES = [
+  { title: "Latest Jobs",  type: "job",        href: "/latest-jobs", color: "bg-blue-600",   light: "bg-blue-50  text-blue-700  border-blue-200",  dot: "bg-blue-500",   icon: Briefcase },
+  { title: "Admit Cards",  type: "admit-card", href: "/admit-card",  color: "bg-green-600",  light: "bg-green-50 text-green-700 border-green-200", dot: "bg-green-500",  icon: FileText },
+  { title: "Results",      type: "result",     href: "/results",     color: "bg-red-600",    light: "bg-red-50   text-red-700   border-red-200",   dot: "bg-red-500",    icon: CheckSquare },
+  { title: "Answer Key",   type: "answer-key", href: "/answer-key",  color: "bg-purple-600", light: "bg-purple-50 text-purple-700 border-purple-200",dot:"bg-purple-500",icon: Key },
+  { title: "Admission",    type: "admission",  href: "/admission",   color: "bg-orange-500", light: "bg-orange-50 text-orange-700 border-orange-200",dot:"bg-orange-500",icon: GraduationCap },
+];
 
-function CategoryBlock({ title, jobs, href }: { title: string; jobs: any[]; href: string }) {
-  const colors = categoryColors[title] || { header: "bg-blue-700", badge: "bg-blue-100 text-blue-700", dot: "bg-blue-500" };
-
+function CategoryCard({ cat, jobs }: { cat: typeof CATEGORIES[0]; jobs: any[] }) {
+  const Icon = cat.icon;
   return (
-    <div className="flex flex-col rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 bg-white">
+    <div className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
       {/* Header */}
-      <div className={`${colors.header} px-4 py-3 flex items-center justify-between`}>
-        <span className="text-white font-bold text-sm tracking-wide uppercase">{title}</span>
-        <Link href={href}>
-          <span className="text-white/80 hover:text-white text-xs font-semibold cursor-pointer underline underline-offset-2">
-            View All
-          </span>
+      <div className={`${cat.color} px-4 py-3 flex items-center justify-between`}>
+        <div className="flex items-center gap-2">
+          <Icon className="w-4 h-4 text-white" />
+          <span className="text-white font-black text-sm uppercase tracking-wide">{cat.title}</span>
+        </div>
+        <Link href={cat.href}>
+          <div className="flex items-center gap-0.5 text-white/80 hover:text-white text-xs font-bold cursor-pointer">
+            All <ChevronRight className="w-3.5 h-3.5" />
+          </div>
         </Link>
       </div>
 
-      {/* Job List */}
-      <div className="flex-1 divide-y divide-slate-100">
-        {jobs.slice(0, 10).map((job) => (
+      {/* List */}
+      <div className="divide-y divide-slate-100">
+        {jobs.slice(0, 8).map(job => (
           <Link key={job.id} href={`/job/${job.slug || job.id}`}>
-            <div className="flex items-start gap-2 px-3 py-2.5 hover:bg-slate-50 cursor-pointer group transition-colors duration-150">
-              <span className={`mt-1.5 w-2 h-2 rounded-full flex-shrink-0 ${colors.dot}`}></span>
-              <span className="text-slate-700 group-hover:text-blue-700 text-sm font-medium leading-snug line-clamp-2 transition-colors duration-150">
+            <div className="flex items-start gap-2.5 px-3 py-2.5 hover:bg-slate-50 active:bg-slate-100 cursor-pointer transition-colors">
+              <span className={`mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0 ${cat.dot}`} />
+              <span className="text-slate-700 text-sm font-medium leading-snug line-clamp-2">
                 {job.title}
               </span>
             </div>
           </Link>
         ))}
         {jobs.length === 0 && (
-          <div className="flex items-center justify-center py-10 text-slate-400 text-sm">
-            No updates available
+          <div className="py-8 text-center text-slate-400 text-sm">
+            No updates yet
           </div>
         )}
       </div>
 
       {/* Footer */}
-      <Link href={href}>
-        <div className="border-t border-slate-200 bg-slate-50 hover:bg-slate-100 px-4 py-2.5 text-center cursor-pointer transition-colors duration-150">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">View All {title}</span>
+      <Link href={cat.href}>
+        <div className={`border-t border-slate-100 py-2.5 text-center cursor-pointer hover:bg-slate-50 transition-colors`}>
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">View All {cat.title}</span>
         </div>
       </Link>
     </div>
@@ -66,96 +69,87 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-500 font-bold text-sm uppercase tracking-widest">Loading...</p>
+          <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-slate-500 font-bold text-sm">Loading...</p>
         </div>
       </div>
     );
   }
 
-  const handleHomeSearch = (e: React.FormEvent) => {
+  const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (homeSearch.trim()) {
-      navigate(`/search?q=${encodeURIComponent(homeSearch.trim())}`);
-    } else {
-      navigate("/search");
-    }
+    navigate(homeSearch.trim() ? `/search?q=${encodeURIComponent(homeSearch.trim())}` : "/search");
   };
 
-  const latestJobs  = jobs.filter((j) => j.type === "job").slice(0, 10);
-  const admitCards  = jobs.filter((j) => j.type === "admit-card").slice(0, 10);
-  const results     = jobs.filter((j) => j.type === "result").slice(0, 10);
-  const answerKeys  = jobs.filter((j) => j.type === "answer-key").slice(0, 10);
-  const admission   = jobs.filter((j) => j.type === "admission").slice(0, 10);
-  const featuredJobs = jobs.filter((j) => j.featured || j.trending).slice(0, 6);
+  const jobsByType = (type: string) => jobs.filter(j => j.type === type);
+  const trending = jobs.filter(j => j.trending || j.featured).slice(0, 6);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
 
-      {/* Search Bar */}
-      <div className="bg-gradient-to-r from-blue-700 to-blue-900 rounded-xl p-6 md:p-10 shadow-lg">
-        <h1 className="text-white text-center font-black text-xl md:text-3xl mb-2 tracking-tight">
-          Sarkari Job Portal
-        </h1>
-        <p className="text-blue-200 text-center text-sm mb-6">Latest Govt Jobs, Results, Admit Cards & More</p>
-        <form onSubmit={handleHomeSearch} className="flex gap-3 max-w-2xl mx-auto">
+      {/* Hero Search */}
+      <div className="bg-gradient-to-br from-blue-700 to-blue-900 rounded-2xl p-5 md:p-10 shadow-xl">
+        <div className="text-center mb-5">
+          <h1 className="text-white font-black text-2xl md:text-4xl tracking-tight">Govt Job Alert</h1>
+          <p className="text-blue-200 text-sm mt-1">Latest Sarkari Jobs, Results & Admit Cards</p>
+        </div>
+        <form onSubmit={handleSearch} className="flex gap-2 max-w-xl mx-auto">
           <input
             type="text"
-            placeholder="Search jobs, results, admit cards..."
-            className="flex-1 px-4 py-3 rounded-lg border-2 border-blue-400 focus:border-white outline-none text-sm font-semibold text-slate-800 placeholder:text-slate-400"
+            placeholder="Search jobs, results..."
+            className="flex-1 px-4 py-3 rounded-xl text-sm font-semibold outline-none border-2 border-blue-400 focus:border-white bg-white text-slate-800 placeholder:text-slate-400"
             value={homeSearch}
-            onChange={(e) => setHomeSearch(e.target.value)}
+            onChange={e => setHomeSearch(e.target.value)}
           />
-          <button
-            type="submit"
-            className="bg-white text-blue-800 px-6 py-3 rounded-lg font-bold text-sm hover:bg-blue-50 transition-colors duration-200 shadow-md"
-          >
+          <button type="submit" className="bg-white text-blue-700 px-5 py-3 rounded-xl font-black text-sm hover:bg-blue-50 transition-colors shadow-md flex-shrink-0">
             Search
           </button>
         </form>
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-4 gap-2 mt-5">
+          {CATEGORIES.slice(0, 4).map(cat => (
+            <Link key={cat.type} href={cat.href}>
+              <div className="bg-white/10 hover:bg-white/20 rounded-xl p-2 text-center cursor-pointer transition-colors">
+                <div className="text-white font-black text-lg">{jobsByType(cat.type).length}</div>
+                <div className="text-blue-200 text-[10px] font-bold leading-tight">{cat.title}</div>
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
 
-      {/* Stats Bar */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          { label: "Latest Jobs",  count: jobs.filter(j => j.type === "job").length,        color: "bg-blue-50 border-blue-200 text-blue-700" },
-          { label: "Admit Cards",  count: jobs.filter(j => j.type === "admit-card").length,  color: "bg-green-50 border-green-200 text-green-700" },
-          { label: "Results",      count: jobs.filter(j => j.type === "result").length,       color: "bg-red-50 border-red-200 text-red-700" },
-          { label: "Answer Keys",  count: jobs.filter(j => j.type === "answer-key").length,  color: "bg-purple-50 border-purple-200 text-purple-700" },
-        ].map((stat) => (
-          <div key={stat.label} className={`border rounded-xl p-4 text-center ${stat.color}`}>
-            <div className="text-2xl font-black">{stat.count}+</div>
-            <div className="text-xs font-bold uppercase tracking-wide mt-1">{stat.label}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Featured / Trending */}
-      {featuredJobs.length > 0 && (
+      {/* Trending Section */}
+      {trending.length > 0 && (
         <div>
-          <h2 className="text-lg font-black text-slate-800 mb-3 flex items-center gap-2">
-            <span className="w-1 h-6 bg-blue-600 rounded-full inline-block"></span>
-            Featured & Trending
-          </h2>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-1 h-5 bg-blue-600 rounded-full" />
+            <h2 className="font-black text-slate-800 text-base uppercase tracking-wide">🔥 Trending Now</h2>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {featuredJobs.map((job) => (
+            {trending.map(job => (
               <Link key={job.id} href={`/job/${job.slug || job.id}`}>
-                <div className="border border-slate-200 rounded-xl p-4 bg-white hover:border-blue-400 hover:shadow-md transition-all duration-200 cursor-pointer group">
-                  <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 rounded-full bg-blue-500 mt-2 flex-shrink-0"></div>
-                    <div>
-                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${job.trending ? "bg-yellow-100 text-yellow-700" : "bg-blue-100 text-blue-700"}`}>
-                        {job.trending ? "Trending" : "Featured"}
-                      </span>
-                      <p className="text-sm font-bold text-slate-700 group-hover:text-blue-700 mt-1 leading-snug transition-colors duration-150">
+                <div className="bg-white border border-slate-200 rounded-xl p-3.5 hover:border-blue-400 hover:shadow-md active:scale-[0.99] transition-all cursor-pointer group">
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        <span className="text-[10px] bg-yellow-100 text-yellow-700 font-bold px-2 py-0.5 rounded-full border border-yellow-200">
+                          🔥 Hot
+                        </span>
+                        {job.lastDate && (
+                          <span className="text-[10px] text-red-600 font-bold">
+                            Last: {job.lastDate}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm font-bold text-slate-800 group-hover:text-blue-700 leading-snug transition-colors">
                         {job.title}
                       </p>
-                      {job.lastDate && (
-                        <p className="text-xs text-red-600 font-semibold mt-1">Last Date: {job.lastDate}</p>
-                      )}
+                      <p className="text-xs text-slate-500 mt-1 font-medium">{job.department}</p>
                     </div>
+                    <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-500 flex-shrink-0 mt-1 transition-colors" />
                   </div>
                 </div>
               </Link>
@@ -164,17 +158,35 @@ export default function Home() {
         </div>
       )}
 
-      {/* Main 3 Column Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <CategoryBlock title="Latest Jobs" jobs={latestJobs} href="/latest-jobs" />
-        <CategoryBlock title="Admit Cards" jobs={admitCards} href="/admit-card" />
-        <CategoryBlock title="Results"     jobs={results}    href="/results" />
+      {/* Mobile: Quick Category Buttons */}
+      <div className="md:hidden grid grid-cols-5 gap-2">
+        {CATEGORIES.map(cat => {
+          const Icon = cat.icon;
+          return (
+            <Link key={cat.type} href={cat.href}>
+              <div className="flex flex-col items-center gap-1 cursor-pointer">
+                <div className={`w-12 h-12 ${cat.color} rounded-2xl flex items-center justify-center shadow-sm`}>
+                  <Icon className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-[10px] font-bold text-slate-600 text-center leading-tight">{cat.title}</span>
+              </div>
+            </Link>
+          );
+        })}
       </div>
 
-      {/* Secondary 2 Column Grid */}
+      {/* Main Grid — Mobile 1 col, Desktop 3 col */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {CATEGORIES.slice(0, 3).map(cat => (
+          <CategoryCard key={cat.type} cat={cat} jobs={jobsByType(cat.type)} />
+        ))}
+      </div>
+
+      {/* Secondary Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <CategoryBlock title="Answer Key" jobs={answerKeys} href="/answer-key" />
-        <CategoryBlock title="Admission"  jobs={admission}  href="/admission" />
+        {CATEGORIES.slice(3).map(cat => (
+          <CategoryCard key={cat.type} cat={cat} jobs={jobsByType(cat.type)} />
+        ))}
       </div>
 
     </div>
