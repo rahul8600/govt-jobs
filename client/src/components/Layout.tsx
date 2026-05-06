@@ -1,8 +1,18 @@
 import { Link, useLocation } from "wouter";
-import { Home, Briefcase, FileText, CheckSquare, GraduationCap, Search } from "lucide-react";
+import { Home, Briefcase, FileText, CheckSquare, GraduationCap, Search, ArrowUp } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
+  const [showTopBtn, setShowTopBtn] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setShowTopBtn(window.scrollY > 400);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   const navItems = [
     { href: "/",            label: "Home",       icon: Home },
@@ -181,6 +191,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {" | "}
         <Link href="/contact"><span className="text-blue-500 cursor-pointer">Contact</span></Link>
       </div>
+
+      {/* Back to Top Button */}
+      {showTopBtn && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-20 md:bottom-8 right-4 z-50 bg-blue-700 hover:bg-blue-800 text-white w-10 h-10 rounded-full shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-110"
+          aria-label="Back to top"
+        >
+          <ArrowUp className="w-5 h-5" />
+        </button>
+      )}
 
     </div>
   );
