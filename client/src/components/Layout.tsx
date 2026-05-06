@@ -1,79 +1,187 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
+import { Home, Briefcase, FileText, CheckSquare, GraduationCap, Search } from "lucide-react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const [location] = useLocation();
+
+  const navItems = [
+    { href: "/",            label: "Home",       icon: Home },
+    { href: "/latest-jobs", label: "Jobs",        icon: Briefcase },
+    { href: "/admit-card",  label: "Admit",       icon: FileText },
+    { href: "/results",     label: "Results",     icon: CheckSquare },
+    { href: "/answer-key",  label: "Answer Key",  icon: GraduationCap },
+    { href: "/search",      label: "Search",      icon: Search },
+  ];
+
+  const isActive = (href: string) =>
+    href === "/" ? location === "/" : location.startsWith(href);
+
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Professional Header */}
-      <header className="bg-white border-b border-slate-200 text-slate-800 shadow-sm z-50">
-        <div className="container-portal py-5 md:py-6 flex flex-col md:flex-row justify-between items-center gap-5">
+    <div className="min-h-screen flex flex-col bg-slate-100">
+
+      {/* ===== HEADER ===== */}
+      <header className="bg-blue-700 text-white shadow-lg z-50 sticky top-0">
+        {/* Top bar */}
+        <div className="px-4 py-3 flex items-center justify-between max-w-6xl mx-auto">
           <Link href="/">
-            <span className="text-2xl md:text-[1.75rem] font-black tracking-tight cursor-pointer text-blue-700 hover:text-blue-800 transition-colors duration-200 uppercase">
-              Govt Job Alert
-            </span>
+            <div className="flex items-center gap-2 cursor-pointer">
+              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+                <span className="text-blue-700 font-black text-sm">GJ</span>
+              </div>
+              <span className="text-white font-black text-lg tracking-tight">Govt Job Alert</span>
+            </div>
           </Link>
-          <nav className="flex flex-wrap justify-center gap-1 md:gap-3 text-sm md:text-base font-extrabold uppercase tracking-wide">
-            <Link href="/"><span className="nav-menu-item text-slate-700 hover:text-blue-700 cursor-pointer px-4 py-2.5 rounded-lg md:relative group">Home<span className="nav-underline hidden md:block"></span></span></Link>
-            <Link href="/latest-jobs"><span className="nav-menu-item text-slate-700 hover:text-blue-700 cursor-pointer px-4 py-2.5 rounded-lg md:relative group">Latest Jobs<span className="nav-underline hidden md:block"></span></span></Link>
-            <Link href="/admit-card"><span className="nav-menu-item text-slate-700 hover:text-blue-700 cursor-pointer px-4 py-2.5 rounded-lg md:relative group">Admit Card<span className="nav-underline hidden md:block"></span></span></Link>
-            <Link href="/results"><span className="nav-menu-item text-slate-700 hover:text-blue-700 cursor-pointer px-4 py-2.5 rounded-lg md:relative group">Results<span className="nav-underline hidden md:block"></span></span></Link>
-            <Link href="/answer-key"><span className="nav-menu-item text-slate-700 hover:text-blue-700 cursor-pointer px-4 py-2.5 rounded-lg md:relative group">Answer Key<span className="nav-underline hidden md:block"></span></span></Link>
-            <Link href="/admission"><span className="nav-menu-item text-slate-700 hover:text-blue-700 cursor-pointer px-4 py-2.5 rounded-lg md:relative group">Admission<span className="nav-underline hidden md:block"></span></span></Link>
+          <Link href="/search">
+            <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center cursor-pointer hover:bg-blue-500 transition-colors">
+              <Search className="w-5 h-5 text-white" />
+            </div>
+          </Link>
+        </div>
+
+        {/* Desktop Nav */}
+        <div className="hidden md:block border-t border-blue-600">
+          <nav className="max-w-6xl mx-auto px-4 flex gap-1 py-1">
+            {navItems.map(({ href, label }) => (
+              <Link key={href} href={href}>
+                <span className={`px-4 py-2 rounded-lg text-sm font-bold cursor-pointer transition-all duration-200 ${
+                  isActive(href)
+                    ? "bg-white text-blue-700"
+                    : "text-blue-100 hover:bg-blue-600 hover:text-white"
+                }`}>
+                  {label}
+                </span>
+              </Link>
+            ))}
           </nav>
+        </div>
+
+        {/* Mobile Category Scroll */}
+        <div className="md:hidden border-t border-blue-600 overflow-x-auto scrollbar-hide">
+          <div className="flex gap-2 px-3 py-2 w-max">
+            {[
+              { href: "/latest-jobs", label: "🗂 Jobs" },
+              { href: "/admit-card",  label: "🪪 Admit Card" },
+              { href: "/results",     label: "📊 Results" },
+              { href: "/answer-key",  label: "🔑 Answer Key" },
+              { href: "/admission",   label: "🎓 Admission" },
+            ].map(({ href, label }) => (
+              <Link key={href} href={href}>
+                <span className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer transition-all ${
+                  isActive(href)
+                    ? "bg-white text-blue-700"
+                    : "bg-blue-600 text-white"
+                }`}>
+                  {label}
+                </span>
+              </Link>
+            ))}
+          </div>
         </div>
       </header>
 
-
-
-      {/* Main Container */}
-      <main className="flex-grow py-10 bg-gradient-to-b from-[#f1f4f7] to-[#e8ecf1]">
-        <div className="container-portal">
+      {/* ===== MAIN ===== */}
+      <main className="flex-grow pb-20 md:pb-0 pt-4">
+        <div className="max-w-6xl mx-auto px-3 md:px-6">
           {children}
         </div>
       </main>
 
-      {/* Professional Footer */}
-      <footer className="bg-white border-t border-slate-200 py-14">
-        <div className="container-portal grid grid-cols-1 md:grid-cols-4 gap-10 md:gap-14">
-          <div className="col-span-1 md:col-span-2">
-            <h3 className="text-blue-800 font-black text-2xl mb-5 uppercase tracking-tight">Govt Job Alert</h3>
-            <p className="text-slate-500 text-sm font-medium leading-relaxed max-w-md mb-7">
-              India's authoritative gateway for verified government job information. We bridge the gap between official gazettes and aspirants with 100% accuracy.
+      {/* ===== MOBILE BOTTOM NAV ===== */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50 shadow-2xl">
+        <div className="grid grid-cols-5 h-16">
+          {[
+            { href: "/",            label: "Home",    icon: Home },
+            { href: "/latest-jobs", label: "Jobs",    icon: Briefcase },
+            { href: "/admit-card",  label: "Admit",   icon: FileText },
+            { href: "/results",     label: "Results", icon: CheckSquare },
+            { href: "/search",      label: "Search",  icon: Search },
+          ].map(({ href, label, icon: Icon }) => (
+            <Link key={href} href={href}>
+              <div className={`flex flex-col items-center justify-center h-full gap-0.5 cursor-pointer transition-colors ${
+                isActive(href) ? "text-blue-700" : "text-slate-400"
+              }`}>
+                <Icon className={`w-5 h-5 ${isActive(href) ? "text-blue-700" : "text-slate-400"}`} />
+                <span className={`text-[10px] font-bold ${isActive(href) ? "text-blue-700" : "text-slate-400"}`}>
+                  {label}
+                </span>
+                {isActive(href) && (
+                  <div className="absolute bottom-0 w-8 h-0.5 bg-blue-700 rounded-full" />
+                )}
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* ===== FOOTER (Desktop only) ===== */}
+      <footer className="hidden md:block bg-white border-t border-slate-200 py-10 mt-6">
+        <div className="max-w-6xl mx-auto px-6 grid grid-cols-4 gap-10">
+          <div className="col-span-2">
+            <h3 className="text-blue-700 font-black text-xl mb-3 uppercase">Govt Job Alert</h3>
+            <p className="text-slate-500 text-sm leading-relaxed mb-4">
+              India's trusted gateway for verified government job information. 100% accurate, updated daily.
             </p>
-            <div className="flex flex-wrap gap-3">
-              <span className="bg-emerald-50 text-emerald-700 text-[11px] font-bold px-4 py-2 rounded-lg border border-emerald-100 uppercase tracking-wide inline-flex items-center gap-2">
-                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Updated Daily
+            <div className="flex flex-wrap gap-2">
+              <span className="bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-lg border border-green-100">
+                ✅ Updated Daily
               </span>
-              <span className="bg-blue-50 text-blue-700 text-[11px] font-bold px-4 py-2 rounded-lg border border-blue-100 uppercase tracking-wide">
-                Official Sources Only
+              <span className="bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-lg border border-blue-100">
+                🔒 Official Sources
               </span>
-              <span className="bg-slate-50 text-slate-700 text-[11px] font-bold px-4 py-2 rounded-lg border border-slate-200 uppercase tracking-wide">
-                100% Free Information
+              <span className="bg-slate-50 text-slate-700 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200">
+                🆓 100% Free
               </span>
             </div>
           </div>
           <div>
-            <h4 className="font-bold text-slate-800 mb-5 uppercase text-xs tracking-widest border-b-2 border-blue-100 pb-3">Navigation</h4>
-            <ul className="space-y-3.5 text-sm text-slate-600 font-medium">
-              <li><Link href="/"><span className="hover:text-blue-600 cursor-pointer transition-colors duration-200">Main Feed</span></Link></li>
-              <li><Link href="/latest-jobs"><span className="hover:text-blue-600 cursor-pointer transition-colors duration-200">Job Listings</span></Link></li>
-              <li><Link href="/results"><span className="hover:text-blue-600 cursor-pointer transition-colors duration-200">Exam Results</span></Link></li>
-              <li><Link href="/admit-card"><span className="hover:text-blue-600 cursor-pointer transition-colors duration-200">Download Admit</span></Link></li>
+            <h4 className="font-bold text-slate-800 mb-4 text-xs uppercase tracking-widest">Quick Links</h4>
+            <ul className="space-y-2.5 text-sm text-slate-500">
+              {[
+                { href: "/latest-jobs", label: "Latest Jobs" },
+                { href: "/admit-card",  label: "Admit Card" },
+                { href: "/results",     label: "Results" },
+                { href: "/answer-key",  label: "Answer Key" },
+                { href: "/admission",   label: "Admission" },
+              ].map(({ href, label }) => (
+                <li key={href}>
+                  <Link href={href}>
+                    <span className="hover:text-blue-600 cursor-pointer transition-colors font-medium">→ {label}</span>
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
           <div>
-            <h4 className="font-bold text-slate-800 mb-5 uppercase text-xs tracking-widest border-b-2 border-blue-100 pb-3">Information</h4>
-            <ul className="space-y-3.5 text-sm text-slate-600 font-medium">
-              <li><Link href="/disclaimer"><span className="hover:text-blue-600 cursor-pointer transition-colors duration-200">Official Disclaimer</span></Link></li>
-              <li><Link href="/terms-of-service"><span className="hover:text-blue-600 cursor-pointer transition-colors duration-200">Terms of Service</span></Link></li>
-              <li><Link href="/privacy-policy"><span className="hover:text-blue-600 cursor-pointer transition-colors duration-200">Privacy Policy</span></Link></li>
-              <li><Link href="/contact"><span className="hover:text-blue-600 cursor-pointer transition-colors duration-200">Contact Us</span></Link></li>
+            <h4 className="font-bold text-slate-800 mb-4 text-xs uppercase tracking-widest">Legal</h4>
+            <ul className="space-y-2.5 text-sm text-slate-500">
+              {[
+                { href: "/disclaimer",     label: "Disclaimer" },
+                { href: "/privacy-policy", label: "Privacy Policy" },
+                { href: "/terms-of-service",label: "Terms of Service" },
+                { href: "/contact",        label: "Contact Us" },
+              ].map(({ href, label }) => (
+                <li key={href}>
+                  <Link href={href}>
+                    <span className="hover:text-blue-600 cursor-pointer transition-colors font-medium">→ {label}</span>
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
-        <div className="container-portal border-t border-slate-100 mt-12 pt-8 text-center text-slate-400 text-xs font-medium tracking-wide">
-          © 2026 Govt Job Alert - Verified Government Information Service
+        <div className="max-w-6xl mx-auto px-6 border-t border-slate-100 mt-8 pt-6 text-center text-slate-400 text-xs">
+          © 2026 Govt Job Alert — All rights reserved
         </div>
       </footer>
+
+      {/* Mobile Footer (minimal) */}
+      <div className="md:hidden bg-white border-t border-slate-100 py-4 pb-20 text-center text-xs text-slate-400">
+        © 2026 Govt Job Alert |{" "}
+        <Link href="/disclaimer"><span className="text-blue-500 cursor-pointer">Disclaimer</span></Link>
+        {" | "}
+        <Link href="/contact"><span className="text-blue-500 cursor-pointer">Contact</span></Link>
+      </div>
+
     </div>
   );
 }
