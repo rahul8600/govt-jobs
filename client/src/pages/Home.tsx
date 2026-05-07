@@ -1,23 +1,23 @@
 import { Link, useLocation } from "wouter";
-import { useState } from "react";
-import { useJobs } from "@/lib/useJobs";
+import { useState, useEffect } from "react";
+import { fetchPostsByType } from "@/lib/useJobs";
 import { useSEO, generateHomeMeta } from "@/components/SEO";
 import { usePageTracker } from "@/lib/usePageTracker";
 import { ChevronRight, Briefcase, FileText, CheckSquare, Key, GraduationCap } from "lucide-react";
+import type { Job } from "@/lib/data";
 
 const CATEGORIES = [
   { title: "Latest Jobs",  type: "job",        href: "/latest-jobs", color: "bg-blue-600",   light: "bg-blue-50  text-blue-700  border-blue-200",  dot: "bg-blue-500",   icon: Briefcase },
   { title: "Admit Cards",  type: "admit-card", href: "/admit-card",  color: "bg-green-600",  light: "bg-green-50 text-green-700 border-green-200", dot: "bg-green-500",  icon: FileText },
   { title: "Results",      type: "result",     href: "/results",     color: "bg-red-600",    light: "bg-red-50   text-red-700   border-red-200",   dot: "bg-red-500",    icon: CheckSquare },
-  { title: "Answer Key",   type: "answer-key", href: "/answer-key",  color: "bg-purple-600", light: "bg-purple-50 text-purple-700 border-purple-200",dot:"bg-purple-500",icon: Key },
-  { title: "Admission",    type: "admission",  href: "/admission",   color: "bg-orange-500", light: "bg-orange-50 text-orange-700 border-orange-200",dot:"bg-orange-500",icon: GraduationCap },
+  { title: "Answer Key",   type: "answer-key", href: "/answer-key",  color: "bg-purple-600", light: "bg-purple-50 text-purple-700 border-purple-200", dot: "bg-purple-500", icon: Key },
+  { title: "Admission",    type: "admission",  href: "/admission",   color: "bg-orange-500", light: "bg-orange-50 text-orange-700 border-orange-200", dot: "bg-orange-500", icon: GraduationCap },
 ];
 
-function CategoryCard({ cat, jobs }: { cat: typeof CATEGORIES[0]; jobs: any[] }) {
+function CategoryCard({ cat, jobs, loading }: { cat: typeof CATEGORIES[0]; jobs: Job[]; loading: boolean }) {
   const Icon = cat.icon;
   return (
     <div className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
-      {/* Header */}
       <div className={`${cat.color} px-4 py-3 flex items-center justify-between`}>
         <div className="flex items-center gap-2">
           <Icon className="w-4 h-4 text-white" />
@@ -30,28 +30,30 @@ function CategoryCard({ cat, jobs }: { cat: typeof CATEGORIES[0]; jobs: any[] })
         </Link>
       </div>
 
-      {/* List */}
       <div className="divide-y divide-slate-100">
-        {jobs.slice(0, 8).map(job => (
-          <Link key={job.id} href={`/job/${job.slug || job.id}`}>
-            <div className="flex items-start gap-2.5 px-3 py-2.5 hover:bg-slate-50 active:bg-slate-100 cursor-pointer transition-colors">
-              <span className={`mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0 ${cat.dot}`} />
-              <span className="text-slate-700 text-sm font-medium leading-snug line-clamp-2">
-                {job.title}
-              </span>
+        {loading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="px-3 py-2.5 flex items-center gap-2.5 animate-pulse">
+              <div className="w-1.5 h-1.5 rounded-full bg-slate-200 flex-shrink-0" />
+              <div className="h-3.5 bg-slate-100 rounded w-full" />
             </div>
-          </Link>
-        ))}
-        {jobs.length === 0 && (
-          <div className="py-8 text-center text-slate-400 text-sm">
-            No updates yet
-          </div>
+          ))
+        ) : jobs.length === 0 ? (
+          <div className="py-8 text-center text-slate-400 text-sm">No updates yet</div>
+        ) : (
+          jobs.slice(0, 8).map(job => (
+            <Link key={job.id} href={`/job/${job.slug || job.id}`}>
+              <div className="flex items-start gap-2.5 px-3 py-2.5 hover:bg-slate-50 active:bg-slate-100 cursor-pointer transition-colors">
+                <span className={`mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0 ${cat.dot}`} />
+                <span className="text-slate-700 text-sm font-medium leading-snug line-clamp-2">{job.title}</span>
+              </div>
+            </Link>
+          ))
         )}
       </div>
 
-      {/* Footer */}
       <Link href={cat.href}>
-        <div className={`border-t border-slate-100 py-2.5 text-center cursor-pointer hover:bg-slate-50 transition-colors`}>
+        <div className="border-t border-slate-100 py-2.5 text-center cursor-pointer hover:bg-slate-50 transition-colors">
           <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">View All {cat.title}</span>
         </div>
       </Link>
@@ -62,68 +64,64 @@ function CategoryCard({ cat, jobs }: { cat: typeof CATEGORIES[0]; jobs: any[] })
 export default function Home() {
   const [, navigate] = useLocation();
   const [homeSearch, setHomeSearch] = useState("");
-  const { jobs, loading } = useJobs();
+  // Each category fetches its own data independently
+  const [categoryData, setCategoryData] = useState<Record<string, Job[]>>({});
+  const [loadingMap, setLoadingMap] = useState<Record<string, boolean>>({});
+  const [trending, setTrending] = useState<Job[]>([]);
 
   useSEO(generateHomeMeta());
   usePageTracker("home");
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-slate-500 font-bold text-sm">Loading...</p>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    // Fetch each category independently — no mixing
+    CATEGORIES.forEach(async (cat) => {
+      setLoadingMap(prev => ({ ...prev, [cat.type]: true }));
+      const jobs = await fetchPostsByType(cat.type, 8);
+      setCategoryData(prev => ({ ...prev, [cat.type]: jobs }));
+      setLoadingMap(prev => ({ ...prev, [cat.type]: false }));
+    });
+
+    // Fetch trending/featured from all types
+    const fetchTrending = async () => {
+      const res = await fetch('/api/posts?page=1&limit=100', {
+        cache: 'no-store',
+        headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' },
+      });
+      if (res.ok) {
+        const posts = await res.json();
+        const t = posts.filter((p: any) => p.trending || p.featured).slice(0, 6);
+        setTrending(t.map((p: any) => ({ ...p, id: String(p.id) })));
+      }
+    };
+    fetchTrending();
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     navigate(homeSearch.trim() ? `/search?q=${encodeURIComponent(homeSearch.trim())}` : "/search");
   };
 
-  const jobsByType = (type: string) => jobs.filter(j => j.type === type);
-  const trending = jobs.filter(j => j.trending || j.featured).slice(0, 6);
-
   return (
     <div className="space-y-5">
 
-      {/* Hero Search */}
+      {/* Hero Search — NO stats cards */}
       <div className="bg-gradient-to-br from-blue-700 to-blue-900 rounded-2xl p-5 md:p-10 shadow-xl">
         <div className="text-center mb-5">
-          <h1 className="text-white font-black text-2xl md:text-4xl tracking-tight">SarkariJobSeva</h1>
-          <p className="text-blue-200 text-sm mt-1">सरकारी नौकरी, सुरक्षित भविष्य</p>
+          <h1 className="text-white font-black text-2xl md:text-4xl tracking-tight">Govt Job Alert</h1>
+          <p className="text-blue-200 text-sm mt-1">Latest Sarkari Jobs, Results & Admit Cards</p>
         </div>
-        <form onSubmit={handleSearch} style={{width:'100%', maxWidth:'560px', margin:'0 auto'}}>
-          <div style={{display:'flex', alignItems:'center', backgroundColor:'white', borderRadius:'14px', padding:'12px 16px', gap:'10px'}}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
-              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-            </svg>
-            <input
-              type="text"
-              placeholder="Search Jobs, Admit Cards, Results..."
-              style={{flex:1, minWidth:0, border:'none', outline:'none', fontSize:'14px', fontWeight:500, color:'#1e293b', backgroundColor:'transparent'}}
-              value={homeSearch}
-              onChange={e => setHomeSearch(e.target.value)}
-            />
-            {homeSearch && (
-              <button type="button" onClick={() => setHomeSearch('')} style={{border:'none', background:'none', cursor:'pointer', color:'#94a3b8', padding:0, flexShrink:0, fontSize:'18px', lineHeight:1}}>×</button>
-            )}
-          </div>
+        <form onSubmit={handleSearch} className="flex gap-2 max-w-xl mx-auto">
+          <input
+            type="text"
+            placeholder="Search jobs, results..."
+            className="flex-1 px-4 py-3 rounded-xl text-sm font-semibold outline-none border-2 border-blue-400 focus:border-white bg-white text-slate-800 placeholder:text-slate-400"
+            value={homeSearch}
+            onChange={e => setHomeSearch(e.target.value)}
+          />
+          <button type="submit" className="bg-white text-blue-700 px-5 py-3 rounded-xl font-black text-sm hover:bg-blue-50 transition-colors shadow-md flex-shrink-0">
+            Search
+          </button>
         </form>
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-4 gap-2 mt-5">
-          {CATEGORIES.slice(0, 4).map(cat => (
-            <Link key={cat.type} href={cat.href}>
-              <div className="bg-white/10 hover:bg-white/20 rounded-xl p-2 text-center cursor-pointer transition-colors">
-                <div className="text-white font-black text-lg">{jobsByType(cat.type).length}</div>
-                <div className="text-blue-200 text-[10px] font-bold leading-tight">{cat.title}</div>
-              </div>
-            </Link>
-          ))}
-        </div>
       </div>
 
       {/* Trending Section */}
@@ -135,23 +133,17 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {trending.map(job => (
-              <Link key={job.id} href={`/job/${job.slug || job.id}`}>
+              <Link key={job.id} href={`/job/${(job as any).slug || job.id}`}>
                 <div className="bg-white border border-slate-200 rounded-xl p-3.5 hover:border-blue-400 hover:shadow-md active:scale-[0.99] transition-all cursor-pointer group">
                   <div className="flex items-start gap-2">
                     <div className="flex-1">
                       <div className="flex items-center gap-1.5 mb-1.5">
-                        <span className="text-[10px] bg-yellow-100 text-yellow-700 font-bold px-2 py-0.5 rounded-full border border-yellow-200">
-                          🔥 Hot
-                        </span>
-                        {job.lastDate && (
-                          <span className="text-[10px] text-red-600 font-bold">
-                            Last: {job.lastDate}
-                          </span>
+                        <span className="text-[10px] bg-yellow-100 text-yellow-700 font-bold px-2 py-0.5 rounded-full border border-yellow-200">🔥 Hot</span>
+                        {(job as any).lastDate && (
+                          <span className="text-[10px] text-red-600 font-bold">Last: {(job as any).lastDate}</span>
                         )}
                       </div>
-                      <p className="text-sm font-bold text-slate-800 group-hover:text-blue-700 leading-snug transition-colors">
-                        {job.title}
-                      </p>
+                      <p className="text-sm font-bold text-slate-800 group-hover:text-blue-700 leading-snug transition-colors">{job.title}</p>
                       <p className="text-xs text-slate-500 mt-1 font-medium">{job.department}</p>
                     </div>
                     <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-500 flex-shrink-0 mt-1 transition-colors" />
@@ -180,21 +172,30 @@ export default function Home() {
         })}
       </div>
 
-      {/* Main Grid — Mobile 1 col, Desktop 3 col */}
+      {/* Main Grid — each category independently fetched */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {CATEGORIES.slice(0, 3).map(cat => (
-          <CategoryCard key={cat.type} cat={cat} jobs={jobsByType(cat.type)} />
+          <CategoryCard
+            key={cat.type}
+            cat={cat}
+            jobs={categoryData[cat.type] || []}
+            loading={loadingMap[cat.type] ?? true}
+          />
         ))}
       </div>
 
       {/* Secondary Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {CATEGORIES.slice(3).map(cat => (
-          <CategoryCard key={cat.type} cat={cat} jobs={jobsByType(cat.type)} />
+          <CategoryCard
+            key={cat.type}
+            cat={cat}
+            jobs={categoryData[cat.type] || []}
+            loading={loadingMap[cat.type] ?? true}
+          />
         ))}
       </div>
 
     </div>
   );
 }
-
