@@ -104,6 +104,8 @@ export default function JobList() {
 
   // Use dedicated search API if search term exists, else use type filter
   const isSearchMode = matchSearch && debouncedSearch.trim().length >= 2;
+  // On /search page with no query — show empty, not all posts
+  const noSearchQuery = matchSearch && debouncedSearch.trim().length < 2;
 
   const apiUrl = isSearchMode
     ? `/api/search?q=${encodeURIComponent(debouncedSearch)}&page=${page}&limit=${ITEMS_PER_PAGE}`
@@ -114,6 +116,7 @@ export default function JobList() {
   const { data: response, isLoading } = useQuery<any>({
     queryKey: ["posts", config.type, debouncedSearch, page],
     queryFn: async () => {
+      if (noSearchQuery) return { data: [], total: 0, totalPages: 0 };
       const res = await fetch(apiUrl, { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to fetch");
       return res.json();
@@ -122,7 +125,7 @@ export default function JobList() {
   });
 
   // Handle both array (old) and paginated (new) response
-  const jobs: Post[] = Array.isArray(response) ? response : (response?.data || []);
+  const jobs: Post[] = noSearchQuery ? [] : (Array.isArray(response) ? response : (response?.data || []));
   const totalPages = response?.totalPages || Math.ceil(jobs.length / ITEMS_PER_PAGE) || 1;
 
   const filteredJobs = jobs.filter(job => {
@@ -241,13 +244,19 @@ export default function JobList() {
         <div className="md:col-span-3 space-y-3">
           {filteredJobs.length === 0 ? (
             <div className="bg-white border border-slate-200 rounded-xl p-16 text-center">
-              <p className="text-slate-400 font-medium">No results found. Try different filters.</p>
-              <button
-                onClick={() => { setQualification("All"); setState("All"); setInputValue(""); setDebounced(""); }}
-                className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-bold hover:bg-blue-700"
-              >
-                Clear Filters
-              </button>
+              {noSearchQuery ? (
+                <p className="text-slate-400 font-medium">Type something to search...</p>
+              ) : (
+                <>
+                  <p className="text-slate-400 font-medium">No results found. Try different filters.</p>
+                  <button
+                    onClick={() => { setQualification("All"); setState("All"); setInputValue(""); setDebounced(""); }}
+                    className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-bold hover:bg-blue-700"
+                  >
+                    Clear Filters
+                  </button>
+                </>
+              )}
             </div>
           ) : (
             filteredJobs.map(job => {
