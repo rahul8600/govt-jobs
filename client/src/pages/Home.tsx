@@ -92,8 +92,8 @@ export default function Home() {
       {/* Hero Search */}
       <div className="bg-gradient-to-br from-blue-700 to-blue-900 rounded-2xl p-5 md:p-10 shadow-xl">
         <div className="text-center mb-5">
-          <h1 className="text-white font-black text-2xl md:text-4xl tracking-tight">Govt Job Alert</h1>
-          <p className="text-blue-200 text-sm mt-1">Latest Sarkari Jobs, Results & Admit Cards</p>
+          <h1 className="text-white font-black text-2xl md:text-4xl tracking-tight">SarkariJobSeva</h1>
+          <p className="text-blue-200 text-sm mt-1">सरकारी नौकरी, सुरक्षित भविष्य</p>
         </div>
         <form onSubmit={handleSearch} className="flex gap-2 max-w-xl mx-auto">
           <input
