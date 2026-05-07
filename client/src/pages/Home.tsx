@@ -110,17 +110,19 @@ export default function Home() {
           <h1 className="text-white font-black text-2xl md:text-4xl tracking-tight">Govt Job Alert</h1>
           <p className="text-blue-200 text-sm mt-1">Latest Sarkari Jobs, Results & Admit Cards</p>
         </div>
-        <form onSubmit={handleSearch} className="flex gap-2 max-w-xl mx-auto">
-          <input
-            type="text"
-            placeholder="Search jobs, results..."
-            className="flex-1 px-4 py-3 rounded-xl text-sm font-semibold outline-none border-2 border-blue-400 focus:border-white bg-white text-slate-800 placeholder:text-slate-400"
-            value={homeSearch}
-            onChange={e => setHomeSearch(e.target.value)}
-          />
-          <button type="submit" className="bg-white text-blue-700 px-5 py-3 rounded-xl font-black text-sm hover:bg-blue-50 transition-colors shadow-md flex-shrink-0">
-            Search
-          </button>
+        <form onSubmit={handleSearch} className="w-full max-w-xl mx-auto">
+          <div className="flex items-center bg-white rounded-xl border-2 border-blue-400 focus-within:border-white overflow-hidden shadow-md">
+            <input
+              type="text"
+              placeholder="Search jobs, results..."
+              className="flex-1 min-w-0 px-4 py-3 text-sm font-semibold outline-none bg-transparent text-slate-800 placeholder:text-slate-400"
+              value={homeSearch}
+              onChange={e => setHomeSearch(e.target.value)}
+            />
+            <button type="submit" className="flex-shrink-0 bg-blue-700 text-white px-4 py-3 font-black text-sm hover:bg-blue-800 transition-colors h-full">
+              Search
+            </button>
+          </div>
         </form>
       </div>
 
