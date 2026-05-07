@@ -95,17 +95,22 @@ export default function Home() {
           <h1 className="text-white font-black text-2xl md:text-4xl tracking-tight">SarkariJobSeva</h1>
           <p className="text-blue-200 text-sm mt-1">सरकारी नौकरी, सुरक्षित भविष्य</p>
         </div>
-        <form onSubmit={handleSearch} style={{display:'flex', gap:'8px', width:'100%', maxWidth:'560px', margin:'0 auto'}}>
-          <input
-            type="text"
-            placeholder="Search jobs, results..."
-            style={{flex:1, minWidth:0, backgroundColor:'white', color:'#1e293b', border:'2px solid #93c5fd', borderRadius:'12px', padding:'12px 16px', fontSize:'14px', fontWeight:600, outline:'none'}}
-            value={homeSearch}
-            onChange={e => setHomeSearch(e.target.value)}
-          />
-          <button type="submit" style={{backgroundColor:'white', color:'#1d4ed8', borderRadius:'12px', padding:'12px 20px', fontWeight:900, fontSize:'14px', flexShrink:0, border:'none', cursor:'pointer'}}>
-            Search
-          </button>
+        <form onSubmit={handleSearch} style={{width:'100%', maxWidth:'560px', margin:'0 auto'}}>
+          <div style={{display:'flex', alignItems:'center', backgroundColor:'white', borderRadius:'14px', padding:'12px 16px', gap:'10px'}}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input
+              type="text"
+              placeholder="Search Jobs, Admit Cards, Results..."
+              style={{flex:1, minWidth:0, border:'none', outline:'none', fontSize:'14px', fontWeight:500, color:'#1e293b', backgroundColor:'transparent'}}
+              value={homeSearch}
+              onChange={e => setHomeSearch(e.target.value)}
+            />
+            {homeSearch && (
+              <button type="button" onClick={() => setHomeSearch('')} style={{border:'none', background:'none', cursor:'pointer', color:'#94a3b8', padding:0, flexShrink:0, fontSize:'18px', lineHeight:1}}>×</button>
+            )}
+          </div>
         </form>
 
         {/* Quick Stats */}
@@ -192,3 +197,4 @@ export default function Home() {
     </div>
   );
 }
+
