@@ -1,18 +1,8 @@
 import { Link, useLocation } from "wouter";
-import { Home, Briefcase, FileText, CheckSquare, GraduationCap, Search, ArrowUp } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Home, Briefcase, FileText, CheckSquare, GraduationCap, Search } from "lucide-react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
-  const [showTopBtn, setShowTopBtn] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setShowTopBtn(window.scrollY > 400);
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   const navItems = [
     { href: "/",            label: "Home",       icon: Home },
@@ -35,10 +25,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="px-4 py-3 flex items-center justify-between max-w-6xl mx-auto">
           <Link href="/">
             <div className="flex items-center gap-2 cursor-pointer">
-              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                <span className="text-blue-700 font-black text-sm">GJ</span>
-              </div>
-              <span className="text-white font-black text-lg tracking-tight">Govt Job Alert</span>
+              <img src="/logo.png" alt="Sarkari Jobs" className="w-10 h-10 object-contain" />
+              <span className="text-white font-black text-lg tracking-tight">SarkariJobSeva</span>
             </div>
           </Link>
           <Link href="/search">
@@ -127,9 +115,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <footer className="hidden md:block bg-white border-t border-slate-200 py-10 mt-6">
         <div className="max-w-6xl mx-auto px-6 grid grid-cols-4 gap-10">
           <div className="col-span-2">
-            <h3 className="text-blue-700 font-black text-xl mb-3 uppercase">Govt Job Alert</h3>
+            <h3 className="text-blue-700 font-black text-xl mb-3 uppercase">SarkariJobSeva</h3>
             <p className="text-slate-500 text-sm leading-relaxed mb-4">
-              India's trusted gateway for verified government job information. 100% accurate, updated daily.
+              भारत का सबसे भरोसेमंद सरकारी नौकरी पोर्टल। रोज़ अपडेट, बिल्कुल सटीक जानकारी।
             </p>
             <div className="flex flex-wrap gap-2">
               <span className="bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-lg border border-green-100">
@@ -180,28 +168,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <div className="max-w-6xl mx-auto px-6 border-t border-slate-100 mt-8 pt-6 text-center text-slate-400 text-xs">
-          © 2026 Govt Job Alert — All rights reserved
+          © 2026 SarkariJobSeva — All rights reserved
         </div>
       </footer>
 
       {/* Mobile Footer (minimal) */}
       <div className="md:hidden bg-white border-t border-slate-100 py-4 pb-20 text-center text-xs text-slate-400">
-        © 2026 Govt Job Alert |{" "}
+        © 2026 SarkariJobSeva |{" "}
         <Link href="/disclaimer"><span className="text-blue-500 cursor-pointer">Disclaimer</span></Link>
         {" | "}
         <Link href="/contact"><span className="text-blue-500 cursor-pointer">Contact</span></Link>
       </div>
-
-      {/* Back to Top Button */}
-      {showTopBtn && (
-        <button
-          onClick={scrollToTop}
-          className="fixed bottom-20 md:bottom-8 right-4 z-50 bg-blue-700 hover:bg-blue-800 text-white w-10 h-10 rounded-full shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-110"
-          aria-label="Back to top"
-        >
-          <ArrowUp className="w-5 h-5" />
-        </button>
-      )}
 
     </div>
   );
