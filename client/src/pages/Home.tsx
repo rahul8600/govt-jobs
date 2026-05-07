@@ -95,16 +95,15 @@ export default function Home() {
           <h1 className="text-white font-black text-2xl md:text-4xl tracking-tight">SarkariJobSeva</h1>
           <p className="text-blue-200 text-sm mt-1">सरकारी नौकरी, सुरक्षित भविष्य</p>
         </div>
-        <form onSubmit={handleSearch} className="flex gap-2 max-w-xl mx-auto w-full">
+        <form onSubmit={handleSearch} style={{display:'flex', gap:'8px', width:'100%', maxWidth:'560px', margin:'0 auto'}}>
           <input
             type="text"
             placeholder="Search jobs, results..."
-            style={{backgroundColor: 'white', color: '#1e293b', minWidth: 0}}
-            className="flex-1 w-full px-4 py-3 rounded-xl text-sm font-semibold outline-none border-2 border-blue-400 focus:border-white placeholder:text-slate-400"
+            style={{flex:1, minWidth:0, backgroundColor:'white', color:'#1e293b', border:'2px solid #93c5fd', borderRadius:'12px', padding:'12px 16px', fontSize:'14px', fontWeight:600, outline:'none'}}
             value={homeSearch}
             onChange={e => setHomeSearch(e.target.value)}
           />
-          <button type="submit" style={{backgroundColor: 'white', color: '#1d4ed8', flexShrink: 0}} className="px-5 py-3 rounded-xl font-black text-sm hover:bg-blue-50 transition-colors shadow-md">
+          <button type="submit" style={{backgroundColor:'white', color:'#1d4ed8', borderRadius:'12px', padding:'12px 20px', fontWeight:900, fontSize:'14px', flexShrink:0, border:'none', cursor:'pointer'}}>
             Search
           </button>
         </form>
