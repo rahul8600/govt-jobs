@@ -1,9 +1,13 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useJobs } from '@/lib/useJobs';
 import { Job } from '@/lib/data';
-import { Trash2, Plus, LayoutGrid, Database, Eye, Upload, CheckCircle2, Edit2, X, Lock, LogOut, Sparkles, Loader2, ArrowRight, BarChart3, Users, TrendingUp, Clock, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/AuthContext';
+import {
+  BarChart3, Users, TrendingUp, Clock, FileText, Lock, LogOut,
+  Plus, Trash2, Edit2, Upload, Eye, ChevronDown, ChevronUp,
+  Sparkles, Loader2, CheckCircle2, X, LayoutGrid
+} from 'lucide-react';
 
 interface AnalyticsData {
   totalVisitors: number;
@@ -14,1545 +18,728 @@ interface AnalyticsData {
   topPosts: { postId: number; title: string; views: number }[];
 }
 
-const initialFormData: Partial<Job> = {
-  type: 'job',
-  department: '',
-  shortInfo: '',
-  vacancyDetails: [{ postName: '', totalPost: '', eligibility: '' }],
+const emptyForm: Partial<Job> = {
+  type: 'job', title: '', department: '', shortInfo: '',
+  qualification: '', lastDate: '', applyOnlineUrl: '', notificationUrl: '', officialWebsiteUrl: '',
+  featured: false, trending: false,
   importantDates: [{ label: 'Application Start', date: '' }, { label: 'Last Date', date: '' }],
-  applicationFee: [{ category: 'General/OBC', fee: '' }, { category: 'SC/ST', fee: '' }],
+  applicationFee: [{ category: 'General/OBC/EWS', fee: '' }, { category: 'SC/ST', fee: '0' }],
   ageLimit: [{ category: 'General', minAge: '18', maxAge: '27' }],
-  eligibilityDetails: '',
+  vacancyDetails: [{ postName: '', totalPost: '', eligibility: '' }],
   selectionProcess: [''],
   physicalEligibility: [],
-  links: [],
-  featured: false,
-  trending: false,
-  rawJobContent: '',
-  applyOnlineUrl: '',
-  admitCardUrl: '',
-  resultUrl: '',
-  answerKeyUrl: '',
-  notificationUrl: '',
-  officialWebsiteUrl: '',
-  importantDatesHtml: '',
-  applicationFeeHtml: '',
-  ageLimitHtml: '',
-  vacancyDetailsHtml: '',
-  physicalStandardHtml: '',
-  physicalEfficiencyHtml: '',
-  selectionProcessHtml: '',
-  importantLinksHtml: ''
+  eligibilityDetails: '',
+  importantDatesHtml: '', applicationFeeHtml: '', ageLimitHtml: '',
+  vacancyDetailsHtml: '', physicalStandardHtml: '', selectionProcessHtml: '', importantLinksHtml: '',
 };
+
+type Tab = 'dashboard' | 'jobs' | 'add' | 'paste';
 
 export default function Admin() {
   const { toast } = useToast();
   const { jobs, addJob, updateJob, deleteJob } = useJobs();
   const { isAdmin, loading: authLoading, refresh: refreshAuth } = useAuth();
-  const [activeTab, setActiveTab] = useState<'list' | 'add' | 'preview' | 'ai' | 'analytics'>('analytics');
-  const [editingJobId, setEditingJobId] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [formData, setFormData] = useState<Partial<Job>>(initialFormData);
-  
-  const [loginUsername, setLoginUsername] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const [loginError, setLoginError] = useState('');
-  
-  const [aiRawText, setAiRawText] = useState('');
-  const [aiParsing, setAiParsing] = useState(false);
-  const [aiParsedData, setAiParsedData] = useState<Partial<Job> | null>(null);
-  const [aiError, setAiError] = useState('');
-  
+  const [tab, setTab] = useState<Tab>('dashboard');
+  const [form, setForm] = useState<Partial<Job>>(emptyForm);
+  const [editId, setEditId] = useState<string | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [pasteText, setPasteText] = useState('');
+  const [parsing, setParsing] = useState(false);
+  const [loginU, setLoginU] = useState('');
+  const [loginP, setLoginP] = useState('');
+  const [loginErr, setLoginErr] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [openSection, setOpenSection] = useState<string>('basic');
+  const fileRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    refreshAuth();
-  }, []);
-  
-  useEffect(() => {
-    if (isAdmin && activeTab === 'analytics') {
-      fetchAnalytics();
-    }
-  }, [isAdmin, activeTab]);
-  
+  useEffect(() => { refreshAuth(); }, []);
+  useEffect(() => { if (isAdmin && tab === 'dashboard') fetchAnalytics(); }, [isAdmin, tab]);
+
   const fetchAnalytics = async () => {
     setAnalyticsLoading(true);
     try {
       const res = await fetch('/api/analytics', { credentials: 'include' });
-      if (res.ok) {
-        const data = await res.json();
-        setAnalytics(data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch analytics:', error);
-    } finally {
-      setAnalyticsLoading(false);
-    }
+      if (res.ok) setAnalytics(await res.json());
+    } catch {}
+    setAnalyticsLoading(false);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoginError('');
+    setLoginErr('');
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: loginUsername, password: loginPassword }),
+        body: JSON.stringify({ username: loginU, password: loginP }),
         credentials: 'include',
       });
-      if (res.ok) {
-        await refreshAuth();
-        toast({ title: "Login Successful", description: "Welcome to Admin Panel" });
-      } else {
-        setLoginError('Invalid username or password');
-      }
-    } catch {
-      setLoginError('Login failed. Please try again.');
-    }
+      if (res.ok) { await refreshAuth(); toast({ title: 'Login Successful' }); }
+      else setLoginErr('Invalid username or password');
+    } catch { setLoginErr('Login failed. Try again.'); }
   };
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
     await refreshAuth();
-    toast({ title: "Logged Out", description: "You have been logged out." });
   };
 
-  if (authLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-500 font-bold text-sm uppercase tracking-widest">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className="max-w-md mx-auto py-20 px-4">
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-lg overflow-hidden">
-          <div className="bg-primary p-6 text-center">
-            <Lock className="w-12 h-12 text-white mx-auto mb-2" />
-            <h1 className="text-xl font-black text-white uppercase tracking-widest">Admin Login</h1>
-          </div>
-          <form onSubmit={handleLogin} className="p-8 space-y-6">
-            {loginError && (
-              <div className="bg-rose-50 text-rose-600 p-4 rounded-xl text-sm font-bold text-center">
-                {loginError}
-              </div>
-            )}
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Username</label>
-              <input
-                type="text"
-                value={loginUsername}
-                onChange={e => setLoginUsername(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl outline-none focus:border-primary font-bold text-sm"
-                placeholder="Enter username"
-                required
-                data-testid="input-login-username"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Password</label>
-              <input
-                type="password"
-                value={loginPassword}
-                onChange={e => setLoginPassword(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl outline-none focus:border-primary font-bold text-sm"
-                placeholder="Enter password"
-                required
-                data-testid="input-login-password"
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full bg-primary text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-secondary transition-all shadow-lg"
-              data-testid="button-login"
-            >
-              Login to Admin Panel
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  }
-
-  const handleEdit = (job: Job) => {
-    setEditingJobId(job.id);
-    setFormData({
-      ...job,
-      ageLimit: job.ageLimit?.length ? job.ageLimit : [{ category: 'General', minAge: '18', maxAge: '27' }],
-      selectionProcess: job.selectionProcess?.length ? job.selectionProcess : [''],
-      physicalEligibility: job.physicalEligibility || [],
-    });
-    setActiveTab('add');
-  };
-
-  const handleRulesParse = async () => {
-    if (!aiRawText.trim() || aiRawText.trim().length < 50) {
-      setAiError('Please paste at least 50 characters of job notification text.');
+  const handlePaste = async () => {
+    if (!pasteText.trim() || pasteText.trim().length < 50) {
+      toast({ title: 'Error', description: 'Please paste at least 50 characters', variant: 'destructive' });
       return;
     }
-
-    setAiParsing(true);
-    setAiError('');
-    setAiParsedData(null);
-
+    setParsing(true);
     try {
       const res = await fetch('/api/parse-job-rules', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rawText: aiRawText }),
+        body: JSON.stringify({ rawText: pasteText }),
         credentials: 'include',
       });
-
       const data = await res.json();
-
-      if (!res.ok) {
-        setAiError(data.error || 'Failed to parse job notification.');
-        return;
+      if (res.ok && data.parsedData) {
+        const pd = data.parsedData;
+        const lastDate = pd.importantDates?.find((d: any) =>
+          d.label.toLowerCase().includes('last') || d.label.toLowerCase().includes('deadline')
+        )?.date || '';
+        setForm({
+          ...emptyForm, ...pd,
+          lastDate,
+          postDate: new Date().toLocaleDateString('en-GB'),
+          ageLimit: pd.ageLimit?.length ? pd.ageLimit : emptyForm.ageLimit,
+          selectionProcess: pd.selectionProcess?.length ? pd.selectionProcess : [''],
+          physicalEligibility: pd.physicalEligibility || [],
+          vacancyDetails: pd.vacancyDetails?.length ? pd.vacancyDetails : emptyForm.vacancyDetails,
+          applicationFee: pd.applicationFee?.length ? pd.applicationFee : emptyForm.applicationFee,
+          importantDates: pd.importantDates?.length ? pd.importantDates : emptyForm.importantDates,
+        });
+        setEditId(null);
+        setTab('add');
+        toast({ title: '✅ Auto-Fill Complete!', description: 'Check all fields and add URLs before publishing.' });
+      } else {
+        toast({ title: 'Parse failed', description: 'Try with more text', variant: 'destructive' });
       }
-
-      toast({ title: "Rule-Based Parsing Complete", description: "Review the extracted data below and edit if needed." });
-      setAiParsedData(data.parsedData);
-    } catch (err) {
-      setAiError('Failed to parse. Please try again.');
-    } finally {
-      setAiParsing(false);
+    } catch {
+      toast({ title: 'Error', description: 'Please try again', variant: 'destructive' });
     }
+    setParsing(false);
   };
 
-  const handleAIParse = async () => {
-    if (!aiRawText.trim() || aiRawText.trim().length < 50) {
-      setAiError('Please paste at least 50 characters of job notification text.');
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.title?.trim() || !form.department?.trim() || !form.shortInfo?.trim()) {
+      toast({ title: 'Error', description: 'Title, Department and Description are required', variant: 'destructive' });
       return;
     }
-
-    setAiParsing(true);
-    setAiError('');
-    setAiParsedData(null);
-
+    setSubmitting(true);
     try {
-      const res = await fetch('/api/parse-job', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rawText: aiRawText }),
-        credentials: 'include',
-      });
+      const jobData: Job = {
+        ...emptyForm as Job,
+        ...form as Job,
+        id: editId || Math.random().toString(36).substr(2, 9),
+        postDate: form.postDate || new Date().toLocaleDateString('en-GB'),
+        links: [
+          ...(form.applyOnlineUrl ? [{ label: 'Apply Online', url: form.applyOnlineUrl }] : []),
+          ...(form.notificationUrl ? [{ label: 'Official Notification', url: form.notificationUrl }] : []),
+          ...(form.officialWebsiteUrl ? [{ label: 'Official Website', url: form.officialWebsiteUrl }] : []),
+        ],
+      };
+      let success = false;
+      if (editId) success = await updateJob(editId, jobData);
+      else success = await addJob(jobData);
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setAiError(data.error || 'Failed to parse job notification.');
-        return;
-      }
-
-      if (data.warning) {
-        toast({ 
-          title: "Parsing Complete with Warnings", 
-          description: "Some fields may need manual correction.",
-          variant: "destructive"
-        });
+      if (success) {
+        toast({ title: editId ? '✅ Job Updated!' : '✅ Job Published!' });
+        setForm(emptyForm);
+        setEditId(null);
+        setTab('jobs');
       } else {
-        toast({ title: "AI Parsing Complete", description: "Review the extracted data below and edit if needed." });
+        toast({ title: 'Failed', description: 'Please try again', variant: 'destructive' });
       }
-
-      setAiParsedData(data.parsedData);
-    } catch (err) {
-      setAiError('Failed to connect to AI service. Please try again.');
-    } finally {
-      setAiParsing(false);
+    } catch {
+      toast({ title: 'Error', variant: 'destructive' });
     }
+    setSubmitting(false);
   };
 
-  const handleUseAIParsedData = () => {
-    if (!aiParsedData) return;
-    
-    const lastDateEntry = aiParsedData.importantDates?.find(d => 
-      d.label.toLowerCase().includes('last') || d.label.toLowerCase().includes('deadline')
-    );
-    
-    setFormData({
-      ...initialFormData,
-      ...aiParsedData,
-      rawJobContent: aiRawText,
-      postDate: new Date().toLocaleDateString('en-GB'),
-      lastDate: lastDateEntry?.date || '',
-      ageLimit: aiParsedData.ageLimit?.length ? aiParsedData.ageLimit : [{ category: 'General', minAge: '18', maxAge: '27' }],
-      selectionProcess: aiParsedData.selectionProcess?.length ? aiParsedData.selectionProcess : [''],
-      physicalEligibility: aiParsedData.physicalEligibility || [],
-      vacancyDetails: aiParsedData.vacancyDetails?.length ? aiParsedData.vacancyDetails : [{ postName: '', totalPost: '', eligibility: '' }],
-      applicationFee: aiParsedData.applicationFee?.length ? aiParsedData.applicationFee : [{ category: 'General/OBC', fee: '' }],
-      importantDates: aiParsedData.importantDates?.length ? aiParsedData.importantDates : [{ label: 'Application Start', date: '' }, { label: 'Last Date', date: '' }],
+  const handleEdit = (job: Job) => {
+    setForm({
+      ...job,
+      ageLimit: job.ageLimit?.length ? job.ageLimit : emptyForm.ageLimit,
+      selectionProcess: job.selectionProcess?.length ? job.selectionProcess : [''],
+      physicalEligibility: job.physicalEligibility || [],
     });
-    setEditingJobId(null);
-    setActiveTab('add');
-    setAiParsedData(null);
-    setAiRawText('');
-    toast({ 
-      title: "Data Loaded", 
-      description: "Review all fields and add required URLs before publishing." 
-    });
+    setEditId(job.id);
+    setTab('add');
+    setOpenSection('basic');
   };
 
-  const handleBulkUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this job?')) return;
+    const success = await deleteJob(id);
+    if (success) toast({ title: 'Deleted' });
+  };
+
+  const handleCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target?.result as string;
+    reader.onload = async (ev) => {
+      const text = ev.target?.result as string;
       const rows = text.split('\n').slice(1);
-      
       let count = 0;
-      rows.forEach(row => {
+      for (const row of rows) {
         const cols = row.split(',');
-        if (cols.length >= 2) {
-          const newJob: Job = {
+        if (cols.length >= 2 && cols[0]?.trim()) {
+          const job: Job = {
+            ...emptyForm as Job,
             id: Math.random().toString(36).substr(2, 9),
-            title: cols[0]?.trim() || "Untitled CSV Post",
-            department: cols[1]?.trim() || "N/A",
+            title: cols[0]?.trim(),
+            department: cols[1]?.trim() || 'N/A',
             type: 'job',
             postDate: new Date().toLocaleDateString('en-GB'),
-            lastDate: cols[2]?.trim() || "TBA",
-            shortInfo: "Bulk uploaded via CSV.",
-            vacancyDetails: [{ postName: "See Notification", totalPost: "N/A", eligibility: "As per rules" }],
-            applicationFee: [{ category: "General", fee: "0" }],
-            importantDates: [{ label: "Last Date", date: cols[2]?.trim() || "TBA" }],
-            ageLimit: [],
-            eligibilityDetails: '',
-            selectionProcess: [],
-            physicalEligibility: [],
-            links: [{ label: "Apply Online", url: cols[3]?.trim() || "#" }, { label: "Official Notification", url: cols[4]?.trim() || "#" }],
-            featured: false,
-            trending: false
+            lastDate: cols[2]?.trim() || '',
+            shortInfo: 'Check official notification for complete details.',
+            applyOnlineUrl: cols[3]?.trim() || '',
+            notificationUrl: cols[4]?.trim() || '',
+            links: [
+              ...(cols[3]?.trim() ? [{ label: 'Apply Online', url: cols[3].trim() }] : []),
+              ...(cols[4]?.trim() ? [{ label: 'Notification', url: cols[4].trim() }] : []),
+            ],
           };
-          addJob(newJob);
-          count++;
+          const ok = await addJob(job);
+          if (ok) count++;
         }
-      });
-      toast({ title: "Bulk Upload Complete", description: `${count} jobs added to portal.` });
+      }
+      toast({ title: `✅ ${count} jobs uploaded!` });
     };
     reader.readAsText(file);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const postType = formData.type || 'job';
-    let primaryUrlValid = false;
-    
-    if (postType === 'job' && formData.applyOnlineUrl) primaryUrlValid = true;
-    if (postType === 'admit-card' && formData.admitCardUrl) primaryUrlValid = true;
-    if (postType === 'result' && formData.resultUrl) primaryUrlValid = true;
-    if (postType === 'answer-key' && formData.answerKeyUrl) primaryUrlValid = true;
+  const Section = ({ id, title, children }: { id: string; title: string; children: React.ReactNode }) => (
+    <div className="border border-slate-200 rounded-xl overflow-hidden">
+      <button type="button" onClick={() => setOpenSection(openSection === id ? '' : id)}
+        className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors">
+        <span className="font-bold text-slate-700 text-sm uppercase tracking-wide">{title}</span>
+        {openSection === id ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />}
+      </button>
+      {openSection === id && <div className="p-4 space-y-3 bg-white">{children}</div>}
+    </div>
+  );
 
-    if (!primaryUrlValid || !formData.notificationUrl) {
-      toast({ 
-        title: "Required Fields Missing", 
-        description: "Primary action URL and Notification URL are mandatory.",
-        variant: "destructive"
-      });
-      return;
-    }
+  const Input = ({ label, value, onChange, placeholder, type = 'text', required = false }: any) => (
+    <div>
+      <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1">{label}{required && ' *'}</label>
+      <input type={type} value={value || ''} onChange={e => onChange(e.target.value)}
+        placeholder={placeholder} required={required}
+        className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-medium outline-none focus:border-blue-400 bg-slate-50 focus:bg-white transition-colors" />
+    </div>
+  );
 
-    const links: { label: string; url: string }[] = [];
-    if (formData.notificationUrl) links.push({ label: 'Official Notification', url: formData.notificationUrl });
-    if (formData.officialWebsiteUrl) links.push({ label: 'Official Website', url: formData.officialWebsiteUrl });
-    if (postType === 'job' && formData.applyOnlineUrl) links.push({ label: 'Apply Online', url: formData.applyOnlineUrl });
-    if (postType === 'admit-card' && formData.admitCardUrl) links.push({ label: 'Download Admit Card', url: formData.admitCardUrl });
-    if (postType === 'result' && formData.resultUrl) links.push({ label: 'Download Result', url: formData.resultUrl });
-    if (postType === 'answer-key' && formData.answerKeyUrl) links.push({ label: 'Download Answer Key', url: formData.answerKeyUrl });
+  if (authLoading) return (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
 
-    const lastDateEntry = formData.importantDates?.find(d => d.label.toLowerCase().includes('last'));
-
-    if (editingJobId) {
-      updateJob({
-        ...formData as Job,
-        id: editingJobId,
-        links,
-        lastDate: lastDateEntry?.date || formData.lastDate,
-      });
-      toast({ title: "Post Updated", description: "Changes have been saved successfully." });
-    } else {
-      const newJob: Job = {
-        ...formData as Job,
-        id: Math.random().toString(36).substr(2, 9),
-        postDate: new Date().toLocaleDateString('en-GB'),
-        links,
-        lastDate: lastDateEntry?.date || '',
-      };
-      addJob(newJob);
-      toast({ title: "Portal Updated", description: "The new post is now live globally." });
-    }
-
-    setFormData(initialFormData);
-    setEditingJobId(null);
-    setActiveTab('list');
-  };
-
-  const addImportantDate = () => {
-    setFormData(prev => ({
-      ...prev,
-      importantDates: [...(prev.importantDates || []), { label: '', date: '' }]
-    }));
-  };
-
-  const removeImportantDate = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      importantDates: prev.importantDates?.filter((_, i) => i !== index) || []
-    }));
-  };
-
-  const addApplicationFee = () => {
-    setFormData(prev => ({
-      ...prev,
-      applicationFee: [...(prev.applicationFee || []), { category: '', fee: '' }]
-    }));
-  };
-
-  const removeApplicationFee = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      applicationFee: prev.applicationFee?.filter((_, i) => i !== index) || []
-    }));
-  };
-
-  const addAgeLimit = () => {
-    setFormData(prev => ({
-      ...prev,
-      ageLimit: [...(prev.ageLimit || []), { category: '', minAge: '', maxAge: '' }]
-    }));
-  };
-
-  const removeAgeLimit = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      ageLimit: prev.ageLimit?.filter((_, i) => i !== index) || []
-    }));
-  };
-
-  const addVacancy = () => {
-    setFormData(prev => ({
-      ...prev,
-      vacancyDetails: [...(prev.vacancyDetails || []), { postName: '', totalPost: '', eligibility: '' }]
-    }));
-  };
-
-  const removeVacancy = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      vacancyDetails: prev.vacancyDetails?.filter((_, i) => i !== index) || []
-    }));
-  };
-
-  const addSelectionStep = () => {
-    setFormData(prev => ({
-      ...prev,
-      selectionProcess: [...(prev.selectionProcess || []), '']
-    }));
-  };
-
-  const removeSelectionStep = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      selectionProcess: prev.selectionProcess?.filter((_, i) => i !== index) || []
-    }));
-  };
-
-  const addPhysicalEligibility = () => {
-    setFormData(prev => ({
-      ...prev,
-      physicalEligibility: [...(prev.physicalEligibility || []), { criteria: '', male: '', female: '' }]
-    }));
-  };
-
-  const removePhysicalEligibility = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      physicalEligibility: prev.physicalEligibility?.filter((_, i) => i !== index) || []
-    }));
-  };
+  if (!isAdmin) return (
+    <div className="max-w-sm mx-auto py-16 px-4">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-lg overflow-hidden">
+        <div className="bg-blue-700 p-6 text-center">
+          <Lock className="w-10 h-10 text-white mx-auto mb-2" />
+          <h1 className="text-lg font-black text-white">Admin Login</h1>
+        </div>
+        <form onSubmit={handleLogin} className="p-6 space-y-4">
+          {loginErr && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm font-bold text-center">{loginErr}</div>}
+          <Input label="Username" value={loginU} onChange={setLoginU} placeholder="admin" required />
+          <div>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1">Password *</label>
+            <input type="password" value={loginP} onChange={e => setLoginP(e.target.value)} placeholder="••••••••" required
+              className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-medium outline-none focus:border-blue-400 bg-slate-50" />
+          </div>
+          <button type="submit" className="w-full bg-blue-700 text-white py-3 rounded-xl font-black text-sm uppercase tracking-wide hover:bg-blue-800 transition-colors shadow-md">
+            Login
+          </button>
+        </form>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="max-w-6xl mx-auto py-10 px-4">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg">
-            <Database className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-black text-slate-900 uppercase tracking-tight">Portal Console</h1>
-            <p className="text-muted font-bold text-xs uppercase tracking-widest mt-1">Management Interface v3.0</p>
-          </div>
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="bg-blue-700 rounded-xl px-5 py-4 flex items-center justify-between">
+        <div>
+          <h1 className="text-white font-black text-lg">Admin Panel</h1>
+          <p className="text-blue-200 text-xs">{jobs.length} total posts</p>
         </div>
-        
-        <div className="flex bg-white border border-slate-200 p-1 shadow-sm rounded-xl overflow-hidden">
-          <button 
-            type="button"
-            onClick={() => setActiveTab('list')}
-            className={`flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'list' ? 'bg-primary text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
-          >
-            <LayoutGrid className="w-4 h-4" /> Live Feed
-          </button>
-          <button 
-            type="button"
-            onClick={() => {
-              setEditingJobId(null);
-              setFormData(initialFormData);
-              setActiveTab('add');
-            }}
-            className={`flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'add' ? 'bg-primary text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
-          >
-            <Plus className="w-4 h-4" /> New Post
-          </button>
-          <button 
-            type="button"
-            onClick={() => {
-              setAiParsedData(null);
-              setAiRawText('');
-              setAiError('');
-              setActiveTab('ai');
-            }}
-            className={`flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'ai' ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-md' : 'text-violet-600 hover:bg-violet-50'}`}
-            data-testid="button-ai-generator"
-          >
-            <Sparkles className="w-4 h-4" /> AI Generator
-          </button>
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={handleBulkUpload} 
-            accept=".csv" 
-            className="hidden" 
-          />
-          <button 
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-50"
-          >
-            <Upload className="w-4 h-4" /> Bulk CSV
-          </button>
-          <button 
-            type="button"
-            onClick={() => setActiveTab('analytics')}
-            className={`flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'analytics' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md' : 'text-emerald-600 hover:bg-emerald-50'}`}
-            data-testid="button-analytics"
-          >
-            <BarChart3 className="w-4 h-4" /> Analytics
-          </button>
-          <button 
-            type="button"
-            onClick={handleLogout}
-            className="flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest text-rose-500 hover:bg-rose-50"
-            data-testid="button-logout"
-          >
-            <LogOut className="w-4 h-4" /> Logout
-          </button>
-        </div>
+        <button onClick={handleLogout} className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded-lg text-xs font-bold transition-colors">
+          <LogOut className="w-4 h-4" /> Logout
+        </button>
       </div>
 
-      <div className="grid lg:grid-cols-4 gap-8">
-        <div className="lg:col-span-4">
-          {activeTab === 'analytics' ? (
-            <div className="space-y-8">
-              <div className="portal-card bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-                <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-6 text-white">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <BarChart3 className="w-6 h-6" />
-                      <h2 className="text-xl font-black uppercase tracking-tight">Analytics Dashboard</h2>
-                    </div>
-                    <button 
-                      onClick={fetchAnalytics}
-                      className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide transition-all"
-                      data-testid="button-refresh-analytics"
-                    >
-                      Refresh Data
-                    </button>
-                  </div>
-                  <p className="text-emerald-100 text-sm font-medium mt-1">Site visitor statistics and page performance</p>
-                </div>
-                
-                {analyticsLoading ? (
-                  <div className="p-12 text-center">
-                    <Loader2 className="w-8 h-8 animate-spin text-emerald-500 mx-auto mb-4" />
-                    <p className="text-slate-500 font-bold text-sm uppercase tracking-widest">Loading Analytics...</p>
-                  </div>
-                ) : analytics ? (
-                  <div className="p-8 space-y-8">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-                      <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200 rounded-xl p-6">
-                        <div className="flex items-center gap-3 mb-3">
-                          <Users className="w-5 h-5 text-blue-600" />
-                          <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">Total Visitors</span>
-                        </div>
-                        <p className="text-3xl font-black text-blue-800">{analytics.totalVisitors.toLocaleString()}</p>
-                      </div>
-                      <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 border border-emerald-200 rounded-xl p-6">
-                        <div className="flex items-center gap-3 mb-3">
-                          <TrendingUp className="w-5 h-5 text-emerald-600" />
-                          <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Today</span>
-                        </div>
-                        <p className="text-3xl font-black text-emerald-800">{analytics.todayVisitors.toLocaleString()}</p>
-                      </div>
-                      <div className="bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-200 rounded-xl p-6">
-                        <div className="flex items-center gap-3 mb-3">
-                          <Clock className="w-5 h-5 text-amber-600" />
-                          <span className="text-[10px] font-black uppercase tracking-widest text-amber-600">Yesterday</span>
-                        </div>
-                        <p className="text-3xl font-black text-amber-800">{analytics.yesterdayVisitors.toLocaleString()}</p>
-                      </div>
-                      <div className="bg-gradient-to-br from-violet-50 to-violet-100/50 border border-violet-200 rounded-xl p-6">
-                        <div className="flex items-center gap-3 mb-3">
-                          <Users className="w-5 h-5 text-violet-600" />
-                          <span className="text-[10px] font-black uppercase tracking-widest text-violet-600">Active (5 min)</span>
-                        </div>
-                        <p className="text-3xl font-black text-violet-800">{analytics.activeUsers.toLocaleString()}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="grid md:grid-cols-2 gap-8">
-                      <div className="border border-slate-200 rounded-xl overflow-hidden">
-                        <div className="bg-slate-100 px-5 py-4 border-b border-slate-200">
-                          <h3 className="font-black text-slate-700 text-sm uppercase tracking-widest flex items-center gap-2">
-                            <FileText className="w-4 h-4" /> Page Views
-                          </h3>
-                        </div>
-                        <div className="divide-y divide-slate-100">
-                          {analytics.pageViews.length > 0 ? analytics.pageViews.slice(0, 8).map((pv, idx) => (
-                            <div key={idx} className="flex items-center justify-between px-5 py-4 hover:bg-slate-50">
-                              <span className="font-bold text-slate-700 text-sm capitalize">{pv.page.replace('/', '') || 'Home'}</span>
-                              <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg text-xs font-bold">{pv.count.toLocaleString()} views</span>
-                            </div>
-                          )) : (
-                            <div className="px-5 py-8 text-center text-slate-400 text-sm">No page views recorded yet</div>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="border border-slate-200 rounded-xl overflow-hidden">
-                        <div className="bg-slate-100 px-5 py-4 border-b border-slate-200">
-                          <h3 className="font-black text-slate-700 text-sm uppercase tracking-widest flex items-center gap-2">
-                            <TrendingUp className="w-4 h-4" /> Top 5 Posts
-                          </h3>
-                        </div>
-                        <div className="divide-y divide-slate-100">
-                          {analytics.topPosts.length > 0 ? analytics.topPosts.map((post, idx) => (
-                            <div key={idx} className="flex items-center justify-between px-5 py-4 hover:bg-slate-50 gap-4">
-                              <span className="font-bold text-slate-700 text-sm truncate flex-1">{post.title}</span>
-                              <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg text-xs font-bold shrink-0">{post.views.toLocaleString()} views</span>
-                            </div>
-                          )) : (
-                            <div className="px-5 py-8 text-center text-slate-400 text-sm">No post views recorded yet</div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-12 text-center">
-                    <BarChart3 className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                    <p className="text-slate-400 font-medium">No analytics data available</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : activeTab === 'ai' ? (
-            <div className="portal-card bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-              <div className="bg-gradient-to-r from-violet-600 to-purple-600 p-6 text-white">
-                <div className="flex items-center gap-3 mb-2">
-                  <Sparkles className="w-6 h-6" />
-                  <h2 className="text-xl font-black uppercase tracking-tight">AI Auto Job Generator</h2>
-                </div>
-                <p className="text-violet-100 text-sm font-medium">Paste raw job notification text and let AI extract all the details automatically</p>
-              </div>
-              
-              <div className="p-8 space-y-8">
-                {!aiParsedData ? (
-                  <>
-                    <div className="space-y-3">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Paste Raw Job Notification Text</label>
-                      <textarea
-                        className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl outline-none focus:border-violet-500 font-medium text-sm min-h-[400px] font-mono"
-                        value={aiRawText}
-                        onChange={e => setAiRawText(e.target.value)}
-                        placeholder={`Paste the complete job notification here...
+      {/* Tabs */}
+      <div className="grid grid-cols-4 gap-2">
+        {[
+          { id: 'dashboard', label: '📊 Dashboard', icon: BarChart3 },
+          { id: 'jobs',      label: '📋 All Jobs',  icon: LayoutGrid },
+          { id: 'add',       label: editId ? '✏️ Edit Job' : '➕ Add Job', icon: Plus },
+          { id: 'paste',     label: '🪄 Smart Paste', icon: Sparkles },
+        ].map(({ id, label }) => (
+          <button key={id} onClick={() => setTab(id as Tab)}
+            className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all ${tab === id ? 'bg-blue-700 text-white shadow-md' : 'bg-white border border-slate-200 text-slate-600 hover:border-blue-300'}`}>
+            {label}
+          </button>
+        ))}
+      </div>
 
-Example:
-SSC CGL 2026 Recruitment
-Staff Selection Commission
-Total Posts: 50000+
-Last Date: 15/02/2026
+      {/* ===== DASHBOARD ===== */}
+      {tab === 'dashboard' && (
+        <div className="space-y-4">
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { label: 'Total Jobs',   val: jobs.filter(j => j.type === 'job').length,        color: 'bg-blue-50 border-blue-200 text-blue-700' },
+              { label: 'Admit Cards',  val: jobs.filter(j => j.type === 'admit-card').length,  color: 'bg-green-50 border-green-200 text-green-700' },
+              { label: 'Results',      val: jobs.filter(j => j.type === 'result').length,       color: 'bg-red-50 border-red-200 text-red-700' },
+              { label: 'Answer Keys',  val: jobs.filter(j => j.type === 'answer-key').length,  color: 'bg-purple-50 border-purple-200 text-purple-700' },
+            ].map(s => (
+              <div key={s.label} className={`border rounded-xl p-4 ${s.color}`}>
+                <div className="text-2xl font-black">{s.val}</div>
+                <div className="text-xs font-bold uppercase tracking-wide mt-1">{s.label}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Analytics */}
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+            <div className="bg-slate-800 px-4 py-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-white" />
+                <span className="text-white font-bold text-sm">Analytics — Real Visitor Data</span>
+              </div>
+              <button onClick={fetchAnalytics} className="bg-white/20 hover:bg-white/30 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition-colors">
+                Refresh
+              </button>
+            </div>
+
+            {analyticsLoading ? (
+              <div className="p-10 text-center">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-3" />
+                <p className="text-slate-500 text-sm font-medium">Loading analytics...</p>
+              </div>
+            ) : analytics ? (
+              <div className="p-4 space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {[
+                    { label: 'Total Visitors', val: analytics.totalVisitors, icon: Users,       color: 'text-blue-600 bg-blue-50' },
+                    { label: 'Today',          val: analytics.todayVisitors, icon: TrendingUp,   color: 'text-green-600 bg-green-50' },
+                    { label: 'Yesterday',      val: analytics.yesterdayVisitors, icon: Clock,    color: 'text-amber-600 bg-amber-50' },
+                    { label: 'Active (5 min)', val: analytics.activeUsers, icon: Users,          color: 'text-purple-600 bg-purple-50' },
+                  ].map(({ label, val, icon: Icon, color }) => (
+                    <div key={label} className="border border-slate-200 rounded-xl p-4">
+                      <div className={`w-8 h-8 rounded-lg ${color} flex items-center justify-center mb-2`}>
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <div className="text-2xl font-black text-slate-800">{val.toLocaleString()}</div>
+                      <div className="text-xs text-slate-500 font-bold uppercase tracking-wide mt-1">{label}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="border border-slate-200 rounded-xl overflow-hidden">
+                    <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200">
+                      <span className="font-bold text-slate-700 text-xs uppercase tracking-wide flex items-center gap-1.5">
+                        <FileText className="w-3.5 h-3.5" /> Page Views
+                      </span>
+                    </div>
+                    <div className="divide-y divide-slate-100">
+                      {analytics.pageViews.length > 0 ? analytics.pageViews.slice(0, 8).map((pv, i) => (
+                        <div key={i} className="flex items-center justify-between px-4 py-2.5 hover:bg-slate-50">
+                          <span className="text-sm font-medium text-slate-700 capitalize">{pv.page.replace('/', '') || 'Home'}</span>
+                          <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-full">{pv.count.toLocaleString()}</span>
+                        </div>
+                      )) : (
+                        <div className="py-8 text-center text-slate-400 text-sm">No data yet — visitors will appear here</div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="border border-slate-200 rounded-xl overflow-hidden">
+                    <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200">
+                      <span className="font-bold text-slate-700 text-xs uppercase tracking-wide flex items-center gap-1.5">
+                        <TrendingUp className="w-3.5 h-3.5" /> Top Posts
+                      </span>
+                    </div>
+                    <div className="divide-y divide-slate-100">
+                      {analytics.topPosts.length > 0 ? analytics.topPosts.map((p, i) => (
+                        <div key={i} className="flex items-center justify-between px-4 py-2.5 hover:bg-slate-50 gap-3">
+                          <span className="text-sm font-medium text-slate-700 truncate flex-1">{p.title}</span>
+                          <span className="bg-green-100 text-green-700 text-xs font-bold px-2.5 py-1 rounded-full shrink-0">{p.views}</span>
+                        </div>
+                      )) : (
+                        <div className="py-8 text-center text-slate-400 text-sm">No post views yet</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="p-10 text-center text-slate-400">
+                <BarChart3 className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                <p className="text-sm font-medium">Click Refresh to load analytics</p>
+              </div>
+            )}
+          </div>
+
+          {/* CSV Upload */}
+          <div className="bg-white border border-slate-200 rounded-xl p-4">
+            <h3 className="font-bold text-slate-700 text-sm mb-2 uppercase tracking-wide">📤 Bulk CSV Upload</h3>
+            <p className="text-xs text-slate-500 mb-3">Format: Title, Department, Last Date, Apply URL, Notification URL</p>
+            <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={handleCSV} />
+            <button onClick={() => fileRef.current?.click()}
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
+              <Upload className="w-4 h-4" /> Upload CSV File
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ===== ALL JOBS ===== */}
+      {tab === 'jobs' && (
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+          <div className="bg-slate-800 px-4 py-3 flex items-center justify-between">
+            <span className="text-white font-bold text-sm">All Posts ({jobs.length})</span>
+            <button onClick={() => { setForm(emptyForm); setEditId(null); setTab('add'); }}
+              className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
+              <Plus className="w-3.5 h-3.5" /> Add New
+            </button>
+          </div>
+          <div className="divide-y divide-slate-100">
+            {jobs.length === 0 ? (
+              <div className="p-12 text-center text-slate-400">
+                <p className="text-sm font-medium">No jobs yet. Add your first job!</p>
+              </div>
+            ) : jobs.map(job => (
+              <div key={job.id} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                      job.type === 'job' ? 'bg-blue-100 text-blue-700' :
+                      job.type === 'admit-card' ? 'bg-green-100 text-green-700' :
+                      job.type === 'result' ? 'bg-red-100 text-red-700' :
+                      'bg-purple-100 text-purple-700'
+                    }`}>{job.type}</span>
+                    {job.trending && <span className="text-[10px] font-bold bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">Trending</span>}
+                  </div>
+                  <p className="text-sm font-bold text-slate-800 truncate">{job.title}</p>
+                  <p className="text-xs text-slate-400 font-medium">{job.department} {job.lastDate ? `• Last: ${job.lastDate}` : ''}</p>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <a href={`/job/${job.slug || job.id}`} target="_blank" rel="noopener noreferrer">
+                    <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                      <Eye className="w-4 h-4" />
+                    </button>
+                  </a>
+                  <button onClick={() => handleEdit(job)} className="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors">
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => handleDelete(job.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ===== ADD / EDIT JOB ===== */}
+      {tab === 'add' && (
+        <form onSubmit={handleSubmit} className="space-y-3">
+          {editId && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center justify-between">
+              <span className="text-amber-700 font-bold text-sm">✏️ Editing: {form.title?.slice(0, 50)}...</span>
+              <button type="button" onClick={() => { setForm(emptyForm); setEditId(null); }} className="text-amber-600 hover:text-amber-800">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
+          {/* Basic Info */}
+          <Section id="basic" title="📝 Basic Information (Required)">
+            <Input label="Post Title" value={form.title} onChange={(v: string) => setForm({...form, title: v})} placeholder="e.g. SSC CGL 2026 (50000 Posts)" required />
+            <Input label="Department / Organization" value={form.department} onChange={(v: string) => setForm({...form, department: v})} placeholder="e.g. Staff Selection Commission" required />
+            <div>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1">Post Type *</label>
+              <select value={form.type} onChange={e => setForm({...form, type: e.target.value as any})}
+                className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-medium outline-none focus:border-blue-400 bg-slate-50">
+                <option value="job">Job</option>
+                <option value="admit-card">Admit Card</option>
+                <option value="result">Result</option>
+                <option value="answer-key">Answer Key</option>
+                <option value="admission">Admission</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1">Qualification</label>
+              <select value={form.qualification} onChange={e => setForm({...form, qualification: e.target.value})}
+                className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-medium outline-none focus:border-blue-400 bg-slate-50">
+                <option value="">Select Qualification</option>
+                <option value="10th">10th Pass</option>
+                <option value="12th">12th Pass</option>
+                <option value="graduation">Graduation</option>
+                <option value="postgraduate">Post Graduate</option>
+              </select>
+            </div>
+            <Input label="Last Date to Apply" value={form.lastDate} onChange={(v: string) => setForm({...form, lastDate: v})} placeholder="e.g. 31 May 2026" />
+            <div>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1">Brief Description *</label>
+              <textarea value={form.shortInfo || ''} onChange={e => setForm({...form, shortInfo: e.target.value})} required
+                placeholder="Short description about this post..."
+                className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-medium outline-none focus:border-blue-400 bg-slate-50 min-h-[80px]" />
+            </div>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={form.featured || false} onChange={e => setForm({...form, featured: e.target.checked})} className="w-4 h-4 accent-blue-600" />
+                <span className="text-sm font-bold text-slate-700">Featured</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={form.trending || false} onChange={e => setForm({...form, trending: e.target.checked})} className="w-4 h-4 accent-yellow-500" />
+                <span className="text-sm font-bold text-slate-700">Trending 🔥</span>
+              </label>
+            </div>
+          </Section>
+
+          {/* Links */}
+          <Section id="links" title="🔗 Important Links">
+            <Input label="Apply Online URL" value={form.applyOnlineUrl} onChange={(v: string) => setForm({...form, applyOnlineUrl: v})} placeholder="https://..." />
+            <Input label="Official Notification URL" value={form.notificationUrl} onChange={(v: string) => setForm({...form, notificationUrl: v})} placeholder="https://...pdf" />
+            <Input label="Official Website URL" value={form.officialWebsiteUrl} onChange={(v: string) => setForm({...form, officialWebsiteUrl: v})} placeholder="https://..." />
+            {form.type === 'admit-card' && <Input label="Admit Card URL" value={form.admitCardUrl} onChange={(v: string) => setForm({...form, admitCardUrl: v})} placeholder="https://..." />}
+            {form.type === 'result' && <Input label="Result URL" value={form.resultUrl} onChange={(v: string) => setForm({...form, resultUrl: v})} placeholder="https://..." />}
+            {form.type === 'answer-key' && <Input label="Answer Key URL" value={form.answerKeyUrl} onChange={(v: string) => setForm({...form, answerKeyUrl: v})} placeholder="https://..." />}
+          </Section>
+
+          {/* Important Dates */}
+          <Section id="dates" title="📅 Important Dates">
+            {(form.importantDates || []).map((d, i) => (
+              <div key={i} className="flex gap-2 items-start">
+                <input value={d.label} onChange={e => { const arr = [...(form.importantDates||[])]; arr[i] = {...d, label: e.target.value}; setForm({...form, importantDates: arr}); }}
+                  placeholder="Label (e.g. Last Date)" className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:border-blue-400 bg-slate-50" />
+                <input value={d.date} onChange={e => { const arr = [...(form.importantDates||[])]; arr[i] = {...d, date: e.target.value}; setForm({...form, importantDates: arr}); }}
+                  placeholder="Date (e.g. 31 May 2026)" className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:border-blue-400 bg-slate-50" />
+                <button type="button" onClick={() => setForm({...form, importantDates: (form.importantDates||[]).filter((_, j) => j !== i)})}
+                  className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg"><X className="w-4 h-4" /></button>
+              </div>
+            ))}
+            <button type="button" onClick={() => setForm({...form, importantDates: [...(form.importantDates||[]), {label:'', date:''}]})}
+              className="flex items-center gap-1.5 text-blue-600 text-sm font-bold hover:text-blue-800">
+              <Plus className="w-4 h-4" /> Add Date
+            </button>
+          </Section>
+
+          {/* Application Fee */}
+          <Section id="fee" title="💰 Application Fee">
+            {(form.applicationFee || []).map((f, i) => (
+              <div key={i} className="flex gap-2 items-start">
+                <input value={f.category} onChange={e => { const arr = [...(form.applicationFee||[])]; arr[i] = {...f, category: e.target.value}; setForm({...form, applicationFee: arr}); }}
+                  placeholder="Category (e.g. General/OBC)" className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:border-blue-400 bg-slate-50" />
+                <input value={f.fee} onChange={e => { const arr = [...(form.applicationFee||[])]; arr[i] = {...f, fee: e.target.value}; setForm({...form, applicationFee: arr}); }}
+                  placeholder="Fee (e.g. ₹500/-)" className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:border-blue-400 bg-slate-50" />
+                <button type="button" onClick={() => setForm({...form, applicationFee: (form.applicationFee||[]).filter((_, j) => j !== i)})}
+                  className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg"><X className="w-4 h-4" /></button>
+              </div>
+            ))}
+            <button type="button" onClick={() => setForm({...form, applicationFee: [...(form.applicationFee||[]), {category:'', fee:''}]})}
+              className="flex items-center gap-1.5 text-blue-600 text-sm font-bold hover:text-blue-800">
+              <Plus className="w-4 h-4" /> Add Fee Category
+            </button>
+          </Section>
+
+          {/* Age Limit */}
+          <Section id="age" title="🎂 Age Limit">
+            {(form.ageLimit || []).map((a, i) => (
+              <div key={i} className="flex gap-2 items-start">
+                <input value={a.category} onChange={e => { const arr = [...(form.ageLimit||[])]; arr[i] = {...a, category: e.target.value}; setForm({...form, ageLimit: arr}); }}
+                  placeholder="Category" className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:border-blue-400 bg-slate-50" />
+                <input value={a.minAge} onChange={e => { const arr = [...(form.ageLimit||[])]; arr[i] = {...a, minAge: e.target.value}; setForm({...form, ageLimit: arr}); }}
+                  placeholder="Min Age" className="w-24 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:border-blue-400 bg-slate-50" />
+                <input value={a.maxAge} onChange={e => { const arr = [...(form.ageLimit||[])]; arr[i] = {...a, maxAge: e.target.value}; setForm({...form, ageLimit: arr}); }}
+                  placeholder="Max Age" className="w-24 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:border-blue-400 bg-slate-50" />
+                <button type="button" onClick={() => setForm({...form, ageLimit: (form.ageLimit||[]).filter((_, j) => j !== i)})}
+                  className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg"><X className="w-4 h-4" /></button>
+              </div>
+            ))}
+            <button type="button" onClick={() => setForm({...form, ageLimit: [...(form.ageLimit||[]), {category:'', minAge:'18', maxAge:'35'}]})}
+              className="flex items-center gap-1.5 text-blue-600 text-sm font-bold hover:text-blue-800">
+              <Plus className="w-4 h-4" /> Add Age Category
+            </button>
+          </Section>
+
+          {/* Vacancy */}
+          <Section id="vacancy" title="📊 Vacancy Details">
+            {(form.vacancyDetails || []).map((v, i) => (
+              <div key={i} className="border border-slate-100 rounded-lg p-3 space-y-2 bg-slate-50">
+                <div className="flex gap-2">
+                  <input value={v.postName} onChange={e => { const arr = [...(form.vacancyDetails||[])]; arr[i] = {...v, postName: e.target.value}; setForm({...form, vacancyDetails: arr}); }}
+                    placeholder="Post Name" className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:border-blue-400 bg-white" />
+                  <input value={v.totalPost} onChange={e => { const arr = [...(form.vacancyDetails||[])]; arr[i] = {...v, totalPost: e.target.value}; setForm({...form, vacancyDetails: arr}); }}
+                    placeholder="Total Posts" className="w-28 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:border-blue-400 bg-white" />
+                  <button type="button" onClick={() => setForm({...form, vacancyDetails: (form.vacancyDetails||[]).filter((_, j) => j !== i)})}
+                    className="p-2 text-red-400 hover:text-red-600 rounded-lg"><X className="w-4 h-4" /></button>
+                </div>
+                <input value={v.eligibility} onChange={e => { const arr = [...(form.vacancyDetails||[])]; arr[i] = {...v, eligibility: e.target.value}; setForm({...form, vacancyDetails: arr}); }}
+                  placeholder="Eligibility (e.g. 10th Pass + ITI)" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:border-blue-400 bg-white" />
+              </div>
+            ))}
+            <button type="button" onClick={() => setForm({...form, vacancyDetails: [...(form.vacancyDetails||[]), {postName:'', totalPost:'', eligibility:''}]})}
+              className="flex items-center gap-1.5 text-blue-600 text-sm font-bold hover:text-blue-800">
+              <Plus className="w-4 h-4" /> Add Vacancy
+            </button>
+          </Section>
+
+          {/* Physical Eligibility */}
+          <Section id="physical" title="🏃 Physical Eligibility (Height/Chest etc.)">
+            {(form.physicalEligibility || []).map((p, i) => (
+              <div key={i} className="flex gap-2 items-start">
+                <input value={p.criteria} onChange={e => { const arr = [...(form.physicalEligibility||[])]; arr[i] = {...p, criteria: e.target.value}; setForm({...form, physicalEligibility: arr}); }}
+                  placeholder="Criteria (e.g. Height, Chest)" className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:border-blue-400 bg-slate-50" />
+                <input value={p.male} onChange={e => { const arr = [...(form.physicalEligibility||[])]; arr[i] = {...p, male: e.target.value}; setForm({...form, physicalEligibility: arr}); }}
+                  placeholder="Male (e.g. 170 cm)" className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:border-blue-400 bg-slate-50" />
+                <input value={p.female} onChange={e => { const arr = [...(form.physicalEligibility||[])]; arr[i] = {...p, female: e.target.value}; setForm({...form, physicalEligibility: arr}); }}
+                  placeholder="Female (e.g. 157 cm)" className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:border-blue-400 bg-slate-50" />
+                <button type="button" onClick={() => setForm({...form, physicalEligibility: (form.physicalEligibility||[]).filter((_, j) => j !== i)})}
+                  className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg"><X className="w-4 h-4" /></button>
+              </div>
+            ))}
+            <button type="button" onClick={() => setForm({...form, physicalEligibility: [...(form.physicalEligibility||[]), {criteria:'', male:'', female:''}]})}
+              className="flex items-center gap-1.5 text-blue-600 text-sm font-bold hover:text-blue-800">
+              <Plus className="w-4 h-4" /> Add Physical Criteria
+            </button>
+          </Section>
+
+          {/* Selection Process */}
+          <Section id="selection" title="📋 Selection Process">
+            {(form.selectionProcess || []).map((s, i) => (
+              <div key={i} className="flex gap-2 items-center">
+                <span className="text-xs font-black text-slate-400 w-6 text-right">{i+1}.</span>
+                <input value={s} onChange={e => { const arr = [...(form.selectionProcess||[])]; arr[i] = e.target.value; setForm({...form, selectionProcess: arr}); }}
+                  placeholder={`Step ${i+1} (e.g. Written Exam)`} className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:border-blue-400 bg-slate-50" />
+                <button type="button" onClick={() => setForm({...form, selectionProcess: (form.selectionProcess||[]).filter((_, j) => j !== i)})}
+                  className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg"><X className="w-4 h-4" /></button>
+              </div>
+            ))}
+            <button type="button" onClick={() => setForm({...form, selectionProcess: [...(form.selectionProcess||[]), '']})}
+              className="flex items-center gap-1.5 text-blue-600 text-sm font-bold hover:text-blue-800">
+              <Plus className="w-4 h-4" /> Add Step
+            </button>
+          </Section>
+
+          {/* HTML Sections */}
+          <Section id="html" title="📄 HTML Content (Copy-Paste from Official Site)">
+            {[
+              { key: 'importantDatesHtml', label: 'Important Dates (HTML Table)' },
+              { key: 'applicationFeeHtml', label: 'Application Fee (HTML Table)' },
+              { key: 'ageLimitHtml',       label: 'Age Limit (HTML Table)' },
+              { key: 'vacancyDetailsHtml', label: 'Vacancy Details (HTML Table)' },
+              { key: 'physicalStandardHtml', label: 'Physical Standard (HTML Table)' },
+              { key: 'selectionProcessHtml', label: 'Selection Process (HTML)' },
+              { key: 'importantLinksHtml', label: 'Important Links (HTML)' },
+            ].map(({ key, label }) => (
+              <div key={key}>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1">{label}</label>
+                <textarea value={(form as any)[key] || ''} onChange={e => setForm({...form, [key]: e.target.value})}
+                  placeholder={`Paste HTML for ${label} here...`}
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-mono outline-none focus:border-blue-400 bg-slate-50 min-h-[80px]" />
+              </div>
+            ))}
+          </Section>
+
+          {/* Submit */}
+          <div className="flex gap-3">
+            <button type="submit" disabled={submitting}
+              className="flex-1 flex items-center justify-center gap-2 bg-blue-700 hover:bg-blue-800 disabled:opacity-60 text-white py-4 rounded-xl font-black text-sm uppercase tracking-wide transition-colors shadow-lg">
+              {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}
+              {submitting ? 'Publishing...' : editId ? 'Update Job' : 'Publish Job'}
+            </button>
+            <button type="button" onClick={() => { setForm(emptyForm); setEditId(null); setTab('jobs'); }}
+              className="px-6 py-4 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 transition-colors">
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* ===== SMART PASTE ===== */}
+      {tab === 'paste' && (
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+          <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-5 py-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Sparkles className="w-5 h-5 text-white" />
+              <h2 className="text-white font-black text-base">🪄 Smart Paste — Auto Fill Form</h2>
+            </div>
+            <p className="text-purple-100 text-xs">Kisi bhi job ka text paste karo — sab automatically fill ho jayega!</p>
+          </div>
+
+          <div className="p-4 space-y-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <p className="text-blue-800 font-bold text-sm mb-2">📋 Kaise use kare:</p>
+              <ol className="text-blue-700 text-xs space-y-1 list-decimal list-inside font-medium">
+                <li>Sarkari Result ya kisi bhi site se job ka poora text copy karo</li>
+                <li>Neeche box mein paste karo</li>
+                <li>"Auto Fill Karo" button dabao</li>
+                <li>Form automatically fill ho jayega — bas URLs check karo</li>
+                <li>Publish karo!</li>
+              </ol>
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-2">Job Notification Text Paste Karo</label>
+              <textarea
+                value={pasteText}
+                onChange={e => setPasteText(e.target.value)}
+                placeholder={`Yahaan paste karo... Example:
+
+CRPF Constable Tradesman Online Form 2026
+Total Posts: 9195
+Apply Online Start: 20 April 2026
+Last Date: 19 May 2026
 
 Application Fee:
-- General/OBC: Rs. 100
-- SC/ST: Nil
+General/OBC: Rs 100
+SC/ST: Nil
 
-Age Limit:
-- 18-27 years for most posts
-- Age relaxation as per rules
+Age Limit: 18-27 years
 
-Important Dates:
-- Application Start: 01/01/2026
-- Last Date: 15/02/2026
-- Exam Date: March 2026
-
-How to Apply:
-Visit https://ssc.nic.in and apply online...`}
-                        data-testid="input-ai-raw-text"
-                      />
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-slate-400 font-bold">{aiRawText.length} characters</span>
-                        <span className="text-slate-400 font-bold">Minimum 50 characters required</span>
-                      </div>
-                    </div>
-
-                    {aiError && (
-                      <div className="bg-rose-50 text-rose-600 p-4 rounded-xl text-sm font-bold">
-                        {aiError}
-                      </div>
-                    )}
-
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <button
-                        type="button"
-                        onClick={handleRulesParse}
-                        disabled={aiParsing || aiRawText.length < 50}
-                        className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-5 font-black text-xs uppercase tracking-widest rounded-xl hover:from-emerald-700 hover:to-teal-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
-                        data-testid="button-rules-parse"
-                      >
-                        {aiParsing ? (
-                          <>
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            Parsing...
-                          </>
-                        ) : (
-                          <>
-                            <FileText className="w-5 h-5" />
-                            Auto Parse (No AI)
-                          </>
-                        )}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleAIParse}
-                        disabled={aiParsing || aiRawText.length < 50}
-                        className="w-full bg-gradient-to-r from-violet-600 to-purple-600 text-white py-5 font-black text-xs uppercase tracking-widest rounded-xl hover:from-violet-700 hover:to-purple-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
-                        data-testid="button-ai-parse"
-                      >
-                        {aiParsing ? (
-                          <>
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            Parsing...
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="w-5 h-5" />
-                            Parse with AI
-                          </>
-                        )}
-                      </button>
-                    </div>
-                    <p className="text-center text-xs text-slate-400 font-medium">
-                      <strong>Auto Parse:</strong> Fast, rule-based extraction (no external calls) | <strong>AI Parse:</strong> Uses AI for complex notifications
-                    </p>
-                  </>
-                ) : (
-                  <div className="space-y-6">
-                    <div className="bg-green-50 border border-green-200 p-4 rounded-xl">
-                      <div className="flex items-center gap-2 text-green-700 font-black text-sm uppercase tracking-widest mb-2">
-                        <CheckCircle2 className="w-5 h-5" />
-                        AI Extraction Complete
-                      </div>
-                      <p className="text-green-600 text-sm">Review the extracted data below. Click "Use This Data" to load it into the form for final editing.</p>
-                    </div>
-
-                    <div className="bg-slate-50 rounded-xl p-6 space-y-4">
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div>
-                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Title</span>
-                          <p className="font-bold text-slate-800 mt-1">{aiParsedData.title || 'Not found'}</p>
-                        </div>
-                        <div>
-                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Department</span>
-                          <p className="font-bold text-slate-800 mt-1">{aiParsedData.department || 'Not found'}</p>
-                        </div>
-                        <div>
-                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Type</span>
-                          <p className="font-bold text-slate-800 mt-1 capitalize">{aiParsedData.type || 'job'}</p>
-                        </div>
-                        <div>
-                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">State</span>
-                          <p className="font-bold text-slate-800 mt-1">{aiParsedData.state || 'All India'}</p>
-                        </div>
-                      </div>
-
-                      <div>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Short Info</span>
-                        <p className="font-medium text-slate-700 mt-1 text-sm">{aiParsedData.shortInfo || 'Not found'}</p>
-                      </div>
-
-                      {aiParsedData.importantDates && aiParsedData.importantDates.length > 0 && (
-                        <div>
-                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Important Dates</span>
-                          <div className="mt-2 space-y-1">
-                            {aiParsedData.importantDates.map((d: any, i: number) => (
-                              <div key={i} className="flex justify-between text-sm">
-                                <span className="text-slate-600">{d.label}</span>
-                                <span className="font-bold text-slate-800">{d.date}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {aiParsedData.vacancyDetails && aiParsedData.vacancyDetails.length > 0 && (
-                        <div>
-                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Vacancies Found</span>
-                          <p className="font-bold text-primary mt-1">{aiParsedData.vacancyDetails.length} position(s) extracted</p>
-                        </div>
-                      )}
-
-                      {aiParsedData.applicationFee && aiParsedData.applicationFee.length > 0 && (
-                        <div>
-                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Application Fees</span>
-                          <div className="mt-2 space-y-1">
-                            {aiParsedData.applicationFee.map((f: any, i: number) => (
-                              <div key={i} className="flex justify-between text-sm">
-                                <span className="text-slate-600">{f.category}</span>
-                                <span className="font-bold text-slate-800">{f.fee}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl">
-                      <p className="text-amber-700 text-sm font-medium">
-                        <strong>Note:</strong> You'll still need to add the required URLs (Apply Online, Notification, etc.) in the form before publishing.
-                      </p>
-                    </div>
-
-                    <div className="flex gap-4">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAiParsedData(null);
-                        }}
-                        className="flex-1 bg-slate-100 text-slate-700 py-4 font-black text-xs uppercase tracking-widest rounded-xl hover:bg-slate-200 transition-all"
-                      >
-                        Parse Again
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleUseAIParsedData}
-                        className="flex-1 bg-gradient-to-r from-violet-600 to-purple-600 text-white py-4 font-black text-xs uppercase tracking-widest rounded-xl hover:from-violet-700 hover:to-purple-700 transition-all shadow-lg flex items-center justify-center gap-2"
-                        data-testid="button-use-ai-data"
-                      >
-                        Use This Data <ArrowRight className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+Height: Male 170 cm, Female 157 cm
+...`}
+                className="w-full border-2 border-slate-200 focus:border-purple-400 rounded-xl px-4 py-3 text-sm font-medium outline-none bg-slate-50 min-h-[350px] font-mono transition-colors"
+              />
+              <p className="text-xs text-slate-400 mt-1">{pasteText.length} characters</p>
             </div>
-          ) : activeTab === 'list' ? (
-            <div className="portal-card bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-              <div className="bg-slate-50 p-4 border-b border-slate-200 flex justify-between items-center">
-                <h3 className="font-black text-slate-700 uppercase text-xs tracking-widest">Active Listings</h3>
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total: {jobs.length}</span>
-              </div>
-              <div className="divide-y divide-slate-100">
-                {jobs.map(job => (
-                  <div key={job.id} className="p-6 flex items-center justify-between group hover:bg-blue-50/30 transition-all">
-                    <div className="flex gap-6 items-center">
-                      <div className={`w-14 h-14 border flex items-center justify-center text-[10px] font-black uppercase tracking-widest rounded-xl ${job.type === 'job' ? 'border-blue-100 bg-blue-50 text-blue-700' : job.type === 'admit-card' ? 'border-amber-100 bg-amber-50 text-amber-700' : job.type === 'result' ? 'border-green-100 bg-green-50 text-green-700' : 'border-purple-100 bg-purple-50 text-purple-700'}`}>
-                        {job.type}
-                      </div>
-                      <div>
-                        <h3 className="font-black text-slate-900 text-lg leading-tight group-hover:text-primary transition-colors">{job.title}</h3>
-                        <div className="flex gap-4 mt-2">
-                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{job.postDate}</span>
-                          <span className="text-[10px] font-black text-primary/60 uppercase tracking-widest">{job.department}</span>
-                          {job.featured && <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-2 rounded uppercase tracking-widest">Featured</span>}
-                          {job.trending && <span className="text-[10px] font-black text-violet-600 bg-violet-50 px-2 rounded uppercase tracking-widest">Trending</span>}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button 
-                        type="button"
-                        onClick={() => handleEdit(job)}
-                        className="p-3 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all rounded-xl shadow-sm"
-                        data-testid={`button-edit-${job.id}`}
-                      >
-                        <Edit2 className="w-5 h-5" />
-                      </button>
-                      <button 
-                        type="button"
-                        onClick={() => deleteJob(job.id)}
-                        className="p-3 bg-rose-50 text-rose-500 hover:bg-rose-600 hover:text-white transition-all rounded-xl shadow-sm"
-                        data-testid={`button-delete-${job.id}`}
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="portal-card bg-white p-8 space-y-10 border border-slate-200 rounded-2xl shadow-sm">
-              <div className="flex justify-between items-center border-b border-slate-100 pb-6">
-                <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">
-                  {editingJobId ? 'Edit Post' : 'Create New Post'}
-                </h2>
-                <div className="flex gap-3">
-                  {editingJobId && (
-                    <button 
-                      type="button"
-                      onClick={() => {
-                        setEditingJobId(null);
-                        setFormData(initialFormData);
-                        setActiveTab('list');
-                      }}
-                      className="flex items-center gap-2 px-4 py-2 bg-rose-50 text-rose-600 font-black text-[10px] uppercase tracking-widest rounded-lg hover:bg-rose-100 transition-all"
-                    >
-                      Cancel Edit
-                    </button>
-                  )}
-                </div>
-              </div>
 
-              {/* 1. BASIC INFORMATION */}
-              <div className="space-y-6">
-                <div className="flex items-center gap-2 text-primary">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <h4 className="text-[11px] font-black uppercase tracking-widest">1. Basic Information</h4>
-                </div>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Post Title *</label>
-                    <input 
-                      type="text" 
-                      required
-                      className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl outline-none focus:border-primary transition-all font-bold text-sm"
-                      value={formData.title || ''}
-                      onChange={e => setFormData({...formData, title: e.target.value})}
-                      placeholder="e.g. SSC CGL 2026 Registration"
-                      data-testid="input-title"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Department</label>
-                    <input 
-                      type="text" 
-                      className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl outline-none focus:border-primary font-bold text-sm"
-                      value={formData.department || ''}
-                      onChange={e => setFormData({...formData, department: e.target.value})}
-                      placeholder="e.g. Railway, UPSC, State Police"
-                      data-testid="input-department"
-                    />
-                  </div>
-                </div>
-                <div className="grid md:grid-cols-3 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Post Type *</label>
-                    <select 
-                      className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl outline-none focus:border-primary font-bold text-sm appearance-none"
-                      value={formData.type}
-                      onChange={e => setFormData({...formData, type: e.target.value as any})}
-                      required
-                      data-testid="select-post-type"
-                    >
-                      <option value="job">Job</option>
-                      <option value="admit-card">Admit Card</option>
-                      <option value="result">Result</option>
-                      <option value="answer-key">Answer Key</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Qualification</label>
-                    <select 
-                      className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl outline-none focus:border-primary font-bold text-sm appearance-none"
-                      value={formData.qualification || ''}
-                      onChange={e => setFormData({...formData, qualification: e.target.value || undefined})}
-                      data-testid="select-qualification"
-                    >
-                      <option value="">Select Qualification</option>
-                      <option value="10th">10th</option>
-                      <option value="12th">12th</option>
-                      <option value="graduation">graduation</option>
-                      <option value="postgraduate">postgraduate</option>
-                    </select>
-                  </div>
-                  <div className="flex items-end gap-6 pb-2">
-                    <label className="flex items-center gap-2 cursor-pointer group">
-                      <input 
-                        type="checkbox" 
-                        className="w-5 h-5 rounded-md border-slate-300 text-primary focus:ring-primary"
-                        checked={formData.featured}
-                        onChange={e => setFormData({...formData, featured: e.target.checked})}
-                      />
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-600 group-hover:text-primary">Featured</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer group">
-                      <input 
-                        type="checkbox" 
-                        className="w-5 h-5 rounded-md border-slate-300 text-primary focus:ring-primary"
-                        checked={formData.trending}
-                        onChange={e => setFormData({...formData, trending: e.target.checked})}
-                      />
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-600 group-hover:text-primary">Trending</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
+            <button
+              onClick={handlePaste}
+              disabled={parsing || pasteText.trim().length < 50}
+              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 text-white py-4 rounded-xl font-black text-sm uppercase tracking-wide transition-all shadow-lg"
+            >
+              {parsing ? (
+                <><Loader2 className="w-5 h-5 animate-spin" /> Parsing...</>
+              ) : (
+                <><Sparkles className="w-5 h-5" /> Auto Fill Karo 🪄</>
+              )}
+            </button>
 
-              {/* 2. SHORT INFORMATION */}
-              <div className="space-y-6 pt-6 border-t border-slate-50">
-                <div className="flex items-center gap-2 text-primary">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <h4 className="text-[11px] font-black uppercase tracking-widest">2. Short Information</h4>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Brief Description *</label>
-                  <textarea 
-                    required
-                    className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl outline-none focus:border-primary font-medium text-sm min-h-[150px]"
-                    value={formData.shortInfo || ''}
-                    onChange={e => setFormData({...formData, shortInfo: e.target.value})}
-                    placeholder="Brief description about this notification..."
-                    data-testid="input-short-info"
-                  />
-                </div>
-              </div>
-
-              {/* FULL NOTIFICATION TEXT */}
-              <div className="space-y-6 pt-6 border-t border-slate-50">
-                <div className="flex items-center gap-2 text-primary">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <h4 className="text-[11px] font-black uppercase tracking-widest">Full Notification Text (Optional)</h4>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Paste Complete Sarkari Result Style Content (HTML Supported)</label>
-                  <textarea 
-                    className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl outline-none focus:border-primary font-medium text-sm min-h-[300px] font-mono"
-                    value={formData.rawJobContent || ''}
-                    onChange={e => setFormData({...formData, rawJobContent: e.target.value})}
-                    placeholder="Paste full notification content here... Supports HTML tables, headings, lists etc."
-                    data-testid="input-full-notification"
-                  />
-                </div>
-              </div>
-
-              {/* HTML PASTE SECTIONS - Sarkari Result Style */}
-              <div className="space-y-6 pt-6 border-t-4 border-violet-200 bg-gradient-to-b from-violet-50/50 to-transparent -mx-8 px-8 pb-6">
-                <div className="flex items-center gap-2 text-violet-600">
-                  <Sparkles className="w-4 h-4" />
-                  <h4 className="text-[11px] font-black uppercase tracking-widest">Section-Based Content (HTML Paste)</h4>
-                </div>
-                <p className="text-xs text-slate-500 font-medium bg-violet-100/50 p-3 rounded-lg">
-                  Copy-paste content directly from official notifications or Sarkari Result. Tables, lists, and formatted text will render exactly as pasted. If you fill these fields, they will override the structured fields above.
-                </p>
-                
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Important Dates (HTML)</label>
-                    <textarea 
-                      className="w-full bg-white border border-slate-200 p-4 rounded-xl outline-none focus:border-violet-500 font-medium text-sm min-h-[180px] font-mono text-xs"
-                      value={formData.importantDatesHtml || ''}
-                      onChange={e => setFormData({...formData, importantDatesHtml: e.target.value})}
-                      placeholder="Paste dates table or list here..."
-                      data-testid="input-dates-html"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Application Fee (HTML)</label>
-                    <textarea 
-                      className="w-full bg-white border border-slate-200 p-4 rounded-xl outline-none focus:border-violet-500 font-medium text-sm min-h-[180px] font-mono text-xs"
-                      value={formData.applicationFeeHtml || ''}
-                      onChange={e => setFormData({...formData, applicationFeeHtml: e.target.value})}
-                      placeholder="Paste fee details table here..."
-                      data-testid="input-fee-html"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Age Limit (HTML)</label>
-                    <textarea 
-                      className="w-full bg-white border border-slate-200 p-4 rounded-xl outline-none focus:border-violet-500 font-medium text-sm min-h-[180px] font-mono text-xs"
-                      value={formData.ageLimitHtml || ''}
-                      onChange={e => setFormData({...formData, ageLimitHtml: e.target.value})}
-                      placeholder="Paste age limit details table here..."
-                      data-testid="input-age-html"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Vacancy Details (HTML)</label>
-                    <textarea 
-                      className="w-full bg-white border border-slate-200 p-4 rounded-xl outline-none focus:border-violet-500 font-medium text-sm min-h-[180px] font-mono text-xs"
-                      value={formData.vacancyDetailsHtml || ''}
-                      onChange={e => setFormData({...formData, vacancyDetailsHtml: e.target.value})}
-                      placeholder="Paste vacancy table here..."
-                      data-testid="input-vacancy-html"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Physical Standard Test (HTML)</label>
-                    <textarea 
-                      className="w-full bg-white border border-slate-200 p-4 rounded-xl outline-none focus:border-violet-500 font-medium text-sm min-h-[180px] font-mono text-xs"
-                      value={formData.physicalStandardHtml || ''}
-                      onChange={e => setFormData({...formData, physicalStandardHtml: e.target.value})}
-                      placeholder="Paste PST details table here..."
-                      data-testid="input-pst-html"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Physical Efficiency Test (HTML)</label>
-                    <textarea 
-                      className="w-full bg-white border border-slate-200 p-4 rounded-xl outline-none focus:border-violet-500 font-medium text-sm min-h-[180px] font-mono text-xs"
-                      value={formData.physicalEfficiencyHtml || ''}
-                      onChange={e => setFormData({...formData, physicalEfficiencyHtml: e.target.value})}
-                      placeholder="Paste PET details table here..."
-                      data-testid="input-pet-html"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Selection Process (HTML)</label>
-                    <textarea 
-                      className="w-full bg-white border border-slate-200 p-4 rounded-xl outline-none focus:border-violet-500 font-medium text-sm min-h-[180px] font-mono text-xs"
-                      value={formData.selectionProcessHtml || ''}
-                      onChange={e => setFormData({...formData, selectionProcessHtml: e.target.value})}
-                      placeholder="Paste selection process here..."
-                      data-testid="input-selection-html"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Important Links (HTML)</label>
-                    <textarea 
-                      className="w-full bg-white border border-slate-200 p-4 rounded-xl outline-none focus:border-violet-500 font-medium text-sm min-h-[180px] font-mono text-xs"
-                      value={formData.importantLinksHtml || ''}
-                      onChange={e => setFormData({...formData, importantLinksHtml: e.target.value})}
-                      placeholder="Paste links table here..."
-                      data-testid="input-links-html"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* 3. IMPORTANT DATES */}
-              <div className="space-y-6 pt-6 border-t border-slate-50">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-primary">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <h4 className="text-[11px] font-black uppercase tracking-widest">3. Important Dates</h4>
-                  </div>
-                  <button type="button" onClick={addImportantDate} className="flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-black uppercase">
-                    <Plus className="w-3 h-3" /> Add Date
-                  </button>
-                </div>
-                <div className="space-y-4">
-                  {formData.importantDates?.map((d, i) => (
-                    <div key={i} className="grid grid-cols-12 gap-4 items-center">
-                      <input 
-                        type="text" 
-                        className="col-span-5 bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none focus:border-primary font-bold text-sm"
-                        value={d.label}
-                        onChange={e => {
-                          const newDates = [...(formData.importantDates || [])];
-                          newDates[i] = { ...d, label: e.target.value };
-                          setFormData({...formData, importantDates: newDates});
-                        }}
-                        placeholder="Event Name"
-                      />
-                      <input 
-                        type="text" 
-                        className="col-span-5 bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none focus:border-primary font-bold text-sm"
-                        value={d.date}
-                        onChange={e => {
-                          const newDates = [...(formData.importantDates || [])];
-                          newDates[i] = { ...d, date: e.target.value };
-                          setFormData({...formData, importantDates: newDates});
-                        }}
-                        placeholder="Date (e.g. 31/12/2026)"
-                      />
-                      <button type="button" onClick={() => removeImportantDate(i)} className="col-span-2 p-2 bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-100">
-                        <X className="w-4 h-4 mx-auto" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* 4. APPLICATION FEE */}
-              <div className="space-y-6 pt-6 border-t border-slate-50">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-primary">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <h4 className="text-[11px] font-black uppercase tracking-widest">4. Application Fee</h4>
-                  </div>
-                  <button type="button" onClick={addApplicationFee} className="flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-black uppercase">
-                    <Plus className="w-3 h-3" /> Add Fee
-                  </button>
-                </div>
-                <div className="space-y-4">
-                  {formData.applicationFee?.map((f, i) => (
-                    <div key={i} className="grid grid-cols-12 gap-4 items-center">
-                      <input 
-                        type="text" 
-                        className="col-span-6 bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none focus:border-primary font-bold text-sm"
-                        value={f.category}
-                        onChange={e => {
-                          const newFees = [...(formData.applicationFee || [])];
-                          newFees[i] = { ...f, category: e.target.value };
-                          setFormData({...formData, applicationFee: newFees});
-                        }}
-                        placeholder="Category (e.g. General/OBC)"
-                      />
-                      <input 
-                        type="text" 
-                        className="col-span-4 bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none focus:border-primary font-bold text-sm"
-                        value={f.fee}
-                        onChange={e => {
-                          const newFees = [...(formData.applicationFee || [])];
-                          newFees[i] = { ...f, fee: e.target.value };
-                          setFormData({...formData, applicationFee: newFees});
-                        }}
-                        placeholder="Amount (₹)"
-                      />
-                      <button type="button" onClick={() => removeApplicationFee(i)} className="col-span-2 p-2 bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-100">
-                        <X className="w-4 h-4 mx-auto" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* 5. AGE LIMIT */}
-              <div className="space-y-6 pt-6 border-t border-slate-50">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-primary">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <h4 className="text-[11px] font-black uppercase tracking-widest">5. Age Limit Details</h4>
-                  </div>
-                  <button type="button" onClick={addAgeLimit} className="flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-black uppercase">
-                    <Plus className="w-3 h-3" /> Add Age
-                  </button>
-                </div>
-                <div className="space-y-4">
-                  {formData.ageLimit?.map((a, i) => (
-                    <div key={i} className="grid grid-cols-12 gap-4 items-center">
-                      <input 
-                        type="text" 
-                        className="col-span-4 bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none focus:border-primary font-bold text-sm"
-                        value={a.category}
-                        onChange={e => {
-                          const newAge = [...(formData.ageLimit || [])];
-                          newAge[i] = { ...a, category: e.target.value };
-                          setFormData({...formData, ageLimit: newAge});
-                        }}
-                        placeholder="Category"
-                      />
-                      <input 
-                        type="text" 
-                        className="col-span-3 bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none focus:border-primary font-bold text-sm"
-                        value={a.minAge}
-                        onChange={e => {
-                          const newAge = [...(formData.ageLimit || [])];
-                          newAge[i] = { ...a, minAge: e.target.value };
-                          setFormData({...formData, ageLimit: newAge});
-                        }}
-                        placeholder="Min Age"
-                      />
-                      <input 
-                        type="text" 
-                        className="col-span-3 bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none focus:border-primary font-bold text-sm"
-                        value={a.maxAge}
-                        onChange={e => {
-                          const newAge = [...(formData.ageLimit || [])];
-                          newAge[i] = { ...a, maxAge: e.target.value };
-                          setFormData({...formData, ageLimit: newAge});
-                        }}
-                        placeholder="Max Age"
-                      />
-                      <button type="button" onClick={() => removeAgeLimit(i)} className="col-span-2 p-2 bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-100">
-                        <X className="w-4 h-4 mx-auto" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* 6. VACANCY DETAILS */}
-              <div className="space-y-6 pt-6 border-t border-slate-50">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-primary">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <h4 className="text-[11px] font-black uppercase tracking-widest">6. Vacancy Details</h4>
-                  </div>
-                  <button type="button" onClick={addVacancy} className="flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-black uppercase">
-                    <Plus className="w-3 h-3" /> Add Vacancy
-                  </button>
-                </div>
-                <div className="space-y-4">
-                  {formData.vacancyDetails?.map((v, i) => (
-                    <div key={i} className="grid grid-cols-12 gap-4 items-center">
-                      <input 
-                        type="text" 
-                        className="col-span-4 bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none focus:border-primary font-bold text-sm"
-                        value={v.postName}
-                        onChange={e => {
-                          const newVac = [...(formData.vacancyDetails || [])];
-                          newVac[i] = { ...v, postName: e.target.value };
-                          setFormData({...formData, vacancyDetails: newVac});
-                        }}
-                        placeholder="Post Name"
-                      />
-                      <input 
-                        type="text" 
-                        className="col-span-2 bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none focus:border-primary font-bold text-sm"
-                        value={v.totalPost}
-                        onChange={e => {
-                          const newVac = [...(formData.vacancyDetails || [])];
-                          newVac[i] = { ...v, totalPost: e.target.value };
-                          setFormData({...formData, vacancyDetails: newVac});
-                        }}
-                        placeholder="Total"
-                      />
-                      <input 
-                        type="text" 
-                        className="col-span-4 bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none focus:border-primary font-bold text-sm"
-                        value={v.eligibility}
-                        onChange={e => {
-                          const newVac = [...(formData.vacancyDetails || [])];
-                          newVac[i] = { ...v, eligibility: e.target.value };
-                          setFormData({...formData, vacancyDetails: newVac});
-                        }}
-                        placeholder="Eligibility"
-                      />
-                      <button type="button" onClick={() => removeVacancy(i)} className="col-span-2 p-2 bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-100">
-                        <X className="w-4 h-4 mx-auto" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* 7. ELIGIBILITY DETAILS */}
-              <div className="space-y-6 pt-6 border-t border-slate-50">
-                <div className="flex items-center gap-2 text-primary">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <h4 className="text-[11px] font-black uppercase tracking-widest">7. Eligibility Details</h4>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Qualification & Requirements</label>
-                  <textarea 
-                    className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl outline-none focus:border-primary font-medium text-sm min-h-[100px]"
-                    value={formData.eligibilityDetails || ''}
-                    onChange={e => setFormData({...formData, eligibilityDetails: e.target.value})}
-                    placeholder="Enter eligibility requirements..."
-                    data-testid="input-eligibility"
-                  />
-                </div>
-              </div>
-
-              {/* 8. SELECTION PROCESS */}
-              <div className="space-y-6 pt-6 border-t border-slate-50">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-primary">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <h4 className="text-[11px] font-black uppercase tracking-widest">8. Selection Process</h4>
-                  </div>
-                  <button type="button" onClick={addSelectionStep} className="flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-black uppercase">
-                    <Plus className="w-3 h-3" /> Add Step
-                  </button>
-                </div>
-                <div className="space-y-4">
-                  {formData.selectionProcess?.map((step, i) => (
-                    <div key={i} className="grid grid-cols-12 gap-4 items-center">
-                      <span className="col-span-1 text-center font-black text-slate-400">{i + 1}.</span>
-                      <input 
-                        type="text" 
-                        className="col-span-9 bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none focus:border-primary font-bold text-sm"
-                        value={step}
-                        onChange={e => {
-                          const newSteps = [...(formData.selectionProcess || [])];
-                          newSteps[i] = e.target.value;
-                          setFormData({...formData, selectionProcess: newSteps});
-                        }}
-                        placeholder="Selection step..."
-                      />
-                      <button type="button" onClick={() => removeSelectionStep(i)} className="col-span-2 p-2 bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-100">
-                        <X className="w-4 h-4 mx-auto" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* 9. PHYSICAL ELIGIBILITY (Optional) */}
-              <div className="space-y-6 pt-6 border-t border-slate-50">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-primary">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <h4 className="text-[11px] font-black uppercase tracking-widest">9. Physical Eligibility (Optional)</h4>
-                  </div>
-                  <button type="button" onClick={addPhysicalEligibility} className="flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-black uppercase">
-                    <Plus className="w-3 h-3" /> Add Criteria
-                  </button>
-                </div>
-                <div className="space-y-4">
-                  {formData.physicalEligibility?.map((p, i) => (
-                    <div key={i} className="grid grid-cols-12 gap-4 items-center">
-                      <input 
-                        type="text" 
-                        className="col-span-4 bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none focus:border-primary font-bold text-sm"
-                        value={p.criteria}
-                        onChange={e => {
-                          const newPhys = [...(formData.physicalEligibility || [])];
-                          newPhys[i] = { ...p, criteria: e.target.value };
-                          setFormData({...formData, physicalEligibility: newPhys});
-                        }}
-                        placeholder="Criteria (e.g. Height)"
-                      />
-                      <input 
-                        type="text" 
-                        className="col-span-3 bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none focus:border-primary font-bold text-sm"
-                        value={p.male}
-                        onChange={e => {
-                          const newPhys = [...(formData.physicalEligibility || [])];
-                          newPhys[i] = { ...p, male: e.target.value };
-                          setFormData({...formData, physicalEligibility: newPhys});
-                        }}
-                        placeholder="Male"
-                      />
-                      <input 
-                        type="text" 
-                        className="col-span-3 bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none focus:border-primary font-bold text-sm"
-                        value={p.female}
-                        onChange={e => {
-                          const newPhys = [...(formData.physicalEligibility || [])];
-                          newPhys[i] = { ...p, female: e.target.value };
-                          setFormData({...formData, physicalEligibility: newPhys});
-                        }}
-                        placeholder="Female"
-                      />
-                      <button type="button" onClick={() => removePhysicalEligibility(i)} className="col-span-2 p-2 bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-100">
-                        <X className="w-4 h-4 mx-auto" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* 10. IMPORTANT LINKS */}
-              <div className="space-y-6 pt-6 border-t border-slate-50">
-                <div className="flex items-center gap-2 text-primary">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <h4 className="text-[11px] font-black uppercase tracking-widest">10. Important Links (Based on Post Type)</h4>
-                </div>
-                <div className="grid md:grid-cols-2 gap-6">
-                  {formData.type === 'job' && (
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Apply Online URL *</label>
-                      <input 
-                        type="text" 
-                        required
-                        className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl outline-none focus:border-primary font-bold text-sm"
-                        value={formData.applyOnlineUrl || ''}
-                        onChange={e => setFormData({...formData, applyOnlineUrl: e.target.value})}
-                        placeholder="https://apply.official-site.com/..."
-                        data-testid="input-apply-url"
-                      />
-                    </div>
-                  )}
-                  {formData.type === 'admit-card' && (
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Download Admit Card URL *</label>
-                      <input 
-                        type="text" 
-                        required
-                        className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl outline-none focus:border-primary font-bold text-sm"
-                        value={formData.admitCardUrl || ''}
-                        onChange={e => setFormData({...formData, admitCardUrl: e.target.value})}
-                        placeholder="https://admit.official-site.com/..."
-                        data-testid="input-admit-url"
-                      />
-                    </div>
-                  )}
-                  {formData.type === 'result' && (
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Download Result URL *</label>
-                      <input 
-                        type="text" 
-                        required
-                        className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl outline-none focus:border-primary font-bold text-sm"
-                        value={formData.resultUrl || ''}
-                        onChange={e => setFormData({...formData, resultUrl: e.target.value})}
-                        placeholder="https://result.official-site.com/..."
-                        data-testid="input-result-url"
-                      />
-                    </div>
-                  )}
-                  {formData.type === 'answer-key' && (
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Download Answer Key URL *</label>
-                      <input 
-                        type="text" 
-                        required
-                        className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl outline-none focus:border-primary font-bold text-sm"
-                        value={formData.answerKeyUrl || ''}
-                        onChange={e => setFormData({...formData, answerKeyUrl: e.target.value})}
-                        placeholder="https://answer.official-site.com/..."
-                        data-testid="input-answer-url"
-                      />
-                    </div>
-                  )}
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Notification URL *</label>
-                    <input 
-                      type="text" 
-                      required
-                      className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl outline-none focus:border-primary font-bold text-sm"
-                      value={formData.notificationUrl || ''}
-                      onChange={e => setFormData({...formData, notificationUrl: e.target.value})}
-                      placeholder="https://notification.official-site.com/..."
-                      data-testid="input-notification-url"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Official Website URL</label>
-                    <input 
-                      type="text"
-                      className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl outline-none focus:border-primary font-bold text-sm"
-                      value={formData.officialWebsiteUrl || ''}
-                      onChange={e => setFormData({...formData, officialWebsiteUrl: e.target.value})}
-                      placeholder="https://official-site.com"
-                      data-testid="input-official-url"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-8 border-t border-slate-100">
-                <button 
-                  type="submit" 
-                  className="w-full bg-primary text-white py-5 font-black text-xs uppercase tracking-widest rounded-xl hover:bg-secondary transition-all shadow-lg active:scale-[0.99]"
-                  data-testid="button-submit-post"
-                >
-                  {editingJobId ? 'Update Post' : 'Publish Post'}
-                </button>
-              </div>
-            </form>
-          )}
+            {pasteText.trim().length < 50 && pasteText.trim().length > 0 && (
+              <p className="text-red-500 text-xs font-bold text-center">Kam se kam 50 characters paste karo</p>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
