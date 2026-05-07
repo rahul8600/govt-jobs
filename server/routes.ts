@@ -494,8 +494,8 @@ Sitemap: ${baseUrl}/sitemap.xml
   // sitemap.xml
   app.get("/sitemap.xml", async (req, res) => {
     try {
-      const baseUrl = `${req.protocol}://${req.get('host')}`;
-      const posts = await storage.getAllPosts();
+      const baseUrl = process.env.SITE_URL || `${req.protocol}://${req.get('host')}`;
+      const posts = await storage.getAllPosts(1, 10000); // get all posts for sitemap
       
       const staticPages = [
         { loc: '/', priority: '1.0', changefreq: 'daily' },
