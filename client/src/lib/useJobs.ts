@@ -42,12 +42,16 @@ interface DbPost {
 }
 
 function dbPostToJob(post: DbPost): Job {
+  // Normalize type — must be one of the valid types
+  const validTypes = ['job', 'admit-card', 'result', 'answer-key', 'admission'];
+  const type = validTypes.includes(post.type) ? post.type : 'job';
+
   return {
     id: String(post.id),
     slug: post.slug || undefined,
     title: post.title,
     department: post.department,
-    type: (post.type as 'job' | 'admit-card' | 'result' | 'answer-key') || 'job',
+    type: type as Job['type'],
     lastDate: post.lastDate || undefined,
     postDate: post.postDate,
     shortInfo: post.shortInfo,
@@ -122,18 +126,34 @@ function jobToDbPost(job: Omit<Job, 'id'> & { id?: string }) {
   };
 }
 
+// Fetch posts by type directly from API — used by Home page sections
+export async function fetchPostsByType(type: string, limit = 8): Promise<Job[]> {
+  try {
+    const res = await fetch(`/api/posts?type=${type}&page=1&limit=${limit}`, {
+      cache: 'no-store',
+      headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' },
+    });
+    if (!res.ok) return [];
+    const posts: DbPost[] = await res.json();
+    return posts.map(dbPostToJob);
+  } catch {
+    return [];
+  }
+}
+
 export function useJobs() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // For home page: fetch ALL types so trending/featured works
   const fetchJobs = useCallback(async () => {
     try {
-      const response = await fetch('/api/posts', {
+      const res = await fetch('/api/posts?page=1&limit=200', {
         cache: 'no-store',
-        headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
+        headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' },
       });
-      if (response.ok) {
-        const posts: DbPost[] = await response.json();
+      if (res.ok) {
+        const posts: DbPost[] = await res.json();
         setJobs(posts.map(dbPostToJob));
       }
     } catch (error) {
@@ -143,25 +163,21 @@ export function useJobs() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchJobs();
-  }, [fetchJobs]);
+  useEffect(() => { fetchJobs(); }, [fetchJobs]);
 
   const addJob = async (job: Job) => {
     try {
-      const response = await fetch('/api/posts', {
+      const res = await fetch('/api/posts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(jobToDbPost(job)),
       });
-      if (response.ok) {
-        const newPost: DbPost = await response.json();
+      if (res.ok) {
+        const newPost: DbPost = await res.json();
         setJobs(prev => [dbPostToJob(newPost), ...prev]);
         return true;
       }
-    } catch (error) {
-      console.error('Error adding job:', error);
-    }
+    } catch (error) { console.error('Error adding job:', error); }
     return false;
   };
 
@@ -169,20 +185,17 @@ export function useJobs() {
     try {
       const id = parseInt(updatedJob.id);
       if (isNaN(id)) return false;
-      
-      const response = await fetch(`/api/posts/${id}`, {
+      const res = await fetch(`/api/posts/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(jobToDbPost(updatedJob)),
       });
-      if (response.ok) {
-        const updated: DbPost = await response.json();
+      if (res.ok) {
+        const updated: DbPost = await res.json();
         setJobs(prev => prev.map(j => j.id === updatedJob.id ? dbPostToJob(updated) : j));
         return true;
       }
-    } catch (error) {
-      console.error('Error updating job:', error);
-    }
+    } catch (error) { console.error('Error updating job:', error); }
     return false;
   };
 
@@ -190,17 +203,12 @@ export function useJobs() {
     try {
       const numId = parseInt(id);
       if (isNaN(numId)) return false;
-      
-      const response = await fetch(`/api/posts/${numId}`, {
-        method: 'DELETE',
-      });
-      if (response.ok) {
+      const res = await fetch(`/api/posts/${numId}`, { method: 'DELETE' });
+      if (res.ok) {
         setJobs(prev => prev.filter(j => j.id !== id));
         return true;
       }
-    } catch (error) {
-      console.error('Error deleting job:', error);
-    }
+    } catch (error) { console.error('Error deleting job:', error); }
     return false;
   };
 
