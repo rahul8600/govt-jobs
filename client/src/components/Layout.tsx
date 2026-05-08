@@ -92,7 +92,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             { href: "/latest-jobs", label: "Jobs",    icon: Briefcase },
             { href: "/admit-card",  label: "Admit",   icon: FileText },
             { href: "/results",     label: "Results", icon: CheckSquare },
-            { href: "/search",      label: "Search",  icon: Search },
+            { href: "/admission",   label: "Admission", icon: GraduationCap },
           ].map(({ href, label, icon: Icon }) => (
             <Link key={href} href={href}>
               <div className={`flex flex-col items-center justify-center h-full gap-0.5 cursor-pointer transition-colors ${
