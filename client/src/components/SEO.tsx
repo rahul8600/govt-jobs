@@ -10,7 +10,7 @@ interface SEOProps {
   job?: Job;
 }
 
-const SITE_NAME = 'Govt Job Alert';
+const SITE_NAME = 'SarkariJobSeva';
 const BASE_URL = typeof window !== 'undefined' ? window.location.origin : '';
 
 export function useSEO({ title, description, keywords, canonical, type = 'website', job }: SEOProps) {
@@ -175,7 +175,7 @@ export function generateListMeta(type: string, searchQuery?: string): SEOProps {
 
   if (searchQuery) {
     title = `Search Results for "${searchQuery}"`;
-    description = `Find government jobs, admit cards, results matching "${searchQuery}". Latest Govt Job Alert updates ${year}.`;
+    description = `Find government jobs, admit cards, results matching "${searchQuery}". Latest SarkariJobSeva updates ${year}.`;
     keywords = `${searchQuery}, sarkari result, government jobs, ${year}`;
   } else {
     switch (type) {
@@ -207,7 +207,7 @@ export function generateListMeta(type: string, searchQuery?: string): SEOProps {
         keywords = `admission ${year}, government college admission, university admission`;
         break;
       default:
-        title = `Govt Job Alert ${year}`;
+        title = `SarkariJobSeva ${year}`;
         description = `Latest government jobs, admit cards, results and answer keys ${year}. Your one-stop portal for govt jobs.`;
         keywords = `sarkari result, government jobs, admit card, result ${year}`;
     }
@@ -219,8 +219,8 @@ export function generateListMeta(type: string, searchQuery?: string): SEOProps {
 export function generateHomeMeta(): SEOProps {
   const year = new Date().getFullYear();
   return {
-    title: `Govt Job Alert – Latest Govt Jobs, Admit Card, Results`,
-    description: `Govt Job Alert ${year} - Latest government job notifications, admit cards, exam results, answer keys. Apply online for SSC, Railway, UPSC, Bank and State Government jobs.`,
+    title: `SarkariJobSeva – Latest Govt Jobs, Admit Card, Results`,
+    description: `SarkariJobSeva ${year} - Latest Sarkari Jobs, Admit Card, Results, Answer Key 2026. सरकारी नौकरी, सुरक्षित भविष्य।`,
     keywords: `sarkari result ${year}, government jobs, sarkari naukri, admit card, result, SSC, Railway, UPSC, Bank jobs`,
     canonical: typeof window !== 'undefined' ? window.location.origin : '',
   };
