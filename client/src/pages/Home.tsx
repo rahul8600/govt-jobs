@@ -96,31 +96,19 @@ export default function Home() {
           <p className="text-blue-200 text-sm mt-1">सरकारी नौकरी, सुरक्षित भविष्य</p>
         </div>
         <form onSubmit={handleSearch} style={{width:'100%', maxWidth:'560px', margin:'0 auto'}}>
-          <div style={{display:'flex', alignItems:'center', backgroundColor:'white', borderRadius:'14px', overflow:'hidden'}}>
+          <div style={{display:'flex', alignItems:'center', backgroundColor:'white', borderRadius:'50px', padding:'12px 20px', gap:'10px'}}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
             <input
               type="text"
               placeholder="Search Jobs, Admit Cards, Results..."
-              style={{flex:1, minWidth:0, border:'none', outline:'none', fontSize:'15px', fontWeight:500, color:'#1e293b', backgroundColor:'white', padding:'14px 16px'}}
+              style={{flex:1, minWidth:0, border:'none', outline:'none', fontSize:'15px', fontWeight:500, color:'#1e293b', backgroundColor:'transparent'}}
               value={homeSearch}
               onChange={e => setHomeSearch(e.target.value)}
             />
-            <button type="submit" style={{backgroundColor:'#1d4ed8', color:'white', border:'none', padding:'14px 20px', fontWeight:700, fontSize:'14px', cursor:'pointer', flexShrink:0}}>
-              Search
-            </button>
           </div>
         </form>
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-4 gap-2 mt-5">
-          {CATEGORIES.slice(0, 4).map(cat => (
-            <Link key={cat.type} href={cat.href}>
-              <div className="bg-white/10 hover:bg-white/20 rounded-xl p-2 text-center cursor-pointer transition-colors">
-                <div className="text-white font-black text-lg">{jobsByType(cat.type).length}</div>
-                <div className="text-blue-200 text-[10px] font-bold leading-tight">{cat.title}</div>
-              </div>
-            </Link>
-          ))}
-        </div>
       </div>
 
       {/* Trending Section */}
