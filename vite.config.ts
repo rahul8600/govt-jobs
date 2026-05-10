@@ -24,6 +24,23 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    // Code splitting for faster initial load
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-core': ['react', 'react-dom'],
+          'router': ['wouter'],
+          'query': ['@tanstack/react-query'],
+          'ui': ['lucide-react'],
+        },
+      },
+    },
+    // Compress output
+    minify: 'esbuild',
+    target: 'es2015',
+    cssMinify: true,
+    // Smaller chunks
+    chunkSizeWarningLimit: 500,
   },
   server: {
     host: "0.0.0.0",
