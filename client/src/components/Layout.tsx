@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Briefcase, FileText, CheckSquare, GraduationCap, Search, ArrowUp, X } from "lucide-react";
+import { Home, Briefcase, FileText, CheckSquare, GraduationCap, Search, ArrowUp, X, Moon, Sun } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -55,6 +55,17 @@ function PushNotificationPrompt() {
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('darkMode', 'true');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('darkMode', 'false');
+    }
+  }, [darkMode]);
 
   const navItems = [
     { href: "/",            label: "Home",       icon: Home },
@@ -81,11 +92,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <span className="text-white font-black text-lg tracking-tight">SarkariJobSeva</span>
             </div>
           </Link>
-          <Link href="/search">
-            <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center cursor-pointer hover:bg-blue-500 transition-colors">
-              <Search className="w-5 h-5 text-white" />
-            </div>
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center hover:bg-blue-500 transition-colors"
+              aria-label="Toggle dark mode"
+            >
+              {darkMode ? <Sun className="w-5 h-5 text-white" /> : <Moon className="w-5 h-5 text-white" />}
+            </button>
+            <Link href="/search">
+              <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center cursor-pointer hover:bg-blue-500 transition-colors">
+                <Search className="w-5 h-5 text-white" />
+              </div>
+            </Link>
+          </div>
         </div>
 
         {/* Desktop Nav */}
