@@ -19,8 +19,8 @@ function PushNotificationPrompt() {
     const perm = await Notification.requestPermission();
     if (perm === 'granted') {
       new Notification('SarkariJobSeva', {
-        body: 'You will now receive job alerts!',
-        icon: '/favicon.png',
+        body: 'Job alerts enabled! Latest sarkari naukri milegi.',
+        icon: '/logo.png',
       });
     }
     setShow(false);
@@ -35,21 +35,71 @@ function PushNotificationPrompt() {
   if (!show || dismissed) return null;
 
   return (
-    <div className="fixed bottom-20 md:bottom-6 left-4 right-4 md:left-auto md:right-6 md:w-80 z-50 bg-white border border-blue-200 rounded-2xl shadow-xl p-4 flex items-start gap-3">
-      <div className="text-2xl flex-shrink-0">🔔</div>
-      <div className="flex-1">
-        <p className="font-black text-slate-800 text-sm">Job Alerts Enable Karein!</p>
-        <p className="text-xs text-slate-500 mt-0.5">Latest sarkari naukri ki instant notification paayein.</p>
-        <div className="flex gap-2 mt-3">
-          <button onClick={requestPermission} className="flex-1 bg-blue-700 text-white text-xs font-bold py-2 rounded-lg hover:bg-blue-800 transition-colors">
-            Enable
-          </button>
-          <button onClick={dismiss} className="flex-1 bg-slate-100 text-slate-600 text-xs font-bold py-2 rounded-lg hover:bg-slate-200 transition-colors">
-            Later
+    <>
+      {/* Backdrop on mobile */}
+      <div className="fixed inset-0 bg-black/50 z-[99] md:hidden" onClick={dismiss} />
+
+      {/* Popup — fullscreen bottom sheet on mobile, small card on desktop */}
+      <div className="fixed z-[100] 
+        bottom-0 left-0 right-0 rounded-t-3xl
+        md:bottom-6 md:right-6 md:left-auto md:rounded-2xl md:w-96
+        bg-white shadow-2xl overflow-hidden">
+        
+        {/* Header with logo */}
+        <div className="bg-blue-700 px-6 py-5 flex items-center gap-4">
+          <img src="/logo.png" alt="SarkariJobSeva" className="w-12 h-12 rounded-xl object-contain bg-white p-1 flex-shrink-0" />
+          <div>
+            <p className="text-white font-black text-base">SarkariJobSeva</p>
+            <p className="text-blue-200 text-xs font-medium">Job Alert Notification</p>
+          </div>
+          <button onClick={dismiss} className="ml-auto text-blue-200 hover:text-white">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
         </div>
+
+        {/* Content */}
+        <div className="px-6 py-5">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-yellow-100 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">🔔</div>
+            <div>
+              <p className="font-black text-slate-800 text-base">Job Alerts Enable Karein!</p>
+              <p className="text-slate-500 text-sm mt-0.5">Nayi sarkari naukri aate hi notification paayein — bilkul free!</p>
+            </div>
+          </div>
+
+          <div className="bg-blue-50 rounded-xl p-4 mb-5 space-y-2">
+            <div className="flex items-center gap-2 text-sm text-slate-600 font-medium">
+              <span className="text-green-500">✅</span> Latest Jobs Alert
+            </div>
+            <div className="flex items-center gap-2 text-sm text-slate-600 font-medium">
+              <span className="text-green-500">✅</span> Admit Card Reminder
+            </div>
+            <div className="flex items-center gap-2 text-sm text-slate-600 font-medium">
+              <span className="text-green-500">✅</span> Result Notification
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={requestPermission}
+              className="flex-1 bg-blue-700 text-white font-black py-3.5 rounded-xl hover:bg-blue-800 transition-colors text-sm shadow-lg shadow-blue-700/30"
+            >
+              🔔 Enable Now
+            </button>
+            <button
+              onClick={dismiss}
+              className="flex-1 bg-slate-100 text-slate-600 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition-colors text-sm"
+            >
+              Later
+            </button>
+          </div>
+
+          <p className="text-center text-xs text-slate-400 mt-3">
+            Aap kisi bhi waqt settings se band kar sakte hain
+          </p>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
