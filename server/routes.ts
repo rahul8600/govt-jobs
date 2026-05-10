@@ -113,6 +113,61 @@ function requireAuth(req: Request, res: Response, next: NextFunction) {
   }
 }
 
+// ===== TELEGRAM BOT =====
+const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
+const TELEGRAM_CHANNEL = process.env.TELEGRAM_CHANNEL_ID || '@sarkarijobseva';
+const SITE_URL_TG = process.env.SITE_URL || 'https://sarkarijobseva.com';
+
+async function sendTelegramMessage(post: any): Promise<void> {
+  if (!TELEGRAM_TOKEN) return;
+  try {
+    const typeEmoji: Record<string, string> = {
+      'job': '💼', 'admit-card': '🪪', 'result': '📊',
+      'answer-key': '🔑', 'admission': '🎓',
+    };
+    const typeLabel: Record<string, string> = {
+      'job': 'New Job Alert', 'admit-card': 'Admit Card Out',
+      'result': 'Result Declared', 'answer-key': 'Answer Key Released',
+      'admission': 'Admission Open',
+    };
+    const emoji = typeEmoji[post.type] || '🔔';
+    const label = typeLabel[post.type] || 'New Update';
+    const jobUrl = `${SITE_URL_TG}/job/${post.slug || post.id}`;
+    let vacancyText = '';
+    if (post.vacancyDetails && Array.isArray(post.vacancyDetails)) {
+      const total = post.vacancyDetails.find((v: any) => v.totalPost && v.totalPost !== 'NA');
+      if (total) vacancyText = `
+📊 *Posts:* ${total.totalPost}`;
+    }
+    const message = `${emoji} *${label}!*
+
+📋 *${post.title}*
+🏢 ${post.department}${vacancyText}
+${post.qualification ? `✅ *Eligibility:* ${post.qualification}
+` : ''}${post.lastDate ? `📅 *Last Date:* ${post.lastDate}
+` : ''}
+🔗 [Full Details & Apply](${jobUrl})
+
+📲 @sarkarijobseva | [sarkarijobseva\.com](${SITE_URL_TG})`;
+    const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: TELEGRAM_CHANNEL,
+        text: message,
+        parse_mode: 'MarkdownV2',
+        disable_web_page_preview: false,
+      }),
+    });
+    const result = await response.json() as any;
+    if (!result.ok) console.error('[Telegram] Error:', result.description);
+    else console.log('[Telegram] Posted:', post.title);
+  } catch (error) {
+    console.error('[Telegram] Failed:', error);
+  }
+}
+// ===== END TELEGRAM BOT =====
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -338,6 +393,8 @@ export async function registerRoutes(
         validatedData.slug = await ensureUniqueSlug(baseSlug);
       }
       const post = await storage.createPost(validatedData);
+      // Auto-post to Telegram
+      sendTelegramMessage(post).catch(e => console.error('[Telegram] Background error:', e));
       res.status(201).json(post);
     } catch (error) {
       console.error("Error creating post:", error);
