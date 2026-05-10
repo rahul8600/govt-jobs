@@ -1,5 +1,5 @@
 // SarkariJobSeva Service Worker
-const CACHE_NAME = 'sarkarijobseva-v1';
+const CACHE_NAME = 'sarkarijobseva-v2';
 const STATIC_ASSETS = ['/', '/latest-jobs', '/admit-card', '/results'];
 
 self.addEventListener('install', e => {
