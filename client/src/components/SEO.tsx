@@ -11,11 +11,11 @@ interface SEOProps {
 }
 
 const SITE_NAME = 'SarkariJobSeva';
-const BASE_URL = typeof window !== 'undefined' ? window.location.origin : '';
+const BASE_URL = 'https://sarkarijobseva.com';
 
 export function useSEO({ title, description, keywords, canonical, type = 'website', job }: SEOProps) {
   useEffect(() => {
-    const fullTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
+    const fullTitle = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} – Latest Sarkari Naukri, Admit Card, Result 2026`;
     document.title = fullTitle;
 
     const setMeta = (name: string, content: string, isProperty = false) => {
@@ -35,193 +35,288 @@ export function useSEO({ title, description, keywords, canonical, type = 'websit
       setMeta('twitter:description', description);
     }
 
-    if (keywords) {
-      setMeta('keywords', keywords);
-    }
+    if (keywords) setMeta('keywords', keywords);
 
     setMeta('og:title', fullTitle, true);
     setMeta('twitter:title', fullTitle);
     setMeta('og:type', type, true);
     setMeta('og:site_name', SITE_NAME, true);
+    setMeta('og:image', `${BASE_URL}/og-image.png`, true);
+    setMeta('og:image:width', '1200', true);
+    setMeta('og:image:height', '630', true);
+    setMeta('twitter:card', 'summary_large_image');
+    setMeta('twitter:image', `${BASE_URL}/og-image.png`);
+    setMeta('twitter:site', '@sarkarijobseva');
 
+    // Canonical
+    const canonicalUrl = canonical || `${BASE_URL}${window.location.pathname}`;
     let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
     if (!link) {
       link = document.createElement('link');
       link.rel = 'canonical';
       document.head.appendChild(link);
     }
-    link.href = canonical || window.location.href.split('?')[0];
+    link.href = canonicalUrl;
+    setMeta('og:url', canonicalUrl, true);
 
-    setMeta('og:url', canonical || window.location.href.split('?')[0], true);
-
-    if (job && job.type === 'job') {
-      let script = document.querySelector('script[data-schema="job"]') as HTMLScriptElement;
-      if (!script) {
-        script = document.createElement('script');
-        script.type = 'application/ld+json';
-        script.setAttribute('data-schema', 'job');
-        document.head.appendChild(script);
+    // Job Schema
+    if (job) {
+      let jobScript = document.querySelector('script[data-schema="job"]') as HTMLScriptElement;
+      if (!jobScript) {
+        jobScript = document.createElement('script');
+        jobScript.type = 'application/ld+json';
+        jobScript.setAttribute('data-schema', 'job');
+        document.head.appendChild(jobScript);
       }
 
-      const year = new Date().getFullYear();
-      const jobPosting = {
-        '@context': 'https://schema.org',
-        '@type': 'JobPosting',
-        title: job.title,
-        description: job.shortInfo || job.title,
-        datePosted: job.createdAt || new Date().toISOString(),
-        validThrough: job.lastDate ? parseIndianDate(job.lastDate) : undefined,
-        hiringOrganization: {
-          '@type': 'Organization',
-          name: job.department || 'Government of India',
-        },
-        jobLocation: {
-          '@type': 'Place',
-          address: {
-            '@type': 'PostalAddress',
-            addressCountry: 'IN',
-            addressRegion: job.state || 'India',
-          },
-        },
-        employmentType: 'FULL_TIME',
-        industry: 'Government',
-        qualifications: job.qualification || job.eligibilityDetails || undefined,
-      };
+      const slug = (job as any).slug || job.id;
+      const jobUrl = `${BASE_URL}/job/${slug}`;
 
-      script.textContent = JSON.stringify(jobPosting);
+      if (job.type === 'job') {
+        jobScript.textContent = JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'JobPosting',
+          title: job.title,
+          description: job.shortInfo || job.eligibilityDetails || job.title,
+          datePosted: (job as any).createdAt || new Date().toISOString().split('T')[0],
+          validThrough: job.lastDate ? parseIndianDate(job.lastDate) : undefined,
+          url: jobUrl,
+          hiringOrganization: {
+            '@type': 'Organization',
+            name: job.department || 'Government of India',
+            sameAs: (job as any).officialWebsiteUrl || BASE_URL,
+          },
+          jobLocation: {
+            '@type': 'Place',
+            address: {
+              '@type': 'PostalAddress',
+              addressCountry: 'IN',
+              addressRegion: job.state || 'India',
+            },
+          },
+          employmentType: 'FULL_TIME',
+          industry: 'Government',
+          qualifications: job.qualification || job.eligibilityDetails || undefined,
+          applicantLocationRequirements: {
+            '@type': 'Country',
+            name: 'India',
+          },
+          directApply: true,
+        });
+      } else {
+        // Article schema for admit card, result, answer key, admission
+        const typeLabel = getTypeLabel(job.type);
+        jobScript.textContent = JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: job.title,
+          description: job.shortInfo || job.title,
+          url: jobUrl,
+          datePublished: (job as any).createdAt || new Date().toISOString().split('T')[0],
+          dateModified: new Date().toISOString().split('T')[0],
+          publisher: {
+            '@type': 'Organization',
+            name: SITE_NAME,
+            url: BASE_URL,
+            logo: {
+              '@type': 'ImageObject',
+              url: `${BASE_URL}/favicon.png`,
+            },
+          },
+          mainEntityOfPage: jobUrl,
+          keywords: `${job.title}, ${job.department}, ${typeLabel}, sarkari result`,
+        });
+      }
+
+      // BreadcrumbList schema
+      let breadcrumbScript = document.querySelector('script[data-schema="breadcrumb"]') as HTMLScriptElement;
+      if (!breadcrumbScript) {
+        breadcrumbScript = document.createElement('script');
+        breadcrumbScript.type = 'application/ld+json';
+        breadcrumbScript.setAttribute('data-schema', 'breadcrumb');
+        document.head.appendChild(breadcrumbScript);
+      }
+      const typeHref = getTypeHref(job.type);
+      breadcrumbScript.textContent = JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: BASE_URL },
+          { '@type': 'ListItem', position: 2, name: getTypeLabel(job.type), item: `${BASE_URL}${typeHref}` },
+          { '@type': 'ListItem', position: 3, name: job.title, item: jobUrl },
+        ],
+      });
     }
 
     return () => {
-      const schema = document.querySelector('script[data-schema="job"]');
-      if (schema) schema.remove();
+      document.querySelector('script[data-schema="job"]')?.remove();
+      document.querySelector('script[data-schema="breadcrumb"]')?.remove();
     };
   }, [title, description, keywords, canonical, type, job]);
 }
 
 function parseIndianDate(dateStr: string): string | undefined {
   if (!dateStr) return undefined;
-  const parts = dateStr.split('/');
-  if (parts.length === 3) {
-    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+  // Handle "DD/MM/YYYY"
+  const slashParts = dateStr.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (slashParts) return `${slashParts[3]}-${slashParts[2].padStart(2,'0')}-${slashParts[1].padStart(2,'0')}`;
+  // Handle "DD Month YYYY"
+  const months: Record<string, string> = {
+    january:'01', february:'02', march:'03', april:'04', may:'05', june:'06',
+    july:'07', august:'08', september:'09', october:'10', november:'11', december:'12'
+  };
+  const wordParts = dateStr.toLowerCase().match(/(\d{1,2})\s+(\w+)\s+(\d{4})/);
+  if (wordParts && months[wordParts[2]]) {
+    return `${wordParts[3]}-${months[wordParts[2]]}-${wordParts[1].padStart(2,'0')}`;
   }
   return undefined;
 }
 
-export function generateJobMeta(job: Job): SEOProps {
-  const yearMatch = job.title.match(/20\d{2}/);
-  const year = yearMatch ? yearMatch[0] : new Date().getFullYear();
-  const typeLabel = getTypeLabel(job.type);
-  
-  let title = job.title;
-  const titleHasYear = /20\d{2}/.test(job.title);
-  const yearSuffix = titleHasYear ? '' : ` ${year}`;
-  
-  if (job.type === 'job') {
-    title = `${job.title}${yearSuffix} – Online Form, Eligibility, Last Date`;
-  } else if (job.type === 'admit-card') {
-    title = `${job.title}${yearSuffix} – Download Admit Card, Exam Date`;
-  } else if (job.type === 'result') {
-    title = `${job.title}${yearSuffix} – Check Result, Merit List, Cut Off`;
-  } else if (job.type === 'answer-key') {
-    title = `${job.title}${yearSuffix} – Download Answer Key, Solutions`;
+function getTypeLabel(type: string): string {
+  switch (type) {
+    case 'job':        return 'Government Jobs';
+    case 'admit-card': return 'Admit Card';
+    case 'result':     return 'Result';
+    case 'answer-key': return 'Answer Key';
+    case 'admission':  return 'Admission';
+    default:           return 'Notification';
   }
-  
-  let description = `${job.title} - online form, eligibility, age limit, syllabus, apply link`;
-  if (job.department) description += `. ${job.department}`;
-  if (job.lastDate) description += `. Last Date: ${job.lastDate}`;
-  description = description.slice(0, 160);
+}
 
-  const keywordParts = [
+function getTypeHref(type: string): string {
+  switch (type) {
+    case 'job':        return '/latest-jobs';
+    case 'admit-card': return '/admit-card';
+    case 'result':     return '/results';
+    case 'answer-key': return '/answer-key';
+    case 'admission':  return '/admission';
+    default:           return '/';
+  }
+}
+
+export function generateJobMeta(job: Job): SEOProps {
+  const year = new Date().getFullYear();
+  const titleYear = job.title.match(/20\d{2}/)?.[0] || year;
+  const yearSuffix = /20\d{2}/.test(job.title) ? '' : ` ${year}`;
+  const typeLabel = getTypeLabel(job.type);
+
+  // Power title — keyword rich
+  let title = job.title;
+  if (job.type === 'job')        title = `${job.title}${yearSuffix} – Apply Online, Eligibility, Last Date`;
+  else if (job.type === 'admit-card') title = `${job.title}${yearSuffix} – Download Admit Card, Exam Date, Hall Ticket`;
+  else if (job.type === 'result')     title = `${job.title}${yearSuffix} – Check Result, Merit List, Cut Off Marks`;
+  else if (job.type === 'answer-key') title = `${job.title}${yearSuffix} – Download Answer Key, Question Paper`;
+  else if (job.type === 'admission')  title = `${job.title}${yearSuffix} – Apply Online, Eligibility, Important Dates`;
+
+  // Power description — 155 chars max
+  let desc = '';
+  if (job.type === 'job') {
+    desc = `${job.title} — Apply online for ${job.department} recruitment ${titleYear}. `;
+    if (job.qualification) desc += `Eligibility: ${job.qualification}. `;
+    if (job.lastDate) desc += `Last Date: ${job.lastDate}. `;
+    desc += `Check vacancy, age limit, fee, syllabus at SarkariJobSeva.`;
+  } else if (job.type === 'admit-card') {
+    desc = `Download ${job.title} admit card ${titleYear} from ${job.department}. `;
+    if (job.lastDate) desc += `Exam Date: ${job.lastDate}. `;
+    desc += `Hall ticket download link, exam schedule at SarkariJobSeva.`;
+  } else if (job.type === 'result') {
+    desc = `Check ${job.title} result ${titleYear} — ${job.department}. `;
+    desc += `Merit list, cut off marks, scorecard download at SarkariJobSeva.`;
+  } else if (job.type === 'answer-key') {
+    desc = `Download ${job.title} answer key ${titleYear} — ${job.department}. `;
+    desc += `Official answer key, question paper, objection link at SarkariJobSeva.`;
+  } else {
+    desc = `${job.title} — ${job.department} ${titleYear}. `;
+    if (job.lastDate) desc += `Last Date: ${job.lastDate}. `;
+    desc += `Apply online, eligibility, important dates at SarkariJobSeva.`;
+  }
+  const description = desc.slice(0, 155);
+
+  // Power keywords
+  const deptWords = job.department?.split(' ') || [];
+  const keywords = [
     job.title,
+    `${job.title} ${titleYear}`,
     job.department,
-    job.state,
+    ...deptWords,
     typeLabel,
+    `${typeLabel} ${titleYear}`,
     job.qualification,
-    job.category,
-    `${year}`,
+    job.state,
     'sarkari result',
+    'sarkarijobseva',
+    'sarkari naukri',
     'government job',
-    'online form',
+    `online form ${titleYear}`,
+    'apply online',
     'eligibility',
+    'last date',
     'age limit',
-    'syllabus',
-    'apply link',
-  ].filter(Boolean);
-  const keywords = keywordParts.join(', ');
+  ].filter(Boolean).join(', ');
 
-  const slug = job.slug || job.id;
-  const canonical = `${typeof window !== 'undefined' ? window.location.origin : ''}/job/${slug}`;
+  const slug = (job as any).slug || job.id;
+  const canonical = `${BASE_URL}/job/${slug}`;
 
   return { title, description, keywords, canonical, type: 'article', job };
 }
 
-function getTypeLabel(type: string): string {
-  switch (type) {
-    case 'job': return 'Government Job';
-    case 'admit-card': return 'Admit Card';
-    case 'result': return 'Result';
-    case 'answer-key': return 'Answer Key';
-    case 'admission': return 'Admission';
-    default: return 'Notification';
-  }
-}
-
 export function generateListMeta(type: string, searchQuery?: string): SEOProps {
   const year = new Date().getFullYear();
-  
-  let title: string;
-  let description: string;
-  let keywords: string;
 
   if (searchQuery) {
-    title = `Search Results for "${searchQuery}"`;
-    description = `Find government jobs, admit cards, results matching "${searchQuery}". Latest SarkariJobSeva updates ${year}.`;
-    keywords = `${searchQuery}, sarkari result, government jobs, ${year}`;
-  } else {
-    switch (type) {
-      case 'job':
-      case 'latest-jobs':
-        title = `Latest Government Jobs ${year}`;
-        description = `Browse latest government job notifications ${year}. Apply online for SSC, Railway, UPSC, State PSC and more sarkari naukri.`;
-        keywords = `government jobs ${year}, sarkari naukri, latest govt jobs, SSC jobs, Railway jobs, UPSC`;
-        break;
-      case 'admit-card':
-        title = `Admit Card Download ${year}`;
-        description = `Download admit cards for government exams ${year}. SSC, Railway, UPSC, State exams hall tickets available.`;
-        keywords = `admit card ${year}, hall ticket download, exam admit card, sarkari exam`;
-        break;
-      case 'result':
-      case 'results':
-        title = `Government Exam Results ${year}`;
-        description = `Check latest government exam results ${year}. SSC, Railway, UPSC, State PSC results and merit lists.`;
-        keywords = `result ${year}, sarkari result, exam result, merit list, government exam`;
-        break;
-      case 'answer-key':
-        title = `Answer Keys ${year}`;
-        description = `Download official answer keys for government exams ${year}. SSC, Railway, UPSC answer keys with solutions.`;
-        keywords = `answer key ${year}, exam answer key, SSC answer key, Railway answer key`;
-        break;
-      case 'admission':
-        title = `Admission Notifications ${year}`;
-        description = `Latest admission notifications for government colleges and universities ${year}. Apply for higher education.`;
-        keywords = `admission ${year}, government college admission, university admission`;
-        break;
-      default:
-        title = `SarkariJobSeva ${year}`;
-        description = `Latest government jobs, admit cards, results and answer keys ${year}. Your one-stop portal for govt jobs.`;
-        keywords = `sarkari result, government jobs, admit card, result ${year}`;
-    }
+    return {
+      title: `"${searchQuery}" – Sarkari Job Search Results ${year}`,
+      description: `Search results for "${searchQuery}" — latest government jobs, admit cards, results ${year}. Find sarkari naukri on SarkariJobSeva.`,
+      keywords: `${searchQuery}, sarkari result, sarkari naukri, government jobs ${year}, sarkarijobseva`,
+    };
   }
 
-  return { title, description, keywords };
+  switch (type) {
+    case 'job':
+      return {
+        title: `Latest Government Jobs ${year} – Sarkari Naukri Online Form`,
+        description: `Latest sarkari naukri ${year} — SSC, Railway, UPSC, Bank, State Govt jobs. Apply online for government jobs. 10th, 12th, Graduation pass jobs daily updates.`,
+        keywords: `sarkari naukri ${year}, government jobs ${year}, latest govt jobs, SSC jobs, Railway jobs, UPSC, Bank jobs, 10th pass jobs, 12th pass jobs, sarkari result`,
+      };
+    case 'admit-card':
+      return {
+        title: `Admit Card Download ${year} – Hall Ticket Sarkari Exam`,
+        description: `Download admit card ${year} for all government exams. SSC, Railway, UPSC, State PSC hall tickets. Exam date, center details at SarkariJobSeva.`,
+        keywords: `admit card ${year}, hall ticket download, sarkari exam admit card, SSC admit card, Railway admit card, UPSC admit card`,
+      };
+    case 'result':
+      return {
+        title: `Sarkari Result ${year} – Government Exam Results, Merit List`,
+        description: `Sarkari result ${year} — check government exam results, merit list, cut off marks. SSC, Railway, UPSC, Bank, State PSC results at SarkariJobSeva.`,
+        keywords: `sarkari result ${year}, government exam result, merit list, cut off marks, SSC result, Railway result, UPSC result`,
+      };
+    case 'answer-key':
+      return {
+        title: `Answer Key ${year} – Government Exam Official Answer Keys`,
+        description: `Download official answer keys ${year} for government exams. SSC, Railway, UPSC answer key with question papers and solutions at SarkariJobSeva.`,
+        keywords: `answer key ${year}, sarkari exam answer key, SSC answer key, Railway answer key, UPSC answer key, official answer key`,
+      };
+    case 'admission':
+      return {
+        title: `Admission ${year} – Government College University Admission Form`,
+        description: `Latest admission notifications ${year} for government colleges and universities. Apply online, eligibility, important dates at SarkariJobSeva.`,
+        keywords: `admission ${year}, government college admission, university admission, sarkari admission, B.Ed admission, engineering admission`,
+      };
+    default:
+      return {
+        title: `SarkariJobSeva – Sarkari Result, Naukri, Admit Card ${year}`,
+        description: `SarkariJobSeva — India's trusted govt job portal. Latest sarkari result, naukri, admit card, answer key ${year}. 100% free daily updates.`,
+        keywords: `sarkarijobseva, sarkari result ${year}, sarkari naukri, government jobs, admit card, result`,
+      };
+  }
 }
 
 export function generateHomeMeta(): SEOProps {
   const year = new Date().getFullYear();
   return {
-    title: `SarkariJobSeva – Latest Govt Jobs, Admit Card, Results`,
-    description: `SarkariJobSeva ${year} - Latest Sarkari Jobs, Admit Card, Results, Answer Key 2026. सरकारी नौकरी, सुरक्षित भविष्य।`,
-    keywords: `sarkari result ${year}, government jobs, sarkari naukri, admit card, result, SSC, Railway, UPSC, Bank jobs`,
-    canonical: typeof window !== 'undefined' ? window.location.origin : '',
+    title: `SarkariJobSeva – Sarkari Result, Naukri, Admit Card ${year}`,
+    description: `SarkariJobSeva.com — India ka #1 sarkari result & naukri portal. Latest government jobs ${year}, admit card, result, answer key. SSC, Railway, UPSC, Bank, State Govt jobs daily free alert.`,
+    keywords: `sarkarijobseva, sarkari result ${year}, sarkari naukri ${year}, government jobs ${year}, admit card ${year}, SSC CGL, Railway NTPC, UPSC, Bank jobs, 10th pass govt job, 12th pass sarkari naukri, free job alert, sarkari result`,
+    canonical: BASE_URL,
   };
 }
