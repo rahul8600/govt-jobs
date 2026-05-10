@@ -457,7 +457,7 @@ export default function JobDetails() {
           <h2 className="bg-blue-700 text-white p-4 text-sm font-bold uppercase tracking-widest text-center">Similar Jobs</h2>
           <div className="divide-y divide-slate-100">
             {relatedJobs.map(related => (
-              <Link key={related.id} href={}>
+              <Link key={related.id} href={`/job/${(related as any).slug || related.id}`}>
                 <div className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 cursor-pointer transition-colors">
                   <div className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
