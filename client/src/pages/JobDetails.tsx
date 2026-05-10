@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useRoute, Link } from "wouter";
 import { useJobs } from "@/lib/useJobs";
-import { Calendar, ExternalLink, ShieldCheck, MapPin, ChevronDown, ChevronUp } from "lucide-react";
+import { Calendar, ExternalLink, ShieldCheck, MapPin, ChevronDown, ChevronUp, Share2 } from "lucide-react";
 import { useSEO, generateJobMeta } from "@/components/SEO";
 import { usePageTracker } from "@/lib/usePageTracker";
 
@@ -43,6 +43,30 @@ const hasLinks = (links: { label: string; url: string }[] | null | undefined): b
   return hasArrayContent(links, l => hasText(l.label) && hasText(l.url));
 };
 
+// Check if job last date has passed
+function isJobExpired(lastDate: string | null | undefined): boolean {
+  if (!lastDate) return false;
+  try {
+    const months: Record<string, number> = {
+      january:0,february:1,march:2,april:3,may:4,june:5,
+      july:6,august:7,september:8,october:9,november:10,december:11
+    };
+    const wordMatch = lastDate.toLowerCase().match(/(\d{1,2})\s+(\w+)\s+(\d{4})/);
+    if (wordMatch && months[wordMatch[2]] !== undefined) {
+      const d = new Date(parseInt(wordMatch[3]), months[wordMatch[2]], parseInt(wordMatch[1]));
+      d.setDate(d.getDate() + 1);
+      return d < new Date();
+    }
+    const slashMatch = lastDate.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (slashMatch) {
+      const d = new Date(parseInt(slashMatch[3]), parseInt(slashMatch[2])-1, parseInt(slashMatch[1]));
+      d.setDate(d.getDate() + 1);
+      return d < new Date();
+    }
+  } catch {}
+  return false;
+}
+
 export default function JobDetails() {
   const [match, params] = useRoute("/job/:id");
   const { jobs, loading } = useJobs();
@@ -55,9 +79,7 @@ export default function JobDetails() {
   usePageTracker('job-detail', job ? parseInt(job.id) : undefined);
 
   if (loading) return <div className="p-10 text-center font-bold">Loading...</div>;
-
   if (!match) return null;
-
   if (!job) return <div className="p-10 text-center font-bold">Job Not Found</div>;
 
   const notifyLink = job.notificationUrl || job.links.find(l => l.label.toLowerCase().includes('notification'))?.url || "#";
@@ -82,6 +104,12 @@ export default function JobDetails() {
   };
   
   const primaryAction = getPrimaryActionButton();
+  const expired = isJobExpired(job.lastDate);
+
+  // Related jobs — same type, excluding current
+  const relatedJobs = jobs
+    .filter(j => j.type === job.type && j.id !== job.id)
+    .slice(0, 5);
 
   const showDatesHtml = hasText(job.importantDatesHtml);
   const showDatesStructured = !showDatesHtml && hasImportantDates(job.importantDates);
@@ -115,6 +143,21 @@ export default function JobDetails() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-10 pb-20">
+
+      {/* Expired Banner */}
+      {expired && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3">
+          <span className="text-2xl">⚠️</span>
+          <div className="flex-1">
+            <p className="text-red-700 font-black text-sm uppercase tracking-wide">Application Closed!</p>
+            <p className="text-red-600 text-xs mt-0.5">Last date ({job.lastDate}) has passed. Check latest jobs for new notifications.</p>
+          </div>
+          <Link href="/latest-jobs">
+            <span className="bg-red-600 text-white text-xs font-bold px-3 py-2 rounded-lg cursor-pointer hover:bg-red-700 flex-shrink-0">New Jobs</span>
+          </Link>
+        </div>
+      )}
+
       {/* 1. Header Card */}
       <div className="bg-white p-10 rounded-2xl border border-slate-200/80 shadow-lg shadow-slate-200/50 space-y-6">
         <h1 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight leading-snug text-center job-details-title" data-testid="text-job-title">
@@ -140,6 +183,15 @@ export default function JobDetails() {
           <a href={notifyLink} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 bg-slate-700 text-white w-full md:w-auto px-9 py-5 md:py-4 rounded-xl font-bold text-sm md:text-xs uppercase tracking-widest hover:bg-slate-800 transition-all duration-200 shadow-lg shadow-slate-700/25 hover:shadow-xl active:scale-[0.98]" data-testid="button-notification">
             Notification
           </a>
+          {/* WhatsApp Share */}
+          <a
+            href={`https://wa.me/?text=${encodeURIComponent(`🔔 ${job.title}\n📅 Last Date: ${job.lastDate || 'N/A'}\n🔗 ${window.location.href}`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 bg-green-500 text-white w-full md:w-auto px-9 py-5 md:py-4 rounded-xl font-bold text-sm md:text-xs uppercase tracking-widest hover:bg-green-600 transition-all duration-200 shadow-lg active:scale-[0.98]"
+          >
+            <Share2 className="w-5 h-5 md:w-4 md:h-4" /> WhatsApp Share
+          </a>
           {hasText(job.rawJobContent) && (
             <button 
               onClick={() => setShowFullNotification(!showFullNotification)}
@@ -153,15 +205,12 @@ export default function JobDetails() {
         </div>
       </div>
 
-      {/* Full Notification Content - Expandable */}
+      {/* Full Notification Content */}
       {hasText(job.rawJobContent) && showFullNotification && (
         <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-lg">
           <h2 className="bg-emerald-600 text-white p-5 text-sm font-bold uppercase tracking-widest">Full Notification Details</h2>
           <div className="p-8 max-h-[600px] overflow-y-auto">
-            <div 
-              className="prose prose-sm max-w-none text-slate-700 leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: job.rawJobContent! }}
-            />
+            <div className="prose prose-sm max-w-none text-slate-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: job.rawJobContent! }} />
           </div>
         </div>
       )}
@@ -303,7 +352,6 @@ export default function JobDetails() {
         </div>
       )}
 
-      {/* Physical Standard Test (HTML only) */}
       {showPstHtml && (
         <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-md">
           <h2 className="bg-[#006400] text-white p-4 text-sm font-bold uppercase tracking-widest text-center">Physical Standard Test (PST)</h2>
@@ -311,7 +359,6 @@ export default function JobDetails() {
         </div>
       )}
 
-      {/* Physical Efficiency Test (HTML only) */}
       {showPetHtml && (
         <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-md">
           <h2 className="bg-[#006400] text-white p-4 text-sm font-bold uppercase tracking-widest text-center">Physical Efficiency Test (PET)</h2>
@@ -319,7 +366,6 @@ export default function JobDetails() {
         </div>
       )}
 
-      {/* Physical Eligibility (structured - only if no PST/PET HTML) */}
       {showPhysicalStructured && (
         <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-md">
           <h2 className="bg-[#006400] text-white p-4 text-sm font-bold uppercase tracking-widest text-center">Physical Eligibility Details</h2>
@@ -358,7 +404,7 @@ export default function JobDetails() {
                 <div key={i} className="grid grid-cols-2 items-center p-6 hover:bg-rose-50/30 transition-all duration-200">
                   <div className="font-bold text-slate-700 text-sm">{l.label}</div>
                   <div className="text-right">
-                    <a href={l.url} target="_blank" rel="noopener noreferrer" className="inline-block bg-rose-600 text-white px-8 py-3.5 rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-rose-700 transition-all duration-200 shadow-lg shadow-rose-600/20 hover:shadow-xl" data-testid={`link-${l.label.toLowerCase().replace(/\s+/g, '-')}`}>
+                    <a href={l.url} target="_blank" rel="noopener noreferrer" className="inline-block bg-rose-600 text-white px-8 py-3.5 rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-rose-700 transition-all duration-200 shadow-lg shadow-rose-600/20 hover:shadow-xl">
                       Click Here
                     </a>
                   </div>
@@ -369,27 +415,50 @@ export default function JobDetails() {
         </div>
       )}
 
-      {/* Internal Links for SEO */}
+      {/* Related Jobs */}
+      {relatedJobs.length > 0 && (
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-md">
+          <h2 className="bg-blue-700 text-white p-4 text-sm font-bold uppercase tracking-widest text-center">Similar Jobs</h2>
+          <div className="divide-y divide-slate-100">
+            {relatedJobs.map(related => (
+              <Link key={related.id} href={`/job/${(related as any).slug || related.id}`}>
+                <div className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 cursor-pointer transition-colors">
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-slate-700 leading-snug line-clamp-1">{related.title}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">{related.department}</p>
+                  </div>
+                  {(related as any).lastDate && (
+                    <span className="text-xs text-orange-600 font-bold flex-shrink-0">{(related as any).lastDate}</span>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* More Jobs */}
       <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-md">
         <h2 className="bg-blue-700 text-white p-4 text-sm font-bold uppercase tracking-widest text-center">More Government Jobs</h2>
         <div className="p-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Link href="/latest-jobs" data-testid="link-latest-govt-jobs">
+            <Link href="/latest-jobs">
               <div className="bg-blue-50 hover:bg-blue-100 p-4 rounded-lg text-center transition-colors cursor-pointer border border-blue-100">
                 <span className="text-blue-700 font-bold text-sm">Latest Government Jobs</span>
               </div>
             </Link>
-            <Link href="/latest-jobs?qualification=10th" data-testid="link-10th-pass-jobs">
+            <Link href="/latest-jobs?qualification=10th">
               <div className="bg-emerald-50 hover:bg-emerald-100 p-4 rounded-lg text-center transition-colors cursor-pointer border border-emerald-100">
                 <span className="text-emerald-700 font-bold text-sm">10th Pass Jobs</span>
               </div>
             </Link>
-            <Link href="/search?q=police" data-testid="link-police-jobs">
+            <Link href="/search?q=police">
               <div className="bg-slate-100 hover:bg-slate-200 p-4 rounded-lg text-center transition-colors cursor-pointer border border-slate-200">
                 <span className="text-slate-700 font-bold text-sm">Police Jobs</span>
               </div>
             </Link>
-            <Link href="/search?q=ssc" data-testid="link-ssc-jobs">
+            <Link href="/search?q=ssc">
               <div className="bg-amber-50 hover:bg-amber-100 p-4 rounded-lg text-center transition-colors cursor-pointer border border-amber-100">
                 <span className="text-amber-700 font-bold text-sm">SSC Jobs</span>
               </div>
