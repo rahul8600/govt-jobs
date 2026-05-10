@@ -1,56 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { Home, Briefcase, FileText, CheckSquare, GraduationCap, Search } from "lucide-react";
 
-function PushNotificationPrompt() {
-  const [show, setShow] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
-
-  useEffect(() => {
-    if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
-    if (Notification.permission === 'default' && !localStorage.getItem('push_dismissed')) {
-      const t = setTimeout(() => setShow(true), 5000);
-      return () => clearTimeout(t);
-    }
-  }, []);
-
-  const requestPermission = async () => {
-    const perm = await Notification.requestPermission();
-    if (perm === 'granted') {
-      new Notification('SarkariJobSeva', {
-        body: 'You will now receive job alerts!',
-        icon: '/favicon.png',
-      });
-    }
-    setShow(false);
-    localStorage.setItem('push_dismissed', '1');
-  };
-
-  const dismiss = () => {
-    setShow(false);
-    localStorage.setItem('push_dismissed', '1');
-  };
-
-  if (!show || dismissed) return null;
-
-  return (
-    <div className="fixed bottom-20 md:bottom-6 left-4 right-4 md:left-auto md:right-6 md:w-80 z-50 bg-white border border-blue-200 rounded-2xl shadow-xl p-4 flex items-start gap-3">
-      <div className="text-2xl flex-shrink-0">🔔</div>
-      <div className="flex-1">
-        <p className="font-black text-slate-800 text-sm">Job Alerts Enable Karein!</p>
-        <p className="text-xs text-slate-500 mt-0.5">Latest sarkari naukri ki instant notification paayein.</p>
-        <div className="flex gap-2 mt-3">
-          <button onClick={requestPermission} className="flex-1 bg-blue-700 text-white text-xs font-bold py-2 rounded-lg hover:bg-blue-800 transition-colors">
-            Enable
-          </button>
-          <button onClick={dismiss} className="flex-1 bg-slate-100 text-slate-600 text-xs font-bold py-2 rounded-lg hover:bg-slate-200 transition-colors">
-            Later
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
 
@@ -247,9 +197,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {" | "}
         <Link href="/contact"><span className="text-blue-500 cursor-pointer">Contact</span></Link>
       </div>
-
-      {/* Push Notification Prompt */}
-      <PushNotificationPrompt />
 
     </div>
   );
