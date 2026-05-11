@@ -10,6 +10,8 @@ import JobDetails from "@/pages/JobDetails";
 import Admin from "@/pages/Admin";
 import JobList from "@/pages/JobList";
 import { Disclaimer, PrivacyPolicy, TermsOfService, Syllabus, Contact } from "@/pages/InfoPages";
+import BlogList from "@/pages/Blog";
+import BlogDetail from "@/pages/BlogDetail";
 
 function Router() {
   return (
@@ -29,6 +31,8 @@ function Router() {
         <Route path="/jobs/graduation" component={JobList} />
         <Route path="/jobs/post-graduate" component={JobList} />
         <Route path="/jobs/state/:state" component={JobList} />
+        <Route path="/blog" component={BlogList} />
+        <Route path="/blog/:slug" component={BlogDetail} />
         <Route path="/disclaimer" component={Disclaimer} />
         <Route path="/privacy-policy" component={PrivacyPolicy} />
         <Route path="/terms-of-service" component={TermsOfService} />
