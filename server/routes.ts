@@ -205,18 +205,21 @@ export async function registerRoutes(
       res.set('Expires', '0');
       res.set('Surrogate-Control', 'no-store');
       
-      const { type, qualification, state } = req.query;
+      const { type, qualification, state, page, limit } = req.query;
+      
+      const pageNum = page ? parseInt(page as string) || 1 : 1;
+      const limitNum = limit ? parseInt(limit as string) || 500 : 500;
       
       if (qualification || state || type) {
         const filters: { type?: string; qualification?: string; state?: string } = {};
         if (type && typeof type === 'string') filters.type = type;
         if (qualification && typeof qualification === 'string') filters.qualification = qualification;
         if (state && typeof state === 'string') filters.state = state;
-        const posts = await storage.getFilteredPosts(filters);
+        const posts = await storage.getFilteredPosts(filters, pageNum, limitNum);
         return res.json(posts);
       }
       
-      const posts = await storage.getAllPosts();
+      const posts = await storage.getAllPosts(pageNum, limitNum);
       res.json(posts);
     } catch (error) {
       console.error("Error fetching posts:", error);
