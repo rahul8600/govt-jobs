@@ -1,7 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import bcrypt from "bcrypt";
-import rateLimit from "express-rate-limit";
 import OpenAI from "openai";
 import { storage } from "./storage";
 import { insertPostSchema } from "@shared/schema";
@@ -113,61 +112,6 @@ function requireAuth(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-// ===== TELEGRAM BOT =====
-const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
-const TELEGRAM_CHANNEL = process.env.TELEGRAM_CHANNEL_ID || '@sarkarijobseva';
-const SITE_URL_TG = process.env.SITE_URL || 'https://sarkarijobseva.com';
-
-async function sendTelegramMessage(post: any): Promise<void> {
-  if (!TELEGRAM_TOKEN) return;
-  try {
-    const typeEmoji: Record<string, string> = {
-      'job': '💼', 'admit-card': '🪪', 'result': '📊',
-      'answer-key': '🔑', 'admission': '🎓',
-    };
-    const typeLabel: Record<string, string> = {
-      'job': 'New Job Alert', 'admit-card': 'Admit Card Out',
-      'result': 'Result Declared', 'answer-key': 'Answer Key Released',
-      'admission': 'Admission Open',
-    };
-    const emoji = typeEmoji[post.type] || '🔔';
-    const label = typeLabel[post.type] || 'New Update';
-    const jobUrl = `${SITE_URL_TG}/job/${post.slug || post.id}`;
-    let vacancyText = '';
-    if (post.vacancyDetails && Array.isArray(post.vacancyDetails)) {
-      const total = post.vacancyDetails.find((v: any) => v.totalPost && v.totalPost !== 'NA');
-      if (total) vacancyText = `
-📊 *Posts:* ${total.totalPost}`;
-    }
-    const message = `${emoji} *${label}!*
-
-📋 *${post.title}*
-🏢 ${post.department}${vacancyText}
-${post.qualification ? `✅ *Eligibility:* ${post.qualification}
-` : ''}${post.lastDate ? `📅 *Last Date:* ${post.lastDate}
-` : ''}
-🔗 [Full Details & Apply](${jobUrl})
-
-📲 @sarkarijobseva | [sarkarijobseva\.com](${SITE_URL_TG})`;
-    const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: TELEGRAM_CHANNEL,
-        text: message,
-        parse_mode: 'MarkdownV2',
-        disable_web_page_preview: false,
-      }),
-    });
-    const result = await response.json() as any;
-    if (!result.ok) console.error('[Telegram] Error:', result.description);
-    else console.log('[Telegram] Posted:', post.title);
-  } catch (error) {
-    console.error('[Telegram] Failed:', error);
-  }
-}
-// ===== END TELEGRAM BOT =====
-
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -253,24 +197,6 @@ export async function registerRoutes(
     }
   });
 
-  // Search posts endpoint
-  app.get("/api/search", async (req, res) => {
-    try {
-      res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-      const { q, page = '1', limit = '20' } = req.query;
-      if (!q || typeof q !== 'string' || q.trim().length < 2) {
-        return res.status(400).json({ error: "Query must be at least 2 characters" });
-      }
-      const pageNum = Math.max(1, parseInt(page as string) || 1);
-      const limitNum = Math.min(50, parseInt(limit as string) || 20);
-      const result = await storage.searchPosts(q.trim(), pageNum, limitNum);
-      res.json(result);
-    } catch (error) {
-      console.error("Error searching posts:", error);
-      res.status(500).json({ error: "Failed to search posts" });
-    }
-  });
-
   // Get all posts with optional filters
   app.get("/api/posts", async (req, res) => {
     try {
@@ -279,20 +205,18 @@ export async function registerRoutes(
       res.set('Expires', '0');
       res.set('Surrogate-Control', 'no-store');
       
-      const { type, qualification, state, page = '1', limit = '30' } = req.query;
-      const pageNum = Math.max(1, parseInt(page as string) || 1);
-      const limitNum = Math.min(100, parseInt(limit as string) || 30);
+      const { type, qualification, state } = req.query;
       
       if (qualification || state || type) {
         const filters: { type?: string; qualification?: string; state?: string } = {};
         if (type && typeof type === 'string') filters.type = type;
         if (qualification && typeof qualification === 'string') filters.qualification = qualification;
         if (state && typeof state === 'string') filters.state = state;
-        const posts = await storage.getFilteredPosts(filters, pageNum, limitNum);
+        const posts = await storage.getFilteredPosts(filters);
         return res.json(posts);
       }
       
-      const posts = await storage.getAllPosts(pageNum, limitNum);
+      const posts = await storage.getAllPosts();
       res.json(posts);
     } catch (error) {
       console.error("Error fetching posts:", error);
@@ -393,8 +317,6 @@ export async function registerRoutes(
         validatedData.slug = await ensureUniqueSlug(baseSlug);
       }
       const post = await storage.createPost(validatedData);
-      // Auto-post to Telegram
-      sendTelegramMessage(post).catch(e => console.error('[Telegram] Background error:', e));
       res.status(201).json(post);
     } catch (error) {
       console.error("Error creating post:", error);
@@ -460,8 +382,8 @@ export async function registerRoutes(
     }
   });
 
-  // AI Job Parser endpoint (protected + rate limited)
-  app.post("/api/parse-job", requireAuth, rateLimit({ windowMs: 60 * 1000, max: 10, message: { error: 'Too many parse requests. Wait a minute.' } }), async (req, res) => {
+  // AI Job Parser endpoint (protected)
+  app.post("/api/parse-job", requireAuth, async (req, res) => {
     try {
       const { rawText } = req.body;
       
@@ -528,6 +450,90 @@ Format dates in DD/MM/YYYY or "Month DD, YYYY" format as they appear.`;
     }
   });
 
+
+  // ===== BLOG ROUTES =====
+  // Get all published blogs
+  app.get('/api/blogs', async (req, res) => {
+    try {
+      const { db } = await import('./db');
+      const result = await db.execute('SELECT id, title, slug, excerpt, image_url, category, tags, author, views, featured, created_at FROM blogs WHERE published = true ORDER BY created_at DESC');
+      res.json(result.rows || []);
+    } catch (error) {
+      console.error('Error fetching blogs:', error);
+      res.status(500).json({ error: 'Failed to fetch blogs' });
+    }
+  });
+
+  // Get single blog by slug
+  app.get('/api/blogs/:slug', async (req, res) => {
+    try {
+      const { db } = await import('./db');
+      const { slug } = req.params;
+      await db.execute('UPDATE blogs SET views = views + 1 WHERE slug = $1', [slug]);
+      const result = await db.execute('SELECT * FROM blogs WHERE slug = $1 AND published = true', [slug]);
+      if (!result.rows || result.rows.length === 0) return res.status(404).json({ error: 'Blog not found' });
+      res.json(result.rows[0]);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch blog' });
+    }
+  });
+
+  // Create blog (admin only)
+  app.post('/api/blogs', requireAuth, async (req, res) => {
+    try {
+      const { db } = await import('./db');
+      const { title, content, excerpt, image_url, category, tags, featured, published } = req.body;
+      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now();
+      const result = await db.execute(
+        'INSERT INTO blogs (title, slug, content, excerpt, image_url, category, tags, featured, published) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
+        [title, slug, content, excerpt, image_url || '', category || 'job', tags || '', featured || false, published || false]
+      );
+      res.json(result.rows[0]);
+    } catch (error) {
+      console.error('Error creating blog:', error);
+      res.status(500).json({ error: 'Failed to create blog' });
+    }
+  });
+
+  // Update blog (admin only)
+  app.put('/api/blogs/:id', requireAuth, async (req, res) => {
+    try {
+      const { db } = await import('./db');
+      const { id } = req.params;
+      const { title, content, excerpt, image_url, category, tags, featured, published } = req.body;
+      const result = await db.execute(
+        'UPDATE blogs SET title=$1, content=$2, excerpt=$3, image_url=$4, category=$5, tags=$6, featured=$7, published=$8, updated_at=NOW() WHERE id=$9 RETURNING *',
+        [title, content, excerpt, image_url, category, tags, featured, published, id]
+      );
+      res.json(result.rows[0]);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to update blog' });
+    }
+  });
+
+  // Delete blog (admin only)
+  app.delete('/api/blogs/:id', requireAuth, async (req, res) => {
+    try {
+      const { db } = await import('./db');
+      const { id } = req.params;
+      await db.execute('DELETE FROM blogs WHERE id = $1', [id]);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to delete blog' });
+    }
+  });
+
+  // Get all blogs for admin
+  app.get('/api/admin/blogs', requireAuth, async (req, res) => {
+    try {
+      const { db } = await import('./db');
+      const result = await db.execute('SELECT * FROM blogs ORDER BY created_at DESC');
+      res.json(result.rows || []);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch blogs' });
+    }
+  });
+
   // robots.txt
   app.get("/robots.txt", (req, res) => {
     const baseUrl = `${req.protocol}://${req.get('host')}`;
@@ -551,8 +557,8 @@ Sitemap: ${baseUrl}/sitemap.xml
   // sitemap.xml
   app.get("/sitemap.xml", async (req, res) => {
     try {
-      const baseUrl = process.env.SITE_URL || `${req.protocol}://${req.get('host')}`;
-      const posts = await storage.getAllPosts(1, 10000); // get all posts for sitemap
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      const posts = await storage.getAllPosts();
       
       const staticPages = [
         { loc: '/', priority: '1.0', changefreq: 'daily' },
