@@ -925,7 +925,7 @@ Visit https://ssc.nic.in and apply online...`}
                 ))}
               </div>
             </div>
-          ) : (
+          ) : activeTab === 'blog' || activeTab === 'add-blog' ? null : (
             <form onSubmit={handleSubmit} className="portal-card bg-white p-8 space-y-10 border border-slate-200 rounded-2xl shadow-sm">
               <div className="flex justify-between items-center border-b border-slate-100 pb-6">
                 <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">
