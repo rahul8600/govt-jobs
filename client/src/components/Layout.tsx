@@ -1,121 +1,8 @@
 import { Link, useLocation } from "wouter";
-import { Home, Briefcase, FileText, CheckSquare, GraduationCap, Search, ArrowUp, X, Moon, Sun } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
-
-function PushNotificationPrompt() {
-  const [show, setShow] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
-
-  useEffect(() => {
-    if (!('Notification' in window)) return;
-    if (Notification.permission === 'default' && !localStorage.getItem('push_dismissed')) {
-      const t = setTimeout(() => setShow(true), 5000);
-      return () => clearTimeout(t);
-    }
-  }, []);
-
-  const requestPermission = async () => {
-    const perm = await Notification.requestPermission();
-    if (perm === 'granted') {
-      new Notification('SarkariJobSeva', {
-        body: 'Job alerts enabled! Latest sarkari naukri milegi.',
-        icon: '/logo.png',
-      });
-    }
-    setShow(false);
-    localStorage.setItem('push_dismissed', '1');
-  };
-
-  const dismiss = () => {
-    setShow(false);
-    localStorage.setItem('push_dismissed', '1');
-  };
-
-  if (!show || dismissed) return null;
-
-  return (
-    <>
-      {/* Backdrop on mobile */}
-      <div className="fixed inset-0 bg-black/50 z-[99] md:hidden" onClick={dismiss} />
-
-      {/* Popup — fullscreen bottom sheet on mobile, small card on desktop */}
-      <div className="fixed z-[100] 
-        bottom-0 left-0 right-0 rounded-t-3xl
-        md:bottom-6 md:right-6 md:left-auto md:rounded-2xl md:w-96
-        bg-white shadow-2xl overflow-hidden">
-        
-        {/* Header with logo */}
-        <div className="bg-blue-700 px-6 py-5 flex items-center gap-4">
-          <img src="/logo.png" alt="SarkariJobSeva" className="w-12 h-12 rounded-xl object-contain bg-white p-1 flex-shrink-0" />
-          <div>
-            <p className="text-white font-black text-base">SarkariJobSeva</p>
-            <p className="text-blue-200 text-xs font-medium">Job Alert Notification</p>
-          </div>
-          <button onClick={dismiss} className="ml-auto text-blue-200 hover:text-white">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="px-6 py-5">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-yellow-100 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">🔔</div>
-            <div>
-              <p className="font-black text-slate-800 text-base">Job Alerts Enable Karein!</p>
-              <p className="text-slate-500 text-sm mt-0.5">Nayi sarkari naukri aate hi notification paayein — bilkul free!</p>
-            </div>
-          </div>
-
-          <div className="bg-blue-50 rounded-xl p-4 mb-5 space-y-2">
-            <div className="flex items-center gap-2 text-sm text-slate-600 font-medium">
-              <span className="text-green-500">✅</span> Latest Jobs Alert
-            </div>
-            <div className="flex items-center gap-2 text-sm text-slate-600 font-medium">
-              <span className="text-green-500">✅</span> Admit Card Reminder
-            </div>
-            <div className="flex items-center gap-2 text-sm text-slate-600 font-medium">
-              <span className="text-green-500">✅</span> Result Notification
-            </div>
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              onClick={requestPermission}
-              className="flex-1 bg-blue-700 text-white font-black py-3.5 rounded-xl hover:bg-blue-800 transition-colors text-sm shadow-lg shadow-blue-700/30"
-            >
-              🔔 Enable Now
-            </button>
-            <button
-              onClick={dismiss}
-              className="flex-1 bg-slate-100 text-slate-600 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition-colors text-sm"
-            >
-              Later
-            </button>
-          </div>
-
-          <p className="text-center text-xs text-slate-400 mt-3">
-            Aap kisi bhi waqt settings se band kar sakte hain
-          </p>
-        </div>
-      </div>
-    </>
-  );
-}
+import { Home, Briefcase, FileText, CheckSquare, GraduationCap, Search } from "lucide-react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
-  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
-
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('darkMode', 'true');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('darkMode', 'false');
-    }
-  }, [darkMode]);
 
   const navItems = [
     { href: "/",            label: "Home",       icon: Home },
@@ -142,20 +29,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <span className="text-white font-black text-lg tracking-tight">SarkariJobSeva</span>
             </div>
           </Link>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center hover:bg-blue-500 transition-colors"
-              aria-label="Toggle dark mode"
-            >
-              {darkMode ? <Sun className="w-5 h-5 text-white" /> : <Moon className="w-5 h-5 text-white" />}
-            </button>
-            <Link href="/search">
-              <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center cursor-pointer hover:bg-blue-500 transition-colors">
-                <Search className="w-5 h-5 text-white" />
-              </div>
-            </Link>
-          </div>
+          <Link href="/search">
+            <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center cursor-pointer hover:bg-blue-500 transition-colors">
+              <Search className="w-5 h-5 text-white" />
+            </div>
+          </Link>
         </div>
 
         {/* Desktop Nav */}
@@ -241,22 +119,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <p className="text-slate-500 text-sm leading-relaxed mb-4">
               भारत का सबसे भरोसेमंद सरकारी नौकरी पोर्टल। रोज़ अपडेट, बिल्कुल सटीक जानकारी।
             </p>
-            <div className="flex flex-wrap gap-2 mb-4">
-              <span className="bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-lg border border-green-100">✅ Updated Daily</span>
-              <span className="bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-lg border border-blue-100">🔒 Official Sources</span>
-              <span className="bg-slate-50 text-slate-700 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200">🆓 100% Free</span>
-            </div>
-            <div className="flex gap-3">
-              <a href="https://www.instagram.com/sarkarijobseva" target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:opacity-90 transition-opacity shadow-sm">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-                Instagram
-              </a>
-              <a href="https://whatsapp.com/channel/0029Vb7dt842ER6rNwc6eB47" target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-2 bg-green-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:opacity-90 transition-opacity shadow-sm">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                WhatsApp
-              </a>
+            <div className="flex flex-wrap gap-2">
+              <span className="bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-lg border border-green-100">
+                ✅ Updated Daily
+              </span>
+              <span className="bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-lg border border-blue-100">
+                🔒 Official Sources
+              </span>
+              <span className="bg-slate-50 text-slate-700 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200">
+                🆓 100% Free
+              </span>
             </div>
           </div>
           <div>
@@ -302,26 +174,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Mobile Footer (minimal) */}
       <div className="md:hidden bg-white border-t border-slate-100 py-4 pb-20 text-center text-xs text-slate-400">
-        <div className="flex justify-center gap-3 mb-3">
-          <a href="https://www.instagram.com/sarkarijobseva" target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-1.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold px-3 py-2 rounded-xl">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-            Instagram
-          </a>
-          <a href="https://whatsapp.com/channel/0029Vb7dt842ER6rNwc6eB47" target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-1.5 bg-green-500 text-white text-xs font-bold px-3 py-2 rounded-xl">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-            WhatsApp
-          </a>
-        </div>
         © 2026 SarkariJobSeva |{" "}
         <Link href="/disclaimer"><span className="text-blue-500 cursor-pointer">Disclaimer</span></Link>
         {" | "}
         <Link href="/contact"><span className="text-blue-500 cursor-pointer">Contact</span></Link>
       </div>
-
-      {/* Push Notification Prompt */}
-      <PushNotificationPrompt />
 
     </div>
   );
