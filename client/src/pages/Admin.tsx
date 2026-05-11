@@ -49,7 +49,7 @@ export default function Admin() {
   const { toast } = useToast();
   const { jobs, addJob, updateJob, deleteJob } = useJobs();
   const { isAdmin, loading: authLoading, refresh: refreshAuth } = useAuth();
-  const [activeTab, setActiveTab] = useState<'list' | 'add' | 'preview' | 'ai' | 'analytics'>('analytics');
+  const [activeTab, setActiveTab] = useState<'list' | 'add' | 'preview' | 'ai' | 'analytics' | 'blog' | 'add-blog'>('analytics');
   const [editingJobId, setEditingJobId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<Partial<Job>>(initialFormData);
@@ -76,6 +76,10 @@ export default function Admin() {
     }
   }, [isAdmin, activeTab]);
   
+  const [blogs, setBlogs] = useState<any[]>([]);
+  const [blogsLoading, setBlogsLoading] = useState(false);
+  const [blogForm, setBlogForm] = useState({ title: '', slug: '', content: '', excerpt: '', image_url: '', category: 'job', tags: '', featured: false });
+
   const fetchBlogs = async () => {
     setBlogsLoading(true);
     try {
@@ -555,6 +559,12 @@ export default function Admin() {
             data-testid="button-analytics"
           >
             <BarChart3 className="w-4 h-4" /> Analytics
+          </button>
+          <button
+            onClick={() => { setActiveTab('blog'); fetchBlogs(); }}
+            className={`flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'blog' || activeTab === 'add-blog' ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md' : 'text-pink-600 hover:bg-pink-50'}`}
+          >
+            📝 Blog
           </button>
           <button 
             type="button"
@@ -1562,6 +1572,147 @@ Visit https://ssc.nic.in and apply online...`}
               </div>
             </form>
           )}
+
+          {/* ===== BLOG TAB ===== */}
+          {activeTab === 'blog' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="font-black text-slate-800 text-lg">All Blogs</h2>
+                <button
+                  onClick={() => setActiveTab('add-blog')}
+                  className="flex items-center gap-2 bg-pink-600 text-white px-4 py-2 rounded-xl font-bold text-xs uppercase"
+                >
+                  + Add Blog
+                </button>
+              </div>
+              {blogsLoading ? (
+                <div className="text-center py-10 text-slate-400">Loading blogs...</div>
+              ) : blogs.length === 0 ? (
+                <div className="text-center py-16 bg-white rounded-2xl border border-slate-200">
+                  <p className="text-slate-400 font-medium">Koi blog nahi hai abhi</p>
+                  <button onClick={() => setActiveTab('add-blog')} className="mt-4 bg-pink-600 text-white px-6 py-2 rounded-xl font-bold text-sm">
+                    Pehla Blog Likho
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {blogs.map((blog: any) => (
+                    <div key={blog.id} className="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-4">
+                      {blog.image_url && <img src={blog.image_url} className="w-16 h-16 rounded-lg object-cover flex-shrink-0" alt="" />}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-slate-800 text-sm line-clamp-1">{blog.title}</p>
+                        <p className="text-xs text-slate-400 mt-0.5">{blog.category} • {blog.views} views</p>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          if (confirm('Delete this blog?')) {
+                            await fetch(`/api/blogs/${blog.id}`, { method: 'DELETE', credentials: 'include' });
+                            fetchBlogs();
+                          }
+                        }}
+                        className="text-red-500 hover:text-red-700 text-xs font-bold px-3 py-1.5 rounded-lg border border-red-200 hover:bg-red-50"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ===== ADD BLOG TAB ===== */}
+          {activeTab === 'add-blog' && (
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <button onClick={() => setActiveTab('blog')} className="text-slate-500 hover:text-blue-600 font-bold text-sm">← Back</button>
+                <h2 className="font-black text-slate-800 text-lg">Add New Blog</h2>
+              </div>
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                try {
+                  const slug = blogForm.slug || blogForm.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                  const res = await fetch('/api/blogs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ ...blogForm, slug }),
+                  });
+                  if (res.ok) {
+                    alert('Blog published!');
+                    setBlogForm({ title: '', slug: '', content: '', excerpt: '', image_url: '', category: 'job', tags: '', featured: false });
+                    setActiveTab('blog');
+                    fetchBlogs();
+                  } else {
+                    alert('Error publishing blog!');
+                  }
+                } catch { alert('Error!'); }
+              }} className="space-y-4 bg-white rounded-2xl border border-slate-200 p-6">
+                
+                <div>
+                  <label className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1.5 block">Blog Title *</label>
+                  <input required type="text" value={blogForm.title}
+                    onChange={e => setBlogForm({...blogForm, title: e.target.value, slug: e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-')})}
+                    className="w-full border border-slate-200 rounded-xl p-3 text-sm font-semibold outline-none focus:border-pink-400"
+                    placeholder="BPSC 72nd CCE Syllabus 2026..." />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1.5 block">Category</label>
+                    <select value={blogForm.category} onChange={e => setBlogForm({...blogForm, category: e.target.value})}
+                      className="w-full border border-slate-200 rounded-xl p-3 text-sm font-semibold outline-none focus:border-pink-400">
+                      <option value="job">Jobs</option>
+                      <option value="result">Results</option>
+                      <option value="admit-card">Admit Card</option>
+                      <option value="answer-key">Answer Key</option>
+                      <option value="admission">Admission</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1.5 block">Image URL</label>
+                    <input type="text" value={blogForm.image_url}
+                      onChange={e => setBlogForm({...blogForm, image_url: e.target.value})}
+                      className="w-full border border-slate-200 rounded-xl p-3 text-sm font-semibold outline-none focus:border-pink-400"
+                      placeholder="https://..." />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1.5 block">Short Excerpt</label>
+                  <textarea value={blogForm.excerpt} onChange={e => setBlogForm({...blogForm, excerpt: e.target.value})}
+                    className="w-full border border-slate-200 rounded-xl p-3 text-sm font-semibold outline-none focus:border-pink-400 h-20 resize-none"
+                    placeholder="Short description..." />
+                </div>
+
+                <div>
+                  <label className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1.5 block">Full Content *</label>
+                  <textarea required value={blogForm.content} onChange={e => setBlogForm({...blogForm, content: e.target.value})}
+                    className="w-full border border-slate-200 rounded-xl p-3 text-sm font-semibold outline-none focus:border-pink-400 h-64 resize-none"
+                    placeholder="Blog ka full content yahan likho... HTML bhi supported hai!" />
+                </div>
+
+                <div>
+                  <label className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1.5 block">Tags (comma separated)</label>
+                  <input type="text" value={blogForm.tags} onChange={e => setBlogForm({...blogForm, tags: e.target.value})}
+                    className="w-full border border-slate-200 rounded-xl p-3 text-sm font-semibold outline-none focus:border-pink-400"
+                    placeholder="BPSC, Bihar, Sarkari Naukri" />
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <input type="checkbox" id="featured" checked={blogForm.featured}
+                    onChange={e => setBlogForm({...blogForm, featured: e.target.checked})}
+                    className="w-4 h-4 accent-pink-600" />
+                  <label htmlFor="featured" className="text-sm font-bold text-slate-600">Featured Blog</label>
+                </div>
+
+                <button type="submit" className="w-full bg-pink-600 text-white py-4 font-black text-xs uppercase tracking-widest rounded-xl hover:bg-pink-700 transition-all shadow-lg">
+                  🚀 Publish Blog
+                </button>
+              </form>
+            </div>
+          )}
+
         </div>
       </div>
     </div>
