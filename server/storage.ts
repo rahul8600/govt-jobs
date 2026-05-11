@@ -62,7 +62,7 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getAllPosts(page = 1, limit = 30): Promise<Post[]> {
+  async getAllPosts(page = 1, limit = 500): Promise<Post[]> {
     const offset = (page - 1) * limit;
     return db.select().from(posts).orderBy(desc(posts.createdAt)).limit(limit).offset(offset);
   }
@@ -79,7 +79,7 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(posts).where(eq(posts.state, state)).orderBy(desc(posts.createdAt)).limit(100);
   }
 
-  async getFilteredPosts(filters: PostFilters, page = 1, limit = 30): Promise<Post[]> {
+  async getFilteredPosts(filters: PostFilters, page = 1, limit = 500): Promise<Post[]> {
     const conditions = [];
     const offset = (page - 1) * limit;
     
