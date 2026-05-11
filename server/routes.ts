@@ -452,11 +452,13 @@ Format dates in DD/MM/YYYY or "Month DD, YYYY" format as they appear.`;
 
 
   // ===== BLOG ROUTES =====
+  const { Pool } = await import('pg').then(m => m.default || m);
+  const blogPool = new Pool({ connectionString: process.env.DATABASE_URL });
+
   // Get all published blogs
   app.get('/api/blogs', async (req, res) => {
     try {
-      const { db } = await import('./db');
-      const result = await db.execute('SELECT id, title, slug, excerpt, image_url, category, tags, author, views, featured, created_at FROM blogs WHERE published = true ORDER BY created_at DESC');
+      const result = await blogPool.query('SELECT id, title, slug, excerpt, image_url, category, tags, author, views, featured, created_at FROM blogs WHERE published = true ORDER BY created_at DESC');
       res.json(result.rows || []);
     } catch (error) {
       console.error('Error fetching blogs:', error);
@@ -467,10 +469,9 @@ Format dates in DD/MM/YYYY or "Month DD, YYYY" format as they appear.`;
   // Get single blog by slug
   app.get('/api/blogs/:slug', async (req, res) => {
     try {
-      const { db } = await import('./db');
       const { slug } = req.params;
-      await db.execute('UPDATE blogs SET views = views + 1 WHERE slug = $1', [slug]);
-      const result = await db.execute('SELECT * FROM blogs WHERE slug = $1 AND published = true', [slug]);
+      await blogPool.query('UPDATE blogs SET views = views + 1 WHERE slug = $1', [slug]);
+      const result = await blogPool.query('SELECT * FROM blogs WHERE slug = $1 AND published = true', [slug]);
       if (!result.rows || result.rows.length === 0) return res.status(404).json({ error: 'Blog not found' });
       res.json(result.rows[0]);
     } catch (error) {
@@ -481,12 +482,11 @@ Format dates in DD/MM/YYYY or "Month DD, YYYY" format as they appear.`;
   // Create blog (admin only)
   app.post('/api/blogs', requireAuth, async (req, res) => {
     try {
-      const { db } = await import('./db');
       const { title, content, excerpt, image_url, category, tags, featured, published } = req.body;
-      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now();
-      const result = await db.execute(
+      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') + '-' + Date.now();
+      const result = await blogPool.query(
         'INSERT INTO blogs (title, slug, content, excerpt, image_url, category, tags, featured, published) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
-        [title, slug, content, excerpt, image_url || '', category || 'job', tags || '', featured || false, published || false]
+        [title, slug, content || '', excerpt || '', image_url || '', category || 'job', tags || '', featured || false, published !== false]
       );
       res.json(result.rows[0]);
     } catch (error) {
@@ -498,12 +498,11 @@ Format dates in DD/MM/YYYY or "Month DD, YYYY" format as they appear.`;
   // Update blog (admin only)
   app.put('/api/blogs/:id', requireAuth, async (req, res) => {
     try {
-      const { db } = await import('./db');
       const { id } = req.params;
       const { title, content, excerpt, image_url, category, tags, featured, published } = req.body;
-      const result = await db.execute(
+      const result = await blogPool.query(
         'UPDATE blogs SET title=$1, content=$2, excerpt=$3, image_url=$4, category=$5, tags=$6, featured=$7, published=$8, updated_at=NOW() WHERE id=$9 RETURNING *',
-        [title, content, excerpt, image_url, category, tags, featured, published, id]
+        [title, content || '', excerpt || '', image_url || '', category || 'job', tags || '', featured || false, published !== false, id]
       );
       res.json(result.rows[0]);
     } catch (error) {
@@ -514,9 +513,8 @@ Format dates in DD/MM/YYYY or "Month DD, YYYY" format as they appear.`;
   // Delete blog (admin only)
   app.delete('/api/blogs/:id', requireAuth, async (req, res) => {
     try {
-      const { db } = await import('./db');
       const { id } = req.params;
-      await db.execute('DELETE FROM blogs WHERE id = $1', [id]);
+      await blogPool.query('DELETE FROM blogs WHERE id = $1', [id]);
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: 'Failed to delete blog' });
@@ -526,8 +524,7 @@ Format dates in DD/MM/YYYY or "Month DD, YYYY" format as they appear.`;
   // Get all blogs for admin
   app.get('/api/admin/blogs', requireAuth, async (req, res) => {
     try {
-      const { db } = await import('./db');
-      const result = await db.execute('SELECT * FROM blogs ORDER BY created_at DESC');
+      const result = await blogPool.query('SELECT * FROM blogs ORDER BY created_at DESC');
       res.json(result.rows || []);
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch blogs' });
