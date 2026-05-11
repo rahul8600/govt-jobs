@@ -47,8 +47,20 @@ const initialFormData: Partial<Job> = {
 
 export default function Admin() {
   const { toast } = useToast();
+  const [blogs, setBlogs] = useState<any[]>([]);
+  const [blogsLoading, setBlogsLoading] = useState(false);
+  const [blogForm, setBlogForm] = useState({ title: '', slug: '', content: '', excerpt: '', image_url: '', category: 'job', tags: '', featured: false });
   const { jobs, addJob, updateJob, deleteJob } = useJobs();
   const { isAdmin, loading: authLoading, refresh: refreshAuth } = useAuth();
+  
+  const fetchBlogs = async () => {
+    setBlogsLoading(true);
+    try {
+      const res = await fetch('/api/admin/blogs', { credentials: 'include' });
+      if (res.ok) setBlogs(await res.json());
+    } catch {}
+    setBlogsLoading(false);
+  };
   const [activeTab, setActiveTab] = useState<'list' | 'add' | 'preview' | 'ai' | 'analytics' | 'blog' | 'add-blog'>('analytics');
   const [editingJobId, setEditingJobId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -76,19 +88,6 @@ export default function Admin() {
     }
   }, [isAdmin, activeTab]);
   
-  const [blogs, setBlogs] = useState<any[]>([]);
-  const [blogsLoading, setBlogsLoading] = useState(false);
-  const [blogForm, setBlogForm] = useState({ title: '', slug: '', content: '', excerpt: '', image_url: '', category: 'job', tags: '', featured: false });
-
-  const fetchBlogs = async () => {
-    setBlogsLoading(true);
-    try {
-      const res = await fetch('/api/admin/blogs', { credentials: 'include' });
-      if (res.ok) setBlogs(await res.json());
-    } catch {}
-    setBlogsLoading(false);
-  };
-
   const fetchAnalytics = async () => {
     setAnalyticsLoading(true);
     try {
@@ -316,14 +315,14 @@ export default function Admin() {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = async (event) => {
+    reader.onload = (event) => {
       const text = event.target?.result as string;
       const rows = text.split('\n').slice(1);
       
       let count = 0;
-      for (const row of rows) {
+      rows.forEach(row => {
         const cols = row.split(',');
-        if (cols.length >= 2 && cols[0]?.trim()) {
+        if (cols.length >= 2) {
           const newJob: Job = {
             id: Math.random().toString(36).substr(2, 9),
             title: cols[0]?.trim() || "Untitled CSV Post",
@@ -331,7 +330,7 @@ export default function Admin() {
             type: 'job',
             postDate: new Date().toLocaleDateString('en-GB'),
             lastDate: cols[2]?.trim() || "TBA",
-            shortInfo: "Check official notification for complete details.",
+            shortInfo: "Bulk uploaded via CSV.",
             vacancyDetails: [{ postName: "See Notification", totalPost: "N/A", eligibility: "As per rules" }],
             applicationFee: [{ category: "General", fee: "0" }],
             importantDates: [{ label: "Last Date", date: cols[2]?.trim() || "TBA" }],
@@ -340,16 +339,14 @@ export default function Admin() {
             selectionProcess: [],
             physicalEligibility: [],
             links: [{ label: "Apply Online", url: cols[3]?.trim() || "#" }, { label: "Official Notification", url: cols[4]?.trim() || "#" }],
-            applyOnlineUrl: cols[3]?.trim() || undefined,
-            notificationUrl: cols[4]?.trim() || undefined,
             featured: false,
             trending: false
           };
-          const success = await addJob(newJob);
-          if (success) count++;
+          addJob(newJob);
+          count++;
         }
-      }
-      toast({ title: "Bulk Upload Complete", description: `${count} jobs successfully added!` });
+      });
+      toast({ title: "Bulk Upload Complete", description: `${count} jobs added to portal.` });
     };
     reader.readAsText(file);
   };
@@ -1573,24 +1570,22 @@ Visit https://ssc.nic.in and apply online...`}
             </form>
           )}
 
-          {/* ===== BLOG TAB ===== */}
+          {/* BLOG LIST TAB */}
           {activeTab === 'blog' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="font-black text-slate-800 text-lg">All Blogs</h2>
-                <button
-                  onClick={() => setActiveTab('add-blog')}
-                  className="flex items-center gap-2 bg-pink-600 text-white px-4 py-2 rounded-xl font-bold text-xs uppercase"
-                >
+                <button onClick={() => setActiveTab('add-blog')}
+                  className="bg-pink-600 text-white px-4 py-2 rounded-xl font-bold text-xs uppercase">
                   + Add Blog
                 </button>
               </div>
               {blogsLoading ? (
-                <div className="text-center py-10 text-slate-400">Loading blogs...</div>
+                <div className="text-center py-10 text-slate-400">Loading...</div>
               ) : blogs.length === 0 ? (
                 <div className="text-center py-16 bg-white rounded-2xl border border-slate-200">
-                  <p className="text-slate-400 font-medium">Koi blog nahi hai abhi</p>
-                  <button onClick={() => setActiveTab('add-blog')} className="mt-4 bg-pink-600 text-white px-6 py-2 rounded-xl font-bold text-sm">
+                  <p className="text-slate-400 font-medium mb-4">Koi blog nahi hai abhi</p>
+                  <button onClick={() => setActiveTab('add-blog')} className="bg-pink-600 text-white px-6 py-2 rounded-xl font-bold text-sm">
                     Pehla Blog Likho
                   </button>
                 </div>
@@ -1601,17 +1596,14 @@ Visit https://ssc.nic.in and apply online...`}
                       {blog.image_url && <img src={blog.image_url} className="w-16 h-16 rounded-lg object-cover flex-shrink-0" alt="" />}
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-slate-800 text-sm line-clamp-1">{blog.title}</p>
-                        <p className="text-xs text-slate-400 mt-0.5">{blog.category} • {blog.views} views</p>
+                        <p className="text-xs text-slate-400 mt-0.5">{blog.category} • {blog.views || 0} views</p>
                       </div>
-                      <button
-                        onClick={async () => {
-                          if (confirm('Delete this blog?')) {
-                            await fetch(`/api/blogs/${blog.id}`, { method: 'DELETE', credentials: 'include' });
-                            fetchBlogs();
-                          }
-                        }}
-                        className="text-red-500 hover:text-red-700 text-xs font-bold px-3 py-1.5 rounded-lg border border-red-200 hover:bg-red-50"
-                      >
+                      <button onClick={async () => {
+                        if (confirm('Delete this blog?')) {
+                          await fetch(`/api/blogs/${blog.id}`, { method: 'DELETE', credentials: 'include' });
+                          fetchBlogs();
+                        }
+                      }} className="text-red-500 text-xs font-bold px-3 py-1.5 rounded-lg border border-red-200 hover:bg-red-50">
                         Delete
                       </button>
                     </div>
@@ -1621,7 +1613,7 @@ Visit https://ssc.nic.in and apply online...`}
             </div>
           )}
 
-          {/* ===== ADD BLOG TAB ===== */}
+          {/* ADD BLOG TAB */}
           {activeTab === 'add-blog' && (
             <div className="space-y-6">
               <div className="flex items-center gap-3">
@@ -1639,16 +1631,15 @@ Visit https://ssc.nic.in and apply online...`}
                     body: JSON.stringify({ ...blogForm, slug }),
                   });
                   if (res.ok) {
-                    alert('Blog published!');
+                    toast({ title: 'Blog published!' });
                     setBlogForm({ title: '', slug: '', content: '', excerpt: '', image_url: '', category: 'job', tags: '', featured: false });
                     setActiveTab('blog');
                     fetchBlogs();
                   } else {
-                    alert('Error publishing blog!');
+                    toast({ title: 'Error!', variant: 'destructive' });
                   }
-                } catch { alert('Error!'); }
+                } catch { toast({ title: 'Error!', variant: 'destructive' }); }
               }} className="space-y-4 bg-white rounded-2xl border border-slate-200 p-6">
-                
                 <div>
                   <label className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1.5 block">Blog Title *</label>
                   <input required type="text" value={blogForm.title}
@@ -1656,7 +1647,6 @@ Visit https://ssc.nic.in and apply online...`}
                     className="w-full border border-slate-200 rounded-xl p-3 text-sm font-semibold outline-none focus:border-pink-400"
                     placeholder="BPSC 72nd CCE Syllabus 2026..." />
                 </div>
-
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1.5 block">Category</label>
@@ -1677,35 +1667,30 @@ Visit https://ssc.nic.in and apply online...`}
                       placeholder="https://..." />
                   </div>
                 </div>
-
                 <div>
                   <label className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1.5 block">Short Excerpt</label>
                   <textarea value={blogForm.excerpt} onChange={e => setBlogForm({...blogForm, excerpt: e.target.value})}
                     className="w-full border border-slate-200 rounded-xl p-3 text-sm font-semibold outline-none focus:border-pink-400 h-20 resize-none"
                     placeholder="Short description..." />
                 </div>
-
                 <div>
                   <label className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1.5 block">Full Content *</label>
                   <textarea required value={blogForm.content} onChange={e => setBlogForm({...blogForm, content: e.target.value})}
                     className="w-full border border-slate-200 rounded-xl p-3 text-sm font-semibold outline-none focus:border-pink-400 h-64 resize-none"
-                    placeholder="Blog ka full content yahan likho... HTML bhi supported hai!" />
+                    placeholder="Blog ka full content likho... HTML bhi supported hai!" />
                 </div>
-
                 <div>
                   <label className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1.5 block">Tags (comma separated)</label>
                   <input type="text" value={blogForm.tags} onChange={e => setBlogForm({...blogForm, tags: e.target.value})}
                     className="w-full border border-slate-200 rounded-xl p-3 text-sm font-semibold outline-none focus:border-pink-400"
                     placeholder="BPSC, Bihar, Sarkari Naukri" />
                 </div>
-
                 <div className="flex items-center gap-3">
-                  <input type="checkbox" id="featured" checked={blogForm.featured}
+                  <input type="checkbox" id="featured-blog" checked={blogForm.featured}
                     onChange={e => setBlogForm({...blogForm, featured: e.target.checked})}
                     className="w-4 h-4 accent-pink-600" />
-                  <label htmlFor="featured" className="text-sm font-bold text-slate-600">Featured Blog</label>
+                  <label htmlFor="featured-blog" className="text-sm font-bold text-slate-600">Featured Blog</label>
                 </div>
-
                 <button type="submit" className="w-full bg-pink-600 text-white py-4 font-black text-xs uppercase tracking-widest rounded-xl hover:bg-pink-700 transition-all shadow-lg">
                   🚀 Publish Blog
                 </button>
