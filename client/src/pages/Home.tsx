@@ -86,7 +86,7 @@ function LatestBlogs() {
           <a key={blog.id} href={`/blog/${blog.slug}`}>
             <div className="bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg hover:border-blue-300 transition-all cursor-pointer group">
               {blog.image_url ? (
-                <img src={blog.image_url} alt={blog.title} className="w-full h-40 object-cover" />
+                <img src={blog.image_url} alt={blog.title} className="w-full h-40 object-cover" width="400" height="160" loading="lazy" />
               ) : (
                 <div className="w-full h-40 bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
                   <span className="text-4xl">📋</span>
@@ -113,12 +113,46 @@ export default function Home() {
   useSEO(generateHomeMeta());
   usePageTracker("home");
 
+  // Skeleton card to avoid layout shift (CLS fix)
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-slate-500 font-bold text-sm">Loading...</p>
+      <div className="space-y-5">
+        {/* Hero skeleton */}
+        <div className="bg-gradient-to-br from-blue-700 to-blue-900 rounded-2xl p-5 md:p-10 shadow-xl">
+          <div className="text-center mb-5">
+            <h1 className="text-white font-black text-2xl md:text-4xl tracking-tight">SarkariJobSeva</h1>
+            <p className="text-blue-200 text-sm mt-1">सरकारी नौकरी, सुरक्षित भविष्य</p>
+          </div>
+          <div style={{width:"100%",maxWidth:"560px",margin:"0 auto"}}>
+            <div style={{display:"flex",alignItems:"center",backgroundColor:"white",borderRadius:"50px",padding:"12px 20px"}}>
+              <div className="h-5 w-full bg-slate-100 rounded-full animate-pulse" />
+            </div>
+          </div>
+        </div>
+        {/* Grid skeleton - same layout as real content to prevent CLS */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[1,2,3].map(i => (
+            <div key={i} className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
+              <div className="h-10 bg-slate-200 animate-pulse" />
+              {[1,2,3,4,5].map(j => (
+                <div key={j} className="px-3 py-3 border-b border-slate-100">
+                  <div className="h-4 bg-slate-100 rounded animate-pulse w-5/6" />
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[1,2].map(i => (
+            <div key={i} className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
+              <div className="h-10 bg-slate-200 animate-pulse" />
+              {[1,2,3,4].map(j => (
+                <div key={j} className="px-3 py-3 border-b border-slate-100">
+                  <div className="h-4 bg-slate-100 rounded animate-pulse w-4/6" />
+                </div>
+              ))}
+            </div>
+          ))}
         </div>
       </div>
     );
