@@ -7,6 +7,9 @@ import { insertPostSchema } from "@shared/schema";
 import { z } from "zod";
 import { parseJobNotification } from "./jobParser";
 import { dbInfo } from "./db";
+import { writeFile, readdir, unlink, mkdir } from "fs/promises";
+import { existsSync } from "fs";
+import path from "path";
 
 function generateSlug(title: string): string {
   const yearMatch = title.match(/20\d{2}/);
@@ -605,6 +608,69 @@ Sitemap: ${baseUrl}/sitemap.xml
     } catch (error) {
       console.error("Error generating sitemap:", error);
       res.status(500).send('Error generating sitemap');
+    }
+  });
+
+
+  // ===== IMAGE GALLERY ROUTES =====
+  const UPLOAD_DIR = path.join(process.cwd(), "uploads", "blog-images");
+
+  if (!existsSync(UPLOAD_DIR)) {
+    await mkdir(UPLOAD_DIR, { recursive: true });
+  }
+
+  // Upload image (admin only)
+  app.post("/api/upload-image", requireAuth, async (req, res) => {
+    try {
+      const { base64, filename, mimeType } = req.body;
+      if (!base64 || !filename) {
+        return res.status(400).json({ error: "base64 and filename required" });
+      }
+      const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+      if (mimeType && !allowedTypes.includes(mimeType)) {
+        return res.status(400).json({ error: "Only JPG, PNG, WebP, GIF allowed" });
+      }
+      const ext = path.extname(filename) || ".jpg";
+      const safeName = Date.now() + "_" + Math.random().toString(36).slice(2) + ext;
+      const filePath = path.join(UPLOAD_DIR, safeName);
+      const buffer = Buffer.from(base64, "base64");
+      if (buffer.length > 5 * 1024 * 1024) {
+        return res.status(400).json({ error: "Image too large. Max 5MB." });
+      }
+      await writeFile(filePath, buffer);
+      const host = req.protocol + "://" + req.get("host");
+      res.json({ url: host + "/uploads/blog-images/" + safeName, filename: safeName });
+    } catch (error) {
+      console.error("Image upload error:", error);
+      res.status(500).json({ error: "Upload failed" });
+    }
+  });
+
+  // Get gallery (admin only)
+  app.get("/api/image-gallery", requireAuth, async (req, res) => {
+    try {
+      if (!existsSync(UPLOAD_DIR)) return res.json([]);
+      const files = await readdir(UPLOAD_DIR);
+      const host = req.protocol + "://" + req.get("host");
+      const images = files
+        .filter(f => /\.(jpg|jpeg|png|webp|gif)$/i.test(f))
+        .map(f => ({ url: host + "/uploads/blog-images/" + f, filename: f }))
+        .reverse();
+      res.json(images);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch gallery" });
+    }
+  });
+
+  // Delete image (admin only)
+  app.delete("/api/image-gallery/:filename", requireAuth, async (req, res) => {
+    try {
+      const safeName = path.basename(req.params.filename);
+      const filePath = path.join(UPLOAD_DIR, safeName);
+      if (existsSync(filePath)) await unlink(filePath);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Delete failed" });
     }
   });
 
