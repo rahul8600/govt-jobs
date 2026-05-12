@@ -23,6 +23,10 @@ if (!process.env.DATABASE_URL) {
 const MemoryStoreSession = MemoryStore(session);
 
 const app = express();
+app.use((req, res, next) => {
+  res.setHeader("Content-Language", "en-IN");
+  next();
+});
 const httpServer = createServer(app);
 
 app.set('trust proxy', 1);
