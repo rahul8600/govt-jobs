@@ -80,7 +80,7 @@ export default function Admin() {
         // ImgBB free image hosting - no server needed!
         const formData = new FormData();
         formData.append('image', base64);
-        const res = await fetch('https://api.imgbb.com/1/upload?key=2b7ad83e73e10d96de1bb2e4f7d16a38', {
+        const res = await fetch('https://api.imgbb.com/1/upload?key=f7285863dd846cd7e9683698a7b6cb3a', {
           method: 'POST',
           body: formData
         });
