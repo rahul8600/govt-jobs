@@ -63,7 +63,9 @@ export default function Admin() {
     try {
       const res = await fetch('/api/image-gallery');
       if (res.ok) setGalleryImages(await res.json());
-    } catch {} finally { setGalleryLoading(false); }
+    } catch {
+      // Gallery from server not available, that's ok
+    } finally { setGalleryLoading(false); }
   }, []);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -75,20 +77,29 @@ export default function Admin() {
       const reader = new FileReader();
       reader.onload = async (ev) => {
         const base64 = (ev.target?.result as string).split(',')[1];
-        const res = await fetch('/api/upload-image', {
+        // ImgBB free image hosting - no server needed!
+        const formData = new FormData();
+        formData.append('image', base64);
+        const res = await fetch('https://api.imgbb.com/1/upload?key=2b7ad83e73e10d96de1bb2e4f7d16a38', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ base64, filename: file.name, mimeType: file.type })
+          body: formData
         });
         if (res.ok) {
           const data = await res.json();
-          setBlogForm(f => ({ ...f, image_url: data.url }));
+          setBlogForm(f => ({ ...f, image_url: data.data.display_url }));
           await fetchGallery();
-        } else { alert('Upload failed'); }
+          alert('✅ Image upload successful!');
+        } else { 
+          alert('Upload failed. Please try again.'); 
+        }
         setUploading(false);
       };
       reader.readAsDataURL(file);
-    } catch { setUploading(false); }
+    } catch (err) { 
+      console.error(err);
+      alert('Upload error. Check internet connection.');
+      setUploading(false); 
+    }
   };
 
   const deleteGalleryImage = async (filename: string) => {
