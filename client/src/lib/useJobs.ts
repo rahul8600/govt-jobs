@@ -129,10 +129,7 @@ function jobToDbPost(job: Omit<Job, 'id'> & { id?: string }) {
 // Fetch posts by type directly from API — used by Home page sections
 export async function fetchPostsByType(type: string, limit = 8): Promise<Job[]> {
   try {
-    const res = await fetch(`/api/posts?type=${type}&page=1&limit=${limit}`, {
-      cache: 'no-store',
-      headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' },
-    });
+    const res = await fetch(`/api/posts?type=${type}&page=1&limit=${limit}`);
     if (!res.ok) return [];
     const posts: DbPost[] = await res.json();
     return posts.map(dbPostToJob);
@@ -148,10 +145,7 @@ export function useJobs() {
   // For home page: fetch ALL types so trending/featured works
   const fetchJobs = useCallback(async () => {
     try {
-      const res = await fetch('/api/posts?page=1&limit=200', {
-        cache: 'no-store',
-        headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' },
-      });
+      const res = await fetch('/api/posts?page=1&limit=200');
       if (res.ok) {
         const posts: DbPost[] = await res.json();
         setJobs(posts.map(dbPostToJob));
