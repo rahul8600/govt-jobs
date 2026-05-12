@@ -201,7 +201,13 @@ export async function registerRoutes(
   });
 
   // Get all posts with optional filters
+  // Cache helper for public APIs
+  function setPublicCache(res: Response, seconds = 60) {
+    res.setHeader("Cache-Control", `public, max-age=${seconds}, stale-while-revalidate=${seconds * 2}`);
+  }
+
   app.get("/api/posts", async (req, res) => {
+    setPublicCache(res, 60);
     try {
       res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
       res.set('Pragma', 'no-cache');
@@ -463,6 +469,7 @@ Format dates in DD/MM/YYYY or "Month DD, YYYY" format as they appear.`;
 
   // Get all published blogs
   app.get('/api/blogs', async (req, res) => {
+    setPublicCache(res, 120);
     try {
       const result = await blogPool.query('SELECT id, title, slug, excerpt, image_url, category, tags, author, views, featured, created_at FROM blogs WHERE published = true ORDER BY created_at DESC');
       res.json(result.rows || []);
@@ -619,55 +626,64 @@ Sitemap: ${baseUrl}/sitemap.xml
     await mkdir(UPLOAD_DIR, { recursive: true });
   }
 
-  // Upload image (admin only)
+  // ===== CLOUDINARY IMAGE GALLERY =====
+  const { v2: cloudinary } = await import("cloudinary");
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
+
+  // Upload image to Cloudinary (admin only)
   app.post("/api/upload-image", requireAuth, async (req, res) => {
     try {
       const { base64, filename, mimeType } = req.body;
-      if (!base64 || !filename) {
-        return res.status(400).json({ error: "base64 and filename required" });
-      }
+      if (!base64) return res.status(400).json({ error: "base64 required" });
       const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
       if (mimeType && !allowedTypes.includes(mimeType)) {
         return res.status(400).json({ error: "Only JPG, PNG, WebP, GIF allowed" });
       }
-      const ext = path.extname(filename) || ".jpg";
-      const safeName = Date.now() + "_" + Math.random().toString(36).slice(2) + ext;
-      const filePath = path.join(UPLOAD_DIR, safeName);
       const buffer = Buffer.from(base64, "base64");
       if (buffer.length > 5 * 1024 * 1024) {
         return res.status(400).json({ error: "Image too large. Max 5MB." });
       }
-      await writeFile(filePath, buffer);
-      const host = req.protocol + "://" + req.get("host");
-      res.json({ url: host + "/uploads/blog-images/" + safeName, filename: safeName });
-    } catch (error) {
-      console.error("Image upload error:", error);
-      res.status(500).json({ error: "Upload failed" });
+      const dataUri = `data:${mimeType || "image/jpeg"};base64,${base64}`;
+      const result = await cloudinary.uploader.upload(dataUri, {
+        folder: "sarkarijobseva",
+        resource_type: "image",
+      });
+      res.json({ url: result.secure_url, filename: result.public_id });
+    } catch (error: any) {
+      console.error("Cloudinary upload error:", error);
+      res.status(500).json({ error: "Upload failed: " + (error.message || "unknown") });
     }
   });
 
-  // Get gallery (admin only)
+  // Get gallery from Cloudinary (admin only)
   app.get("/api/image-gallery", requireAuth, async (req, res) => {
     try {
-      if (!existsSync(UPLOAD_DIR)) return res.json([]);
-      const files = await readdir(UPLOAD_DIR);
-      const host = req.protocol + "://" + req.get("host");
-      const images = files
-        .filter(f => /\.(jpg|jpeg|png|webp|gif)$/i.test(f))
-        .map(f => ({ url: host + "/uploads/blog-images/" + f, filename: f }))
-        .reverse();
+      const result = await cloudinary.api.resources({
+        type: "upload",
+        prefix: "sarkarijobseva/",
+        max_results: 100,
+        resource_type: "image",
+      });
+      const images = result.resources.map((r: any) => ({
+        url: r.secure_url,
+        filename: r.public_id,
+      })).reverse();
       res.json(images);
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Gallery fetch error:", error);
       res.status(500).json({ error: "Failed to fetch gallery" });
     }
   });
 
-  // Delete image (admin only)
-  app.delete("/api/image-gallery/:filename", requireAuth, async (req, res) => {
+  // Delete image from Cloudinary (admin only)
+  app.delete("/api/image-gallery/:filename(*)", requireAuth, async (req, res) => {
     try {
-      const safeName = path.basename(req.params.filename);
-      const filePath = path.join(UPLOAD_DIR, safeName);
-      if (existsSync(filePath)) await unlink(filePath);
+      const publicId = req.params.filename;
+      await cloudinary.uploader.destroy(publicId);
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Delete failed" });
