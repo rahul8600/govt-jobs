@@ -6,6 +6,8 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import MemoryStore from "memorystore";
+import path from "path";
+import fs from "fs";
 
 // Environment logging at startup - Always treat as production for data handling
 console.log('='.repeat(60));
@@ -121,6 +123,11 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
+    // Serve uploaded blog images
+    const uploadsDir = path.join(process.cwd(), "uploads", "blog-images");
+    if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+    app.use("/uploads/blog-images", express.static(uploadsDir));
+
     await registerRoutes(httpServer, app);
 
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
