@@ -52,8 +52,8 @@ function CategoryCard({ cat, jobs }: { cat: typeof CATEGORIES[0]; jobs: any[] })
 
       {/* Footer */}
       <Link href={cat.href}>
-        <div className={`border-t border-slate-100 py-2.5 text-center cursor-pointer hover:bg-slate-50 transition-colors`}>
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">View All {cat.title}</span>
+        <div className="border-t border-slate-100 py-2.5 text-center cursor-pointer hover:bg-slate-50 transition-colors">
+          <span className={`text-xs font-bold uppercase tracking-wide ${cat.light.split(' ')[1]}`}>VIEW ALL {cat.title} →</span>
         </div>
       </Link>
     </div>
@@ -85,13 +85,20 @@ function LatestBlogs() {
         {blogs.slice(0, 3).map((blog: any) => (
           <a key={blog.id} href={`/blog/${blog.slug}`}>
             <div className="bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg hover:border-blue-300 transition-all cursor-pointer group">
-              {blog.image_url ? (
-                <img src={blog.image_url} alt={blog.title} className="w-full h-40 object-cover" width="400" height="160" loading="lazy" />
-              ) : (
-                <div className="w-full h-40 bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+              <div className="w-full h-40 bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center overflow-hidden">
+                {blog.image_url ? (
+                  <img 
+                    src={blog.image_url} 
+                    alt={blog.title} 
+                    className="w-full h-40 object-cover"
+                    width="400" height="160"
+                    loading="lazy"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }}
+                  />
+                ) : (
                   <span className="text-4xl">📋</span>
-                </div>
-              )}
+                )}
+              </div>
               <div className="p-3">
                 <span className="text-[10px] font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full uppercase">{blog.category}</span>
                 <p className="font-bold text-slate-800 text-sm mt-1.5 line-clamp-2 group-hover:text-blue-700 transition-colors">{blog.title}</p>
@@ -113,46 +120,12 @@ export default function Home() {
   useSEO(generateHomeMeta());
   usePageTracker("home");
 
-  // Skeleton card to avoid layout shift (CLS fix)
   if (loading) {
     return (
-      <div className="space-y-5">
-        {/* Hero skeleton */}
-        <div className="bg-gradient-to-br from-blue-700 to-blue-900 rounded-2xl p-5 md:p-10 shadow-xl">
-          <div className="text-center mb-5">
-            <h1 className="text-white font-black text-2xl md:text-4xl tracking-tight">SarkariJobSeva</h1>
-            <p className="text-blue-200 text-sm mt-1">सरकारी नौकरी, सुरक्षित भविष्य</p>
-          </div>
-          <div style={{width:"100%",maxWidth:"560px",margin:"0 auto"}}>
-            <div style={{display:"flex",alignItems:"center",backgroundColor:"white",borderRadius:"50px",padding:"12px 20px"}}>
-              <div className="h-5 w-full bg-slate-100 rounded-full animate-pulse" />
-            </div>
-          </div>
-        </div>
-        {/* Grid skeleton - same layout as real content to prevent CLS */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[1,2,3].map(i => (
-            <div key={i} className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
-              <div className="h-10 bg-slate-200 animate-pulse" />
-              {[1,2,3,4,5].map(j => (
-                <div key={j} className="px-3 py-3 border-b border-slate-100">
-                  <div className="h-4 bg-slate-100 rounded animate-pulse w-5/6" />
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[1,2].map(i => (
-            <div key={i} className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
-              <div className="h-10 bg-slate-200 animate-pulse" />
-              {[1,2,3,4].map(j => (
-                <div key={j} className="px-3 py-3 border-b border-slate-100">
-                  <div className="h-4 bg-slate-100 rounded animate-pulse w-4/6" />
-                </div>
-              ))}
-            </div>
-          ))}
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-slate-500 font-bold text-sm">Loading...</p>
         </div>
       </div>
     );
