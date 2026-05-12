@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useJobs } from '@/lib/useJobs';
 import { Job } from '@/lib/data';
-import { Trash2, Plus, LayoutGrid, Database, Eye, Upload, CheckCircle2, Edit2, X, Lock, LogOut, Sparkles, Loader2, ArrowRight, BarChart3, Users, TrendingUp, Clock, FileText } from 'lucide-react';
+import { Trash2, Plus, LayoutGrid, Database, Eye, Upload, CheckCircle2, Edit2, X, Lock, LogOut, Sparkles, Loader2, ArrowRight, BarChart3, Users, TrendingUp, Clock, FileText, Image, ImagePlus, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/AuthContext';
 
@@ -50,8 +50,52 @@ export default function Admin() {
   const [blogs, setBlogs] = useState<any[]>([]);
   const [blogsLoading, setBlogsLoading] = useState(false);
   const [blogForm, setBlogForm] = useState({ title: '', slug: '', content: '', excerpt: '', image_url: '', category: 'job', tags: '', featured: false });
+  const [showGallery, setShowGallery] = useState(false);
+  const [galleryImages, setGalleryImages] = useState<{url: string, filename: string}[]>([]);
+  const [galleryLoading, setGalleryLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const { jobs, addJob, updateJob, deleteJob } = useJobs();
   const { isAdmin, loading: authLoading, refresh: refreshAuth } = useAuth();
+
+  const fetchGallery = useCallback(async () => {
+    setGalleryLoading(true);
+    try {
+      const res = await fetch('/api/image-gallery');
+      if (res.ok) setGalleryImages(await res.json());
+    } catch {} finally { setGalleryLoading(false); }
+  }, []);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { alert('Image too large. Max 5MB.'); return; }
+    setUploading(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        const base64 = (ev.target?.result as string).split(',')[1];
+        const res = await fetch('/api/upload-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ base64, filename: file.name, mimeType: file.type })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setBlogForm(f => ({ ...f, image_url: data.url }));
+          await fetchGallery();
+        } else { alert('Upload failed'); }
+        setUploading(false);
+      };
+      reader.readAsDataURL(file);
+    } catch { setUploading(false); }
+  };
+
+  const deleteGalleryImage = async (filename: string) => {
+    if (!confirm('Delete this image?')) return;
+    await fetch('/api/image-gallery/' + filename, { method: 'DELETE' });
+    await fetchGallery();
+  };
   
   const fetchBlogs = async () => {
     setBlogsLoading(true);
@@ -1660,11 +1704,31 @@ Visit https://ssc.nic.in and apply online...`}
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1.5 block">Image URL</label>
-                    <input type="text" value={blogForm.image_url}
-                      onChange={e => setBlogForm({...blogForm, image_url: e.target.value})}
-                      className="w-full border border-slate-200 rounded-xl p-3 text-sm font-semibold outline-none focus:border-pink-400"
-                      placeholder="https://..." />
+                    <label className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1.5 block">Blog Image</label>
+                    <div className="space-y-2">
+                      {blogForm.image_url && (
+                        <div className="relative w-full h-32 rounded-xl overflow-hidden border border-slate-200">
+                          <img src={blogForm.image_url} alt="preview" className="w-full h-full object-cover" />
+                          <button type="button" onClick={() => setBlogForm(f => ({...f, image_url: ''}))}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold hover:bg-red-600">✕</button>
+                        </div>
+                      )}
+                      <div className="flex gap-2">
+                        <input type="text" value={blogForm.image_url}
+                          onChange={e => setBlogForm({...blogForm, image_url: e.target.value})}
+                          className="flex-1 border border-slate-200 rounded-xl p-2.5 text-sm font-semibold outline-none focus:border-pink-400"
+                          placeholder="https://... ya gallery se chunein" />
+                        <button type="button" onClick={() => { setShowGallery(true); fetchGallery(); }}
+                          className="bg-pink-100 text-pink-700 px-3 py-2 rounded-xl font-bold text-xs hover:bg-pink-200 flex items-center gap-1 whitespace-nowrap">
+                          <Image className="w-3.5 h-3.5" /> Gallery
+                        </button>
+                      </div>
+                      <label className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 cursor-pointer rounded-xl px-3 py-2.5 text-sm font-bold text-slate-600 transition-colors">
+                        <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                        {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImagePlus className="w-4 h-4" />}
+                        {uploading ? 'Uploading...' : 'Device se upload karo'}
+                      </label>
+                    </div>
                   </div>
                 </div>
                 <div>
@@ -1700,6 +1764,57 @@ Visit https://ssc.nic.in and apply online...`}
 
         </div>
       </div>
+
+      {/* Image Gallery Modal */}
+      {showGallery && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{backgroundColor: 'rgba(0,0,0,0.7)'}}>
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden shadow-2xl">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="font-black text-slate-800 text-base">📷 Image Gallery</h3>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={fetchGallery}
+                  className="p-2 rounded-xl hover:bg-slate-100 text-slate-500">
+                  <RefreshCw className="w-4 h-4" />
+                </button>
+                <label className="bg-pink-600 text-white px-3 py-2 rounded-xl font-bold text-xs cursor-pointer hover:bg-pink-700 flex items-center gap-1">
+                  <input type="file" accept="image/*" className="hidden" onChange={async (e) => { await handleImageUpload(e); fetchGallery(); }} />
+                  <ImagePlus className="w-3.5 h-3.5" /> Upload New
+                </label>
+                <button type="button" onClick={() => setShowGallery(false)}
+                  className="p-2 rounded-xl hover:bg-slate-100 text-slate-500">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              {galleryLoading ? (
+                <div className="flex items-center justify-center h-40">
+                  <Loader2 className="w-8 h-8 animate-spin text-pink-500" />
+                </div>
+              ) : galleryImages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-40 text-slate-400">
+                  <Image className="w-12 h-12 mb-2 opacity-30" />
+                  <p className="text-sm font-semibold">Koi image nahi hai. Upload karo!</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-3">
+                  {galleryImages.map(img => (
+                    <div key={img.filename} className="relative group rounded-xl overflow-hidden border-2 border-transparent hover:border-pink-400 cursor-pointer transition-all"
+                      onClick={() => { setBlogForm(f => ({...f, image_url: img.url})); setShowGallery(false); }}>
+                      <img src={img.url} alt={img.filename} className="w-full h-28 object-cover" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <span className="text-white font-black text-xs bg-pink-600 px-2 py-1 rounded-lg">Select</span>
+                      </div>
+                      <button type="button" onClick={(e) => { e.stopPropagation(); deleteGalleryImage(img.filename); }}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600">✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
