@@ -53,17 +53,11 @@ app.use((req, res, next) => {
 
 // Block suspicious query patterns (SQL injection, XSS attempts)
 app.use((req, res, next) => {
-  const suspicious = [
-    /(\%27)|(')|(\-\-)|(\%23)|(#)/i,
-    /((\%3C)|<)((\%2F)|\/)*[a-z0-9\%]+((\%3E)|>)/i,
-    /((\%3C)|<)((\%69)|i|(\%49))((\%6D)|m|(\%4D))((\%67)|g|(\%47))[^
-]+((\%3E)|>)/i,
-    /union.*select/i,
-    /exec(\s|\+)+(s|x)p\w+/i,
-    /\.\.\//,
-  ];
   const toCheck = req.url + JSON.stringify(req.query);
-  if (suspicious.some(rx => rx.test(toCheck))) {
+  const hasSqlInjection = /union[\s\+]+select/i.test(toCheck) || /exec[\s\+]+(s|x)p\w+/i.test(toCheck);
+  const hasXss = /<script[\s>]/i.test(toCheck) || /javascript:/i.test(toCheck);
+  const hasPathTraversal = /\.\.\//.test(toCheck);
+  if (hasSqlInjection || hasXss || hasPathTraversal) {
     return res.status(400).json({ error: "Bad request" });
   }
   next();
