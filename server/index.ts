@@ -30,27 +30,77 @@ app.set('trust proxy', 1);
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,
+  referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+  xFrameOptions: { action: "deny" },
+  xContentTypeOptions: true,
+  hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
 }));
 
+// Block known bad bots and spam user-agents
+app.use((req, res, next) => {
+  const ua = req.headers["user-agent"] || "";
+  const badBots = [
+    "ahrefsbot", "semrushbot", "dotbot", "mj12bot", "blexbot",
+    "petalbot", "sogou", "yandexbot", "baiduspider", "scrapy",
+    "python-requests", "go-http-client", "libwww", "masscan",
+    "zgrab", "nikto", "sqlmap", "nmap"
+  ];
+  if (badBots.some(bot => ua.toLowerCase().includes(bot))) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  next();
+});
+
+// Block suspicious query patterns (SQL injection, XSS attempts)
+app.use((req, res, next) => {
+  const suspicious = [
+    /(\%27)|(')|(\-\-)|(\%23)|(#)/i,
+    /((\%3C)|<)((\%2F)|\/)*[a-z0-9\%]+((\%3E)|>)/i,
+    /((\%3C)|<)((\%69)|i|(\%49))((\%6D)|m|(\%4D))((\%67)|g|(\%47))[^
+]+((\%3E)|>)/i,
+    /union.*select/i,
+    /exec(\s|\+)+(s|x)p\w+/i,
+    /\.\.\//,
+  ];
+  const toCheck = req.url + JSON.stringify(req.query);
+  if (suspicious.some(rx => rx.test(toCheck))) {
+    return res.status(400).json({ error: "Bad request" });
+  }
+  next();
+});
+
+// Strict rate limiter for API
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 500,
-  message: { error: 'Too many requests, please try again later.' },
+  max: 300,
+  message: { error: "Too many requests, please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.path.startsWith("/uploads/"),
+});
+
+// Very strict for login - prevent brute force
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { error: "Too many login attempts, please try again after 15 minutes." },
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  message: { error: 'Too many login attempts, please try again after 15 minutes.' },
+// API specific limiter - tighter for write ops
+const apiWriteLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: { error: "Slow down! Too many requests." },
   standardHeaders: true,
   legacyHeaders: false,
 });
 
 app.use(generalLimiter);
-
-app.post('/api/auth/login', loginLimiter);
+app.post("/api/auth/login", loginLimiter);
+app.post("/api/posts", apiWriteLimiter);
+app.post("/api/blogs", apiWriteLimiter);
 
 app.use(session({
   secret: process.env.SESSION_SECRET || 'sarkari-admin-secret-key-2026',
