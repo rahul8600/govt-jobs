@@ -10,6 +10,7 @@ import { dbInfo } from "./db";
 import { writeFile, readdir, unlink, mkdir } from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
+import { v2 as cloudinary } from "cloudinary";
 
 function generateSlug(title: string): string {
   const yearMatch = title.match(/20\d{2}/);
@@ -627,7 +628,6 @@ Sitemap: ${baseUrl}/sitemap.xml
   }
 
   // ===== CLOUDINARY IMAGE GALLERY =====
-  const { v2: cloudinary } = await import("cloudinary");
   cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
