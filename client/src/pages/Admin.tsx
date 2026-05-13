@@ -86,11 +86,16 @@ export default function Admin() {
         });
         if (res.ok) {
           const data = await res.json();
-          setBlogForm(f => ({ ...f, image_url: data.data.display_url }));
+          // Use direct URL (permanent) instead of display_url
+          const imageUrl = data.data.url;
+          console.log('ImgBB upload success:', imageUrl);
+          setBlogForm(f => ({ ...f, image_url: imageUrl }));
           await fetchGallery();
-          alert('✅ Image upload successful!');
-        } else { 
-          alert('Upload failed. Please try again.'); 
+          alert('✅ Image upload ho gayi! URL: ' + imageUrl);
+        } else {
+          const errText = await res.text();
+          console.error('ImgBB error:', errText);
+          alert('Upload failed: ' + errText);
         }
         setUploading(false);
       };
