@@ -275,8 +275,8 @@ export function generateListMeta(type: string, searchQuery?: string): SEOProps {
     case 'job':
       return {
         title: `Latest Government Jobs ${year} – Sarkari Naukri Online Form`,
-        description: `Latest sarkari naukri ${year} — SSC, Railway, UPSC, Bank, State Govt jobs. Apply online for government jobs. 10th, 12th, Graduation pass jobs daily updates.`,
-        keywords: `sarkari naukri ${year}, government jobs ${year}, latest govt jobs, SSC jobs, Railway jobs, UPSC, Bank jobs, 10th pass jobs, 12th pass jobs, sarkari result`,
+        description: `Latest sarkari naukri ${year} — 10वीं 12वीं पास सरकारी नौकरी। SSC, Railway, Army, Police, Anganwadi, Teacher Bharti। UP, Bihar, Rajasthan, MP सरकारी नौकरी। Free Job Alert।`,
+        keywords: `sarkari naukri ${year}, government jobs ${year}, 10th pass sarkari job, 12th pass sarkari job, railway job ${year}, army bharti ${year}, police bharti ${year}, anganwadi bharti, teacher bharti, bank job, SSC GD, group d, group c, constable bharti, patwari, lekhpal, gram sevak, gramin naukri, up naukri, bihar naukri, rajasthan naukri, free job alert`,
       };
     case 'admit-card':
       return {
@@ -314,9 +314,9 @@ export function generateListMeta(type: string, searchQuery?: string): SEOProps {
 export function generateHomeMeta(): SEOProps {
   const year = new Date().getFullYear();
   return {
-    title: `SarkariJobSeva – Sarkari Result, Naukri, Admit Card ${year}`,
-    description: `SarkariJobSeva.com — India ka #1 sarkari result & naukri portal. Latest government jobs ${year}, admit card, result, answer key. SSC, Railway, UPSC, Bank, State Govt jobs daily free alert.`,
-    keywords: `sarkarijobseva, sarkari result ${year}, sarkari naukri ${year}, government jobs ${year}, admit card ${year}, SSC CGL, Railway NTPC, UPSC, Bank jobs, 10th pass govt job, 12th pass sarkari naukri, free job alert, sarkari result`,
+    title: `SarkariJobSeva – सरकारी नौकरी, सरकारी रिजल्ट, Admit Card ${year}`,
+    description: `SarkariJobSeva.com — भारत का नंबर 1 सरकारी नौकरी पोर्टल। 10वीं 12वीं पास सरकारी नौकरी ${year}। Railway, Army, Police, Anganwadi, Teacher Bharti। Admit Card, Result। Free Job Alert।`,
+    keywords: `sarkari naukri, sarkari job, government job, sarkari result, free job alert, rojgar samachar, 10th pass sarkari job, 12th pass sarkari job, railway job, army bharti, police bharti, anganwadi bharti, gram sevak bharti, lekhpal bharti, patwari bharti, teacher bharti, shikshak bharti, bank job, post office job, SSC, SSC GD, SSC CHSL, UPSC, NDA, up sarkari job, bihar sarkari job, rajasthan sarkari job, mp sarkari job, new vacancy ${year}, online form ${year}, admit card download, sarkari exam, sarkarijobseva, naukri, rozgar, gramin naukri, panchayat job, iti job, group d, group c, constable bharti, forest guard, home guard, clerk job, data entry job government, computer operator job, anm gnm nursing job, driver job government, village job india`,
     canonical: BASE_URL,
   };
 }
