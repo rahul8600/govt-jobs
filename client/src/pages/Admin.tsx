@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useJobs } from '@/lib/useJobs';
 import { Job } from '@/lib/data';
-import { Trash2, Plus, LayoutGrid, Database, Eye, Upload, CheckCircle2, Edit2, X, Lock, LogOut, Sparkles, Loader2, ArrowRight, BarChart3, Users, TrendingUp, Clock, FileText, Image, ImagePlus, RefreshCw } from 'lucide-react';
+import { Trash2, Plus, LayoutGrid, Database, Eye, Upload, CheckCircle2, Edit2, X, Lock, LogOut, Sparkles, Loader2, ArrowRight, BarChart3, Users, TrendingUp, Clock, FileText, Image, ImagePlus, RefreshCw, Bell } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/AuthContext';
 
@@ -971,6 +971,14 @@ Visit https://ssc.nic.in and apply online...`}
                         data-testid={`button-edit-${job.id}`}
                       >
                         <Edit2 className="w-5 h-5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => notifyPost(job.id, job.title)}
+                        className="p-3 bg-blue-50 text-blue-500 hover:bg-blue-600 hover:text-white transition-all rounded-xl shadow-sm"
+                        title="Telegram + Push Notification Bhejo"
+                      >
+                        <Bell className="w-5 h-5" />
                       </button>
                       <button 
                         type="button"
