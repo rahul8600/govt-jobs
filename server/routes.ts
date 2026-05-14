@@ -116,6 +116,33 @@ function requireAuth(req: Request, res: Response, next: NextFunction) {
   }
 }
 
+
+// ===== TELEGRAM BOT AUTO POST =====
+async function sendTelegramMessage(message: string): Promise<void> {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHANNEL_ID;
+  if (!token || !chatId) {
+    console.log("Telegram not configured - skipping notification");
+    return;
+  }
+  try {
+    const url = `https://api.telegram.org/bot${token}/sendMessage`;
+    await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message,
+        parse_mode: "HTML",
+        disable_web_page_preview: false,
+      }),
+    });
+    console.log("Telegram notification sent!");
+  } catch (err) {
+    console.error("Telegram send error:", err);
+  }
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -502,7 +529,24 @@ Format dates in DD/MM/YYYY or "Month DD, YYYY" format as they appear.`;
         'INSERT INTO blogs (title, slug, content, excerpt, image_url, category, tags, featured, published) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
         [title, slug, content || '', excerpt || '', image_url || '', category || 'job', tags || '', featured || false, published !== false]
       );
-      res.json(result.rows[0]);
+      const blog = result.rows[0];
+      res.json(blog);
+
+      // Auto-post to Telegram
+      const siteUrl = `${req.protocol}://${req.get('host')}`;
+      const blogUrl = `https://sarkarijobseva.com/blog/${blog.slug}`;
+      const telegramMsg = `📢 <b>New Blog Post!</b>
+
+📝 <b>${blog.title}</b>
+
+${blog.excerpt ? blog.excerpt.substring(0, 200) + '...' : ''}
+
+🔗 <a href="${blogUrl}">Read More</a>
+
+🌐 SarkariJobSeva.com
+📲 Join: https://t.me/sarkarijobse`;
+      sendTelegramMessage(telegramMsg).catch(console.error);
+
     } catch (error) {
       console.error('Error creating blog:', error);
       res.status(500).json({ error: 'Failed to create blog' });
