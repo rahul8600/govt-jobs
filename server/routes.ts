@@ -609,6 +609,20 @@ Sitemap: ${baseUrl}/sitemap.xml
 `;
       }
 
+      // Blog pages sitemap
+      const blogs = await storage.getAllBlogs();
+      for (const blog of blogs) {
+        const slug = blog.slug || blog.id;
+        const lastmod = blog.createdAt ? new Date(blog.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+        xml += `  <url>
+    <loc>${baseUrl}/blog/${slug}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+`;
+      }
+
       xml += `</urlset>`;
 
       res.type('application/xml');
