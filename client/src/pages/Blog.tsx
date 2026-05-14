@@ -88,7 +88,7 @@ export default function BlogList() {
                 <div className="bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg transition-all cursor-pointer group">
                   {blog.image_url ? (
                     <img src={blog.image_url} alt={blog.title}
-                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300" />
+                      className="w-full h-48 object-contain bg-white group-hover:scale-105 transition-transform duration-300" />
                   ) : (
                     <div className="w-full h-48 bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
                       <span className="text-4xl">📋</span>
@@ -127,7 +127,7 @@ export default function BlogList() {
                 <div className="bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg hover:border-blue-300 transition-all cursor-pointer group flex">
                   {blog.image_url ? (
                     <img src={blog.image_url} alt={blog.title}
-                      className="w-32 h-full object-cover flex-shrink-0" />
+                      className="w-32 h-full object-contain bg-white flex-shrink-0" />
                   ) : (
                     <div className="w-32 flex-shrink-0 bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
                       <span className="text-3xl">📋</span>
