@@ -358,6 +358,34 @@ export async function registerRoutes(
       }
       const post = await storage.createPost(validatedData);
       res.status(201).json(post);
+
+      // Auto-post to Telegram
+      try {
+        const postUrl = `https://sarkarijobseva.com/job/${post.slug || post.id}`;
+        const typeEmoji: Record<string, string> = {
+          job: "💼", "admit-card": "🎫", result: "📊", "answer-key": "🔑", admission: "🎓"
+        };
+        const emoji = typeEmoji[post.type] || "📢";
+        const typeLabel: Record<string, string> = {
+          job: "New Job", "admit-card": "Admit Card", result: "Result Out", "answer-key": "Answer Key", admission: "Admission"
+        };
+        const label = typeLabel[post.type] || "New Post";
+        const msg = `${emoji} <b>${label}!</b>
+
+📋 <b>${post.title}</b>
+
+🏢 ${post.organization || ""}
+📅 Last Date: ${post.lastDate || "N/A"}
+👥 Posts: ${post.totalPost || "N/A"}
+🎓 Qualification: ${post.qualification || "N/A"}
+
+🔗 <a href="${postUrl}">Full Details & Apply</a>
+
+🌐 SarkariJobSeva.com
+📲 Join: https://t.me/sarkarijobse`;
+        sendTelegramMessage(msg).catch(console.error);
+      } catch(e) { console.error("Telegram job notify error:", e); }
+
     } catch (error) {
       console.error("Error creating post:", error);
       res.status(400).json({ error: "Failed to create post" });
