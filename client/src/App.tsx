@@ -12,6 +12,8 @@ import JobList from "@/pages/JobList";
 import { Disclaimer, PrivacyPolicy, TermsOfService, Syllabus, Contact } from "@/pages/InfoPages";
 import BlogList from "@/pages/Blog";
 import BlogDetail from "@/pages/BlogDetail";
+import SalaryCalculator from "@/pages/SalaryCalculator";
+import { LanguageProvider } from "@/lib/LanguageContext";
 
 function Router() {
   return (
@@ -38,6 +40,7 @@ function Router() {
         <Route path="/terms-of-service" component={TermsOfService} />
         <Route path="/syllabus" component={Syllabus} />
         <Route path="/contact" component={Contact} />
+        <Route path="/salary-calculator" component={SalaryCalculator} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
@@ -47,10 +50,12 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <LanguageProvider>
       <AuthProvider>
         <Toaster />
         <Router />
       </AuthProvider>
+      </LanguageProvider>
     </QueryClientProvider>
   );
 }
