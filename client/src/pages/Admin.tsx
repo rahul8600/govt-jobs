@@ -56,6 +56,18 @@ export default function Admin() {
   const [uploading, setUploading] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const { jobs, addJob, updateJob, deleteJob } = useJobs();
+
+  const notifyPost = async (id: number, title: string) => {
+    if (!confirm(`"${title}" ka notification Telegram + Website pe bhejna hai?`)) return;
+    try {
+      const res = await fetch(`/api/posts/${id}/notify`, { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) alert('✅ Notification bhej diya! Telegram + Website dono pe!');
+      else alert('❌ Error: ' + (data.error || 'Unknown'));
+    } catch (e) {
+      alert('❌ Network error!');
+    }
+  };
   const { isAdmin, loading: authLoading, refresh: refreshAuth } = useAuth();
 
   const fetchGallery = useCallback(async () => {
