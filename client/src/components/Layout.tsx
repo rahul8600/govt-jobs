@@ -1,8 +1,10 @@
 import { Link, useLocation } from "wouter";
+import { useLang } from "@/lib/LanguageContext";
 import { Home, Briefcase, FileText, CheckSquare, GraduationCap, Search } from "lucide-react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
+  const { lang } = useLang();
   const navItems = [
     { href: "/",            label: "Home",       icon: Home },
     { href: "/latest-jobs", label: "Jobs",       icon: Briefcase },
