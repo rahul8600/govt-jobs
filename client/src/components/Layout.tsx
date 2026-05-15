@@ -1,18 +1,15 @@
 import { Link, useLocation } from "wouter";
-import { useLang } from "@/lib/LanguageContext";
 import { Home, Briefcase, FileText, CheckSquare, GraduationCap, Search } from "lucide-react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
-  const { lang, toggleLang } = useLang();
-
   const navItems = [
-    { href: "/",            label: lang === "hi" ? "होम" : "Home",       icon: Home },
-    { href: "/latest-jobs", label: lang === "hi" ? "नौकरी" : "Jobs",      icon: Briefcase },
-    { href: "/admit-card",  label: lang === "hi" ? "एडमिट" : "Admit",     icon: FileText },
-    { href: "/results",     label: lang === "hi" ? "रिजल्ट" : "Results",  icon: CheckSquare },
-    { href: "/answer-key",  label: lang === "hi" ? "आंसर की" : "Answer Key", icon: GraduationCap },
-    { href: "/salary-calculator", label: lang === "hi" ? "💰 सैलरी" : "💰 Salary", icon: Search },
+    { href: "/",            label: "Home",       icon: Home },
+    { href: "/latest-jobs", label: "Jobs",       icon: Briefcase },
+    { href: "/admit-card",  label: "Admit",      icon: FileText },
+    { href: "/results",     label: "Results",    icon: CheckSquare },
+    { href: "/answer-key",  label: "Answer Key", icon: GraduationCap },
+    { href: "/salary-calculator", label: "💰 Salary", icon: Search },
   ];
 
   const isActive = (href: string) =>
@@ -32,13 +29,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </Link>
           <div className="flex items-center gap-2">
-            {/* Hindi/English Toggle */}
-            <button onClick={toggleLang}
-              className="h-9 px-3 bg-orange-100 text-orange-700 rounded-xl font-black text-xs hover:bg-orange-200 transition-colors"
-              title="भाषा बदलें">
-              {lang === "hi" ? "EN" : "हि"}
-            </button>
-            {/* WhatsApp */}
+{/* WhatsApp */}
             <a href="https://whatsapp.com/channel/0029Vb7dt842ER6rNwc6eB47" target="_blank" rel="noopener noreferrer"
               className="w-9 h-9 bg-green-500 rounded-xl flex items-center justify-center cursor-pointer hover:bg-green-400 transition-colors"
               title="Join WhatsApp Channel">
