@@ -7,10 +7,6 @@ import { insertPostSchema } from "@shared/schema";
 import { z } from "zod";
 import { parseJobNotification } from "./jobParser";
 import { dbInfo } from "./db";
-import { writeFile, readdir, unlink, mkdir } from "fs/promises";
-import { existsSync } from "fs";
-import path from "path";
-import { v2 as cloudinary } from "cloudinary";
 
 function generateSlug(title: string): string {
   const yearMatch = title.match(/20\d{2}/);
@@ -116,103 +112,60 @@ function requireAuth(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-
-// ===== TELEGRAM BOT AUTO POST =====
-async function sendTelegramMessage(message: string): Promise<void> {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHANNEL_ID;
-  if (!token || !chatId) {
-    console.log("Telegram not configured - skipping notification");
-    return;
-  }
-  try {
-    const url = `https://api.telegram.org/bot${token}/sendMessage`;
-    await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: message,
-        parse_mode: "HTML",
-        disable_web_page_preview: false,
-      }),
-    });
-    console.log("Telegram notification sent!");
-  } catch (err) {
-    console.error("Telegram send error:", err);
-  }
-}
-
-
-// ===== ONESIGNAL PUSH NOTIFICATION =====
-async function sendPushNotification(title: string, message: string, url: string): Promise<void> {
-  const appId = "fd40d63f-bbbd-46e4-8162-c331854a0225";
-  const apiKey = process.env.ONESIGNAL_REST_API_KEY;
-  if (!apiKey) {
-    console.log("OneSignal REST API key not set - skipping push notification");
-    return;
-  }
-  try {
-    const res = await fetch("https://onesignal.com/api/v1/notifications", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Basic ${apiKey}`,
-      },
-      body: JSON.stringify({
-        app_id: appId,
-        included_segments: ["All"],
-        headings: { en: title },
-        contents: { en: message },
-        url: url,
-        chrome_web_icon: "https://sarkarijobseva.com/logo.png",
-      }),
-    });
-    const data = await res.json();
-    console.log("Push notification sent:", data.id || data.errors);
-  } catch (err) {
-    console.error("OneSignal push error:", err);
-  }
-}
-
-// Send both Telegram + Push notification for a post
-async function notifyAllChannels(post: any, req: any): Promise<void> {
-  const postUrl = `https://sarkarijobseva.com/job/${post.slug || post.id}`;
-  const typeEmoji: Record<string, string> = {
-    job: "💼", "admit-card": "🎫", result: "📊", "answer-key": "🔑", admission: "🎓"
-  };
-  const typeLabel: Record<string, string> = {
-    job: "New Job", "admit-card": "Admit Card Out", result: "Result Out", "answer-key": "Answer Key", admission: "Admission"
-  };
-  const emoji = typeEmoji[post.type] || "📢";
-  const label = typeLabel[post.type] || "New Post";
-
-  // Telegram
-  const telegramMsg = `${emoji} <b>${label}!</b>
-
-📋 <b>${post.title}</b>
-
-🏢 ${post.organization || ""}
-📅 Last Date: ${post.lastDate || "N/A"}
-👥 Posts: ${post.totalPost || "N/A"}
-🎓 Qualification: ${post.qualification || "N/A"}
-
-🔗 <a href="${postUrl}">Full Details & Apply</a>
-
-🌐 SarkariJobSeva.com
-📲 Join: https://t.me/sarkarijobse`;
-  await sendTelegramMessage(telegramMsg).catch(console.error);
-
-  // Push Notification
-  const pushMsg = `${post.organization || ""} | Last Date: ${post.lastDate || "N/A"} | Posts: ${post.totalPost || "N/A"}`;
-  await sendPushNotification(`${emoji} ${label}: ${post.title}`, pushMsg, postUrl).catch(console.error);
-}
+// Bot prerender
+const BOTS = ['googlebot','bingbot','yandex','facebookexternalhit','twitterbot','linkedinbot','whatsapp','telegrambot','applebot','discordbot'];
+function isBot(ua: string): boolean { return BOTS.some(b => ua.toLowerCase().includes(b)); }
+function esc(s: string): string { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  
+
+  // BOT PRERENDER MIDDLEWARE
+  app.use(async (req: any, res: any, next: any) => {
+    const ua = req.headers['user-agent'] || '';
+    if (!isBot(ua)) return next();
+    const urlPath = req.path;
+    const baseUrl = 'https://sarkarijobseva.com';
+    try {
+      const jobMatch = urlPath.match(/^\/job\/([^/?]+)/);
+      if (jobMatch) {
+        const slug = jobMatch[1];
+        let job: any = null;
+        try { job = await storage.getPostBySlug(slug); } catch {}
+        if (!job) { try { job = await storage.getPost(parseInt(slug)); } catch {} }
+        if (job) {
+          const title = esc(job.title) + ' – Apply Online, Last Date, Eligibility | SarkariJobSeva';
+          const desc = esc((job.shortInfo || job.title).slice(0, 155));
+          const canonical = baseUrl + '/job/' + (job.slug || job.id);
+          return res.send('<!DOCTYPE html><html lang="hi-IN"><head>' +
+            '<meta charset="UTF-8">' +
+            '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+            '<title>' + title + '</title>' +
+            '<meta name="description" content="' + desc + '">' +
+            '<meta name="robots" content="index,follow">' +
+            '<link rel="canonical" href="' + canonical + '">' +
+            '<meta property="og:title" content="' + title + '">' +
+            '<meta property="og:description" content="' + desc + '">' +
+            '<meta property="og:url" content="' + canonical + '">' +
+            '<meta property="og:type" content="article">' +
+            '<meta property="og:site_name" content="SarkariJobSeva">' +
+            '<meta property="og:image" content="' + baseUrl + '/og-image.png">' +
+            '<meta name="twitter:card" content="summary_large_image">' +
+            '</head><body>' +
+            '<h1>' + esc(job.title) + '</h1>' +
+            '<p>' + esc(job.department) + '</p>' +
+            '<p>' + esc(job.shortInfo || '') + '</p>' +
+            (job.lastDate ? '<p>Last Date: ' + esc(job.lastDate) + '</p>' : '') +
+            (job.qualification ? '<p>Eligibility: ' + esc(job.qualification) + '</p>' : '') +
+            '</body></html>');
+        }
+      }
+    } catch(e) { console.error('[Prerender]', e); }
+    next();
+  });
+
   // Health check endpoint - shows database connection info
   app.get("/api/health", async (req, res) => {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
@@ -294,34 +247,25 @@ export async function registerRoutes(
   });
 
   // Get all posts with optional filters
-  // Cache helper for public APIs
-  function setPublicCache(res: Response, seconds = 60) {
-    res.setHeader("Cache-Control", `public, max-age=${seconds}, stale-while-revalidate=${seconds * 2}`);
-  }
-
   app.get("/api/posts", async (req, res) => {
-    setPublicCache(res, 60);
     try {
       res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
       res.set('Pragma', 'no-cache');
       res.set('Expires', '0');
       res.set('Surrogate-Control', 'no-store');
       
-      const { type, qualification, state, page, limit } = req.query;
-      
-      const pageNum = page ? parseInt(page as string) || 1 : 1;
-      const limitNum = limit ? parseInt(limit as string) || 500 : 500;
+      const { type, qualification, state } = req.query;
       
       if (qualification || state || type) {
         const filters: { type?: string; qualification?: string; state?: string } = {};
         if (type && typeof type === 'string') filters.type = type;
         if (qualification && typeof qualification === 'string') filters.qualification = qualification;
         if (state && typeof state === 'string') filters.state = state;
-        const posts = await storage.getFilteredPosts(filters, pageNum, limitNum);
+        const posts = await storage.getFilteredPosts(filters);
         return res.json(posts);
       }
       
-      const posts = await storage.getAllPosts(pageNum, limitNum);
+      const posts = await storage.getAllPosts();
       res.json(posts);
     } catch (error) {
       console.error("Error fetching posts:", error);
@@ -423,10 +367,6 @@ export async function registerRoutes(
       }
       const post = await storage.createPost(validatedData);
       res.status(201).json(post);
-
-      // Auto-notify Telegram + Push
-      notifyAllChannels(post, req).catch(console.error);
-
     } catch (error) {
       console.error("Error creating post:", error);
       res.status(400).json({ error: "Failed to create post" });
@@ -561,14 +501,11 @@ Format dates in DD/MM/YYYY or "Month DD, YYYY" format as they appear.`;
 
 
   // ===== BLOG ROUTES =====
-  const { Pool } = await import('pg').then(m => m.default || m);
-  const blogPool = new Pool({ connectionString: process.env.DATABASE_URL });
-
   // Get all published blogs
   app.get('/api/blogs', async (req, res) => {
-    setPublicCache(res, 120);
     try {
-      const result = await blogPool.query('SELECT id, title, slug, excerpt, image_url, category, tags, author, views, featured, created_at FROM blogs WHERE published = true ORDER BY created_at DESC');
+      const { db } = await import('./db');
+      const result = await db.execute('SELECT id, title, slug, excerpt, image_url, category, tags, author, views, featured, created_at FROM blogs WHERE published = true ORDER BY created_at DESC');
       res.json(result.rows || []);
     } catch (error) {
       console.error('Error fetching blogs:', error);
@@ -579,9 +516,10 @@ Format dates in DD/MM/YYYY or "Month DD, YYYY" format as they appear.`;
   // Get single blog by slug
   app.get('/api/blogs/:slug', async (req, res) => {
     try {
+      const { db } = await import('./db');
       const { slug } = req.params;
-      await blogPool.query('UPDATE blogs SET views = views + 1 WHERE slug = $1', [slug]);
-      const result = await blogPool.query('SELECT * FROM blogs WHERE slug = $1 AND published = true', [slug]);
+      await db.execute('UPDATE blogs SET views = views + 1 WHERE slug = $1', [slug]);
+      const result = await db.execute('SELECT * FROM blogs WHERE slug = $1 AND published = true', [slug]);
       if (!result.rows || result.rows.length === 0) return res.status(404).json({ error: 'Blog not found' });
       res.json(result.rows[0]);
     } catch (error) {
@@ -592,30 +530,14 @@ Format dates in DD/MM/YYYY or "Month DD, YYYY" format as they appear.`;
   // Create blog (admin only)
   app.post('/api/blogs', requireAuth, async (req, res) => {
     try {
+      const { db } = await import('./db');
       const { title, content, excerpt, image_url, category, tags, featured, published } = req.body;
-      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') + '-' + Date.now();
-      const result = await blogPool.query(
+      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now();
+      const result = await db.execute(
         'INSERT INTO blogs (title, slug, content, excerpt, image_url, category, tags, featured, published) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
-        [title, slug, content || '', excerpt || '', image_url || '', category || 'job', tags || '', featured || false, published !== false]
+        [title, slug, content, excerpt, image_url || '', category || 'job', tags || '', featured || false, published || false]
       );
-      const blog = result.rows[0];
-      res.json(blog);
-
-      // Auto-post to Telegram
-      const siteUrl = `${req.protocol}://${req.get('host')}`;
-      const blogUrl = `https://sarkarijobseva.com/blog/${blog.slug}`;
-      const telegramMsg = `📢 <b>New Blog Post!</b>
-
-📝 <b>${blog.title}</b>
-
-${blog.excerpt ? blog.excerpt.substring(0, 200) + '...' : ''}
-
-🔗 <a href="${blogUrl}">Read More</a>
-
-🌐 SarkariJobSeva.com
-📲 Join: https://t.me/sarkarijobse`;
-      sendTelegramMessage(telegramMsg).catch(console.error);
-
+      res.json(result.rows[0]);
     } catch (error) {
       console.error('Error creating blog:', error);
       res.status(500).json({ error: 'Failed to create blog' });
@@ -625,11 +547,12 @@ ${blog.excerpt ? blog.excerpt.substring(0, 200) + '...' : ''}
   // Update blog (admin only)
   app.put('/api/blogs/:id', requireAuth, async (req, res) => {
     try {
+      const { db } = await import('./db');
       const { id } = req.params;
       const { title, content, excerpt, image_url, category, tags, featured, published } = req.body;
-      const result = await blogPool.query(
+      const result = await db.execute(
         'UPDATE blogs SET title=$1, content=$2, excerpt=$3, image_url=$4, category=$5, tags=$6, featured=$7, published=$8, updated_at=NOW() WHERE id=$9 RETURNING *',
-        [title, content || '', excerpt || '', image_url || '', category || 'job', tags || '', featured || false, published !== false, id]
+        [title, content, excerpt, image_url, category, tags, featured, published, id]
       );
       res.json(result.rows[0]);
     } catch (error) {
@@ -640,8 +563,9 @@ ${blog.excerpt ? blog.excerpt.substring(0, 200) + '...' : ''}
   // Delete blog (admin only)
   app.delete('/api/blogs/:id', requireAuth, async (req, res) => {
     try {
+      const { db } = await import('./db');
       const { id } = req.params;
-      await blogPool.query('DELETE FROM blogs WHERE id = $1', [id]);
+      await db.execute('DELETE FROM blogs WHERE id = $1', [id]);
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: 'Failed to delete blog' });
@@ -651,7 +575,8 @@ ${blog.excerpt ? blog.excerpt.substring(0, 200) + '...' : ''}
   // Get all blogs for admin
   app.get('/api/admin/blogs', requireAuth, async (req, res) => {
     try {
-      const result = await blogPool.query('SELECT * FROM blogs ORDER BY created_at DESC');
+      const { db } = await import('./db');
+      const result = await db.execute('SELECT * FROM blogs ORDER BY created_at DESC');
       res.json(result.rows || []);
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch blogs' });
@@ -722,25 +647,6 @@ Sitemap: ${baseUrl}/sitemap.xml
 `;
       }
 
-      // Blog pages sitemap
-      try {
-        const blogRes = await fetch(`${baseUrl}/api/blogs`);
-        if (blogRes.ok) {
-          const blogs = await blogRes.json();
-          for (const blog of blogs) {
-            const slug = blog.slug || blog.id;
-            const lastmod = blog.created_at ? new Date(blog.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
-            xml += `  <url>
-    <loc>${baseUrl}/blog/${slug}</loc>
-    <lastmod>${lastmod}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-`;
-          }
-        }
-      } catch {}
-
       xml += `</urlset>`;
 
       res.type('application/xml');
@@ -748,92 +654,6 @@ Sitemap: ${baseUrl}/sitemap.xml
     } catch (error) {
       console.error("Error generating sitemap:", error);
       res.status(500).send('Error generating sitemap');
-    }
-  });
-
-
-  // ===== IMAGE GALLERY ROUTES =====
-  const UPLOAD_DIR = path.join(process.cwd(), "uploads", "blog-images");
-
-  if (!existsSync(UPLOAD_DIR)) {
-    await mkdir(UPLOAD_DIR, { recursive: true });
-  }
-
-  // ===== CLOUDINARY IMAGE GALLERY =====
-  cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-  });
-
-  // Upload image to Cloudinary (admin only)
-  app.post("/api/upload-image", requireAuth, async (req, res) => {
-    try {
-      const { base64, filename, mimeType } = req.body;
-      if (!base64) return res.status(400).json({ error: "base64 required" });
-      const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-      if (mimeType && !allowedTypes.includes(mimeType)) {
-        return res.status(400).json({ error: "Only JPG, PNG, WebP, GIF allowed" });
-      }
-      const buffer = Buffer.from(base64, "base64");
-      if (buffer.length > 5 * 1024 * 1024) {
-        return res.status(400).json({ error: "Image too large. Max 5MB." });
-      }
-      const dataUri = `data:${mimeType || "image/jpeg"};base64,${base64}`;
-      const result = await cloudinary.uploader.upload(dataUri, {
-        folder: "sarkarijobseva",
-        resource_type: "image",
-      });
-      res.json({ url: result.secure_url, filename: result.public_id });
-    } catch (error: any) {
-      console.error("Cloudinary upload error:", error);
-      res.status(500).json({ error: "Upload failed: " + (error.message || "unknown") });
-    }
-  });
-
-  // Get gallery from Cloudinary (admin only)
-  app.get("/api/image-gallery", requireAuth, async (req, res) => {
-    try {
-      const result = await cloudinary.api.resources({
-        type: "upload",
-        prefix: "sarkarijobseva/",
-        max_results: 100,
-        resource_type: "image",
-      });
-      const images = result.resources.map((r: any) => ({
-        url: r.secure_url,
-        filename: r.public_id,
-      })).reverse();
-      res.json(images);
-    } catch (error: any) {
-      console.error("Gallery fetch error:", error);
-      res.status(500).json({ error: "Failed to fetch gallery" });
-    }
-  });
-
-  // Delete image from Cloudinary (admin only)
-  app.delete("/api/image-gallery/:filename(*)", requireAuth, async (req, res) => {
-    try {
-      const publicId = req.params.filename;
-      await cloudinary.uploader.destroy(publicId);
-      res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ error: "Delete failed" });
-    }
-  });
-
-
-  // Manual notify route - send Telegram + Push for any post (admin only)
-  app.post("/api/posts/:id/notify", requireAuth, async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const post = await storage.getPost(id);
-      if (!post) return res.status(404).json({ error: "Post not found" });
-      await notifyAllChannels(post, req);
-      res.json({ success: true, message: "Notification sent to Telegram + Push!" });
-    } catch (error) {
-      console.error("Notify error:", error);
-      res.status(500).json({ error: "Failed to send notification" });
     }
   });
 
