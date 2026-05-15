@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { SEO } from '@/components/SEO';
+import { useSEO } from '@/components/SEO';
 import { Calculator, IndianRupee, TrendingUp, Info } from 'lucide-react';
 
 const PAY_MATRIX = {
@@ -33,6 +33,13 @@ export default function SalaryCalculator() {
   const [city, setCity] = useState('Y');
   const [showBreakdown, setShowBreakdown] = useState(false);
 
+  useSEO({
+    title: "7th Pay Commission Salary Calculator 2026 – Sarkari Naukri Salary",
+    description: "Calculate your government job salary as per 7th Pay Commission. Basic Pay, DA, HRA, TA sabka calculation karein. Sarkari naukri mein kitni salary milegi jaanein.",
+    keywords: "7th pay commission salary calculator, sarkari naukri salary, government job salary 2026, DA HRA TA calculator, basic pay calculator India",
+    canonical: "https://sarkarijobseva.com/salary-calculator",
+  });
+
   const pay = PAY_MATRIX[level as keyof typeof PAY_MATRIX];
   const basic = pay.basic;
   const da = Math.round(basic * DA_RATE);
@@ -49,13 +56,6 @@ export default function SalaryCalculator() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
-      <SEO
-        title="7th Pay Commission Salary Calculator 2026 – Sarkari Naukri Salary"
-        description="Calculate your government job salary as per 7th Pay Commission. Basic Pay, DA, HRA, TA sabka calculation karein. Sarkari naukri mein kitni salary milegi jaanein."
-        keywords="7th pay commission salary calculator, sarkari naukri salary, government job salary 2026, DA HRA TA calculator, basic pay calculator India"
-        canonical="https://sarkarijobseva.com/salary-calculator"
-      />
-
       {/* Header */}
       <div className="bg-gradient-to-br from-blue-700 to-blue-900 rounded-2xl p-6 text-white shadow-xl">
         <div className="flex items-center gap-3 mb-1">
