@@ -7,13 +7,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { lang, toggleLang } = useLang();
 
   const navItems = [
-    { href: "/",            label: "Home",       icon: Home },
-    { href: "/latest-jobs", label: "Jobs",        icon: Briefcase },
-    { href: "/admit-card",  label: "Admit",       icon: FileText },
-    { href: "/results",     label: "Results",     icon: CheckSquare },
-    { href: "/answer-key",  label: "Answer Key",  icon: GraduationCap },
-    { href: "/search",      label: "Search",      icon: Search },
-    { href: "/salary-calculator", label: "💰 Salary", icon: Search },
+    { href: "/",            label: lang === "hi" ? "होम" : "Home",       icon: Home },
+    { href: "/latest-jobs", label: lang === "hi" ? "नौकरी" : "Jobs",      icon: Briefcase },
+    { href: "/admit-card",  label: lang === "hi" ? "एडमिट" : "Admit",     icon: FileText },
+    { href: "/results",     label: lang === "hi" ? "रिजल्ट" : "Results",  icon: CheckSquare },
+    { href: "/answer-key",  label: lang === "hi" ? "आंसर की" : "Answer Key", icon: GraduationCap },
+    { href: "/salary-calculator", label: lang === "hi" ? "💰 सैलरी" : "💰 Salary", icon: Search },
   ];
 
   const isActive = (href: string) =>
@@ -144,7 +143,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="col-span-2">
             <h3 className="text-blue-700 font-black text-xl mb-3 uppercase">SarkariJobSeva</h3>
             <p className="text-slate-500 text-sm leading-relaxed mb-4">
-              भारत का सबसे भरोसेमंद सरकारी नौकरी पोर्टल। रोज़ अपडेट, बिल्कुल सटीक जानकारी।
+              { lang === "hi" ? "भारत का सबसे भरोसेमंद सरकारी नौकरी पोर्टल। रोज़ अपडेट, बिल्कुल सटीक जानकारी।" : "India's most trusted government job portal. Daily updates, accurate information." }
             </p>
             <div className="flex flex-wrap gap-2 mb-4">
               <span className="bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-lg border border-green-100">
