@@ -112,7 +112,7 @@ function requireAuth(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-// Bot prerender
+// Bot detection
 const BOTS = ['googlebot','bingbot','yandex','facebookexternalhit','twitterbot','linkedinbot','whatsapp','telegrambot','applebot','discordbot'];
 function isBot(ua: string): boolean { return BOTS.some(b => ua.toLowerCase().includes(b)); }
 function esc(s: string): string { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -122,13 +122,15 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
-  // BOT PRERENDER MIDDLEWARE
+  // ===== BOT PRERENDER MIDDLEWARE =====
   app.use(async (req: any, res: any, next: any) => {
     const ua = req.headers['user-agent'] || '';
     if (!isBot(ua)) return next();
     const urlPath = req.path;
     const baseUrl = 'https://sarkarijobseva.com';
+
     try {
+      // 1. Job/Post pages
       const jobMatch = urlPath.match(/^\/job\/([^/?]+)/);
       if (jobMatch) {
         const slug = jobMatch[1];
@@ -136,35 +138,83 @@ export async function registerRoutes(
         try { job = await storage.getPostBySlug(slug); } catch {}
         if (!job) { try { job = await storage.getPost(parseInt(slug)); } catch {} }
         if (job) {
-          const title = esc(job.title) + ' – Apply Online, Last Date, Eligibility | SarkariJobSeva';
+          const title = esc(job.title) + ' - Apply Online, Last Date, Eligibility | SarkariJobSeva';
           const desc = esc((job.shortInfo || job.title).slice(0, 155));
           const canonical = baseUrl + '/job/' + (job.slug || job.id);
-          return res.send('<!DOCTYPE html><html lang="hi-IN"><head>' +
-            '<meta charset="UTF-8">' +
-            '<meta name="viewport" content="width=device-width,initial-scale=1">' +
-            '<title>' + title + '</title>' +
-            '<meta name="description" content="' + desc + '">' +
-            '<meta name="robots" content="index,follow">' +
-            '<link rel="canonical" href="' + canonical + '">' +
-            '<meta property="og:title" content="' + title + '">' +
-            '<meta property="og:description" content="' + desc + '">' +
-            '<meta property="og:url" content="' + canonical + '">' +
-            '<meta property="og:type" content="article">' +
-            '<meta property="og:site_name" content="SarkariJobSeva">' +
-            '<meta property="og:image" content="' + baseUrl + '/og-image.png">' +
-            '<meta name="twitter:card" content="summary_large_image">' +
-            '</head><body>' +
-            '<h1>' + esc(job.title) + '</h1>' +
-            '<p>' + esc(job.department) + '</p>' +
-            '<p>' + esc(job.shortInfo || '') + '</p>' +
-            (job.lastDate ? '<p>Last Date: ' + esc(job.lastDate) + '</p>' : '') +
-            (job.qualification ? '<p>Eligibility: ' + esc(job.qualification) + '</p>' : '') +
-            '</body></html>');
+          return res.send(`<!DOCTYPE html><html lang="hi-IN"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${title}</title>
+<meta name="description" content="${desc}">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="${canonical}">
+<meta property="og:title" content="${title}">
+<meta property="og:description" content="${desc}">
+<meta property="og:url" content="${canonical}">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="SarkariJobSeva">
+<meta property="og:image" content="${baseUrl}/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+</head><body>
+<h1>${esc(job.title)}</h1>
+<p>${esc(job.department)}</p>
+<p>${esc(job.shortInfo || '')}</p>
+${job.lastDate ? '<p>Last Date: ' + esc(job.lastDate) + '</p>' : ''}
+${job.qualification ? '<p>Eligibility: ' + esc(job.qualification) + '</p>' : ''}
+</body></html>`);
         }
       }
+
+      // 2. Category pages with real posts
+      const categoryMap: Record<string, {title: string; desc: string; type: string}> = {
+        '/latest-jobs':  { title: 'Latest Government Jobs 2026', desc: 'Latest sarkari naukri 2026 – SSC, Railway, UPSC, Bank, State Govt jobs. Apply online at SarkariJobSeva.', type: 'job' },
+        '/admit-card':   { title: 'Admit Card Download 2026', desc: 'Download admit card 2026 for all government exams – SSC, Railway, UPSC. Hall ticket at SarkariJobSeva.', type: 'admit-card' },
+        '/results':      { title: 'Sarkari Result 2026', desc: 'Sarkari result 2026 – Check government exam results, merit list, cut off marks at SarkariJobSeva.', type: 'result' },
+        '/answer-key':   { title: 'Answer Key Download 2026', desc: 'Download answer key 2026 for SSC, Railway, UPSC, Bank government exams at SarkariJobSeva.', type: 'answer-key' },
+        '/admission':    { title: 'Admission Form 2026', desc: 'Government college admission 2026 – Apply online, eligibility, important dates at SarkariJobSeva.', type: 'admission' },
+        '/search':       { title: 'Search Sarkari Jobs 2026', desc: 'Search latest sarkari jobs, admit cards, results 2026 at SarkariJobSeva.', type: 'all' },
+        '/blog':         { title: 'Sarkari Job Blog', desc: 'Latest sarkari job news, tips, syllabus and updates for government job aspirants.', type: 'blog' },
+        '/':             { title: 'SarkariJobSeva - Sarkari Result, Naukri, Admit Card 2026', desc: 'India ka #1 sarkari naukri portal. Latest government jobs, admit card, result, answer key 2026.', type: 'all' },
+      };
+
+      const catConfig = categoryMap[urlPath];
+      if (catConfig) {
+        const canonical = baseUrl + urlPath;
+        let postsHtml = '';
+        
+        try {
+          if (catConfig.type !== 'all' && catConfig.type !== 'blog') {
+            const posts = await storage.getFilteredPosts({ type: catConfig.type }, 1, 20);
+            postsHtml = posts.slice(0, 10).map((p: any) => 
+              `<li><a href="${baseUrl}/job/${p.slug || p.id}">${esc(p.title)}</a>${p.lastDate ? ' – Last Date: ' + esc(p.lastDate) : ''}</li>`
+            ).join('');
+          }
+        } catch {}
+
+        return res.send(`<!DOCTYPE html><html lang="hi-IN"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(catConfig.title)} | SarkariJobSeva</title>
+<meta name="description" content="${esc(catConfig.desc)}">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="${canonical}">
+<meta property="og:title" content="${esc(catConfig.title)} | SarkariJobSeva">
+<meta property="og:description" content="${esc(catConfig.desc)}">
+<meta property="og:url" content="${canonical}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="SarkariJobSeva">
+</head><body>
+<h1>${esc(catConfig.title)}</h1>
+<p>${esc(catConfig.desc)}</p>
+${postsHtml ? '<ul>' + postsHtml + '</ul>' : ''}
+<p>Visit <a href="${baseUrl}">SarkariJobSeva.com</a> for more updates.</p>
+</body></html>`);
+      }
+
     } catch(e) { console.error('[Prerender]', e); }
     next();
   });
+  // ===== END BOT PRERENDER =====
 
   // Health check endpoint - shows database connection info
   app.get("/api/health", async (req, res) => {
