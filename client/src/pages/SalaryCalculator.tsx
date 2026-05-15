@@ -1,32 +1,53 @@
 import { useState } from 'react';
 import { useSEO } from '@/components/SEO';
-import { Calculator, IndianRupee, TrendingUp, Info } from 'lucide-react';
+import { Calculator, TrendingUp, Info, ExternalLink } from 'lucide-react';
 
-const PAY_MATRIX = {
-  '1': { basic: 18000, label: 'Level 1 – MTS, Peon, Group D' },
-  '2': { basic: 19900, label: 'Level 2 – Group D' },
-  '3': { basic: 21700, label: 'Level 3 – Constable, LDC' },
-  '4': { basic: 25500, label: 'Level 4 – Clerk, Junior Assistant' },
-  '5': { basic: 29200, label: 'Level 5 – Upper Division Clerk' },
-  '6': { basic: 35400, label: 'Level 6 – Sub Inspector, Junior Engineer' },
-  '7': { basic: 44900, label: 'Level 7 – Inspector, Section Officer' },
-  '8': { basic: 47600, label: 'Level 8 – Sr. Section Officer' },
-  '9': { basic: 53100, label: 'Level 9 – Under Secretary' },
-  '10': { basic: 56100, label: 'Level 10 – ASP, DSP, CAPF Asst Commandant' },
-  '11': { basic: 67700, label: 'Level 11 – SSP, Deputy Director' },
-  '12': { basic: 78800, label: 'Level 12 – SP, Director' },
-  '13': { basic: 118500, label: 'Level 13 – IAS/IPS Joint Secretary' },
-  '14': { basic: 144200, label: 'Level 14 – Additional Secretary' },
+// 7th CPC Pay Matrix as per official gazette notification
+// Source: 7th Central Pay Commission Report, Ministry of Finance
+const PAY_MATRIX: Record<string, { basic: number; label: string; examples: string }> = {
+  '1':  { basic: 18000,  label: 'Level 1',  examples: 'MTS, Peon, Helper, Group D' },
+  '2':  { basic: 19900,  label: 'Level 2',  examples: 'Group D (skilled)' },
+  '3':  { basic: 21700,  label: 'Level 3',  examples: 'Constable (GD), LDC' },
+  '4':  { basic: 25500,  label: 'Level 4',  examples: 'Constable (Technical), Clerk' },
+  '5':  { basic: 29200,  label: 'Level 5',  examples: 'Upper Division Clerk, Junior Clerk' },
+  '6':  { basic: 35400,  label: 'Level 6',  examples: 'ASI, Sub Inspector, Junior Engineer, Head Constable' },
+  '7':  { basic: 44900,  label: 'Level 7',  examples: 'Inspector, Section Officer, Junior Accountant' },
+  '8':  { basic: 47600,  label: 'Level 8',  examples: 'Sr. Section Officer, Accountant' },
+  '9':  { basic: 53100,  label: 'Level 9',  examples: 'Under Secretary, Sr. Inspector' },
+  '10': { basic: 56100,  label: 'Level 10', examples: 'DSP, Asst. Commandant, Group A Entry' },
+  '11': { basic: 67700,  label: 'Level 11', examples: 'Deputy Director, SSP' },
+  '12': { basic: 78800,  label: 'Level 12', examples: 'Director, SP, DIG' },
+  '13': { basic: 118500, label: 'Level 13', examples: 'Joint Secretary, IG' },
+  '14': { basic: 144200, label: 'Level 14', examples: 'Additional Secretary' },
 };
 
-const CITIES = {
-  'X': { label: 'X City (Delhi, Mumbai, Chennai, Kolkata, Hyderabad, Bengaluru)', hra: 0.27 },
-  'Y': { label: 'Y City (State Capitals, Big Cities)', hra: 0.18 },
-  'Z': { label: 'Z City (Other Areas / Rural)', hra: 0.09 },
+// HRA rates as per 7th CPC (revised June 2024)
+const CITY_HRA: Record<string, { label: string; rate: number }> = {
+  'X': { label: 'X (Delhi, Mumbai, Chennai, Kolkata, Hyderabad, Bengaluru)', rate: 0.27 },
+  'Y': { label: 'Y (State Capitals, Cities >50 lakh population)', rate: 0.18 },
+  'Z': { label: 'Z (Other towns & rural areas)', rate: 0.09 },
 };
 
-const DA_RATE = 0.50; // 50% DA as of 2026
-const TA_AMOUNT = { '1-4': 1350, '5-8': 3600, '9-14': 7200 };
+// DA as per Jan 2025 order (50% of basic)
+// Source: Ministry of Finance Office Memorandum dated Jan 2025
+const DA_RATE = 0.50;
+
+// TA as per 7th CPC (revised)
+const getTA = (level: number) => {
+  if (level <= 2) return 1350;
+  if (level <= 8) return 3600;
+  return 7200;
+};
+
+// NPS contribution - 10% of (Basic + DA) for central govt employees
+// CGHS subscription as per circular
+const getCGHS = (level: number) => {
+  if (level <= 2) return 250;
+  if (level <= 5) return 450;
+  if (level <= 9) return 650;
+  if (level <= 12) return 1000;
+  return 1300;
+};
 
 export default function SalaryCalculator() {
   const [level, setLevel] = useState('6');
@@ -34,130 +55,138 @@ export default function SalaryCalculator() {
   const [showBreakdown, setShowBreakdown] = useState(false);
 
   useSEO({
-    title: "7th Pay Commission Salary Calculator 2026 – Sarkari Naukri Salary",
-    description: "Calculate your government job salary as per 7th Pay Commission. Basic Pay, DA, HRA, TA sabka calculation karein. Sarkari naukri mein kitni salary milegi jaanein.",
-    keywords: "7th pay commission salary calculator, sarkari naukri salary, government job salary 2026, DA HRA TA calculator, basic pay calculator India",
+    title: "7th Pay Commission Salary Calculator 2026 – Sarkari Naukri In-Hand Salary",
+    description: "7th Pay Commission ke anusar apni sarkari naukri ki salary calculate karein. Basic Pay, DA 50%, HRA, TA sab milakaar in-hand salary jaanein. Level 1 se Level 14 tak.",
+    keywords: "7th pay commission salary calculator 2026, sarkari naukri salary, government job salary calculator, DA 50% salary, HRA TA calculator, in hand salary government employee",
     canonical: "https://sarkarijobseva.com/salary-calculator",
   });
 
-  const pay = PAY_MATRIX[level as keyof typeof PAY_MATRIX];
+  const lvl = parseInt(level);
+  const pay = PAY_MATRIX[level];
   const basic = pay.basic;
   const da = Math.round(basic * DA_RATE);
-  const hra = Math.round(basic * CITIES[city as keyof typeof CITIES].hra);
-  const levelNum = parseInt(level);
-  const ta = levelNum <= 4 ? TA_AMOUNT['1-4'] : levelNum <= 8 ? TA_AMOUNT['5-8'] : TA_AMOUNT['9-14'];
-  const grossSalary = basic + da + hra + ta;
+  const hra = Math.round(basic * CITY_HRA[city].rate);
+  const ta = getTA(lvl);
+  const gross = basic + da + hra + ta;
 
   // Deductions
-  const nps = Math.round(basic * 0.10);
-  const cghs = levelNum <= 4 ? 250 : levelNum <= 8 ? 450 : 650;
-  const totalDeductions = nps + cghs;
-  const inHandSalary = grossSalary - totalDeductions;
+  const nps = Math.round((basic + da) * 0.10); // NPS on basic+DA
+  const cghs = getCGHS(lvl);
+  const totalDed = nps + cghs;
+  const inHand = gross - totalDed;
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+    <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
       {/* Header */}
-      <div className="bg-gradient-to-br from-blue-700 to-blue-900 rounded-2xl p-6 text-white shadow-xl">
+      <div className="bg-gradient-to-br from-blue-700 to-blue-900 rounded-2xl p-5 text-white shadow-xl">
         <div className="flex items-center gap-3 mb-1">
-          <Calculator className="w-7 h-7" />
-          <h1 className="text-xl font-black">Salary Calculator</h1>
+          <Calculator className="w-6 h-6" />
+          <h1 className="text-lg font-black">7th Pay Commission Salary Calculator</h1>
         </div>
-        <p className="text-blue-200 text-sm">7th Pay Commission – 2026 | सरकारी नौकरी सैलरी कैलकुलेटर</p>
+        <p className="text-blue-200 text-xs">सरकारी नौकरी में कितनी सैलरी मिलेगी – जानें यहाँ</p>
+        <p className="text-blue-300 text-xs mt-1">DA: 50% (Jan 2025) | Based on official 7th CPC Pay Matrix</p>
       </div>
 
       {/* Inputs */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
         <div>
-          <label className="text-xs font-black uppercase tracking-widest text-slate-500 mb-2 block">Pay Level चुनें</label>
-          <select
-            value={level}
-            onChange={e => setLevel(e.target.value)}
-            className="w-full border-2 border-slate-200 rounded-xl p-3 text-sm font-bold outline-none focus:border-blue-500 bg-white"
-          >
-            {Object.entries(PAY_MATRIX).map(([lvl, data]) => (
-              <option key={lvl} value={lvl}>Level {lvl} – ₹{data.basic.toLocaleString('en-IN')} | {data.label}</option>
+          <label className="text-xs font-black uppercase tracking-widest text-slate-500 mb-2 block">Pay Level चुनें *</label>
+          <select value={level} onChange={e => setLevel(e.target.value)}
+            className="w-full border-2 border-slate-200 rounded-xl p-3 text-sm font-bold outline-none focus:border-blue-500 bg-white">
+            {Object.entries(PAY_MATRIX).map(([lvl, d]) => (
+              <option key={lvl} value={lvl}>
+                Level {lvl} – Basic ₹{d.basic.toLocaleString('en-IN')} | {d.examples}
+              </option>
             ))}
           </select>
         </div>
-
         <div>
-          <label className="text-xs font-black uppercase tracking-widest text-slate-500 mb-2 block">City Category चुनें</label>
-          <select
-            value={city}
-            onChange={e => setCity(e.target.value)}
-            className="w-full border-2 border-slate-200 rounded-xl p-3 text-sm font-bold outline-none focus:border-blue-500 bg-white"
-          >
-            {Object.entries(CITIES).map(([cat, data]) => (
-              <option key={cat} value={cat}>{cat} – {data.label} (HRA {Math.round(data.hra * 100)}%)</option>
+          <label className="text-xs font-black uppercase tracking-widest text-slate-500 mb-2 block">City Category चुनें *</label>
+          <select value={city} onChange={e => setCity(e.target.value)}
+            className="w-full border-2 border-slate-200 rounded-xl p-3 text-sm font-bold outline-none focus:border-blue-500 bg-white">
+            {Object.entries(CITY_HRA).map(([cat, d]) => (
+              <option key={cat} value={cat}>{cat} City – {d.label} (HRA {Math.round(d.rate * 100)}%)</option>
             ))}
           </select>
         </div>
       </div>
 
-      {/* Result Card */}
-      <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-6 text-white shadow-xl">
-        <p className="text-green-100 text-sm font-bold mb-1">💰 हाथ में मिलने वाली सैलरी (In-Hand)</p>
-        <p className="text-4xl font-black">₹{inHandSalary.toLocaleString('en-IN')}</p>
-        <p className="text-green-200 text-xs mt-1">प्रति माह / Per Month</p>
-        <p className="text-green-100 text-sm mt-2 font-semibold">Gross Salary: ₹{grossSalary.toLocaleString('en-IN')}</p>
+      {/* Result */}
+      <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-5 text-white shadow-xl">
+        <p className="text-green-100 text-sm font-bold mb-1">💰 अनुमानित In-Hand Salary</p>
+        <p className="text-4xl font-black">₹{inHand.toLocaleString('en-IN')}</p>
+        <p className="text-green-200 text-xs mt-1">प्रति माह (Per Month) – approximate</p>
+        <p className="text-green-100 text-sm mt-2 font-semibold">Gross: ₹{gross.toLocaleString('en-IN')} | Deductions: ₹{totalDed.toLocaleString('en-IN')}</p>
       </div>
 
-      {/* Breakdown Toggle */}
-      <button
-        onClick={() => setShowBreakdown(!showBreakdown)}
-        className="w-full bg-white border-2 border-blue-200 rounded-xl py-3 text-blue-700 font-black text-sm hover:bg-blue-50 transition-colors flex items-center justify-center gap-2"
-      >
+      {/* Breakdown */}
+      <button onClick={() => setShowBreakdown(!showBreakdown)}
+        className="w-full bg-white border-2 border-blue-200 rounded-xl py-3 text-blue-700 font-black text-sm hover:bg-blue-50 transition-colors flex items-center justify-center gap-2">
         <TrendingUp className="w-4 h-4" />
         {showBreakdown ? 'Breakdown छुपाएं' : 'पूरा Breakdown देखें'}
       </button>
 
       {showBreakdown && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="bg-slate-50 px-5 py-3 border-b border-slate-200">
-            <p className="font-black text-slate-700 text-sm uppercase tracking-wide">Salary Breakdown – Level {level}</p>
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden text-sm">
+          <div className="bg-slate-50 px-4 py-3 border-b">
+            <p className="font-black text-slate-700">Level {level} – {pay.label} | {pay.examples}</p>
           </div>
-          {/* Earnings */}
-          <div className="p-5 space-y-3">
-            <p className="text-xs font-black uppercase text-green-600 tracking-widest mb-2">✅ Earnings (आय)</p>
+          <div className="p-4 space-y-2">
+            <p className="text-xs font-black text-green-600 uppercase tracking-wide mb-2">✅ आय (Earnings)</p>
             {[
-              { label: 'Basic Pay (मूल वेतन)', value: basic },
-              { label: `DA – Dearness Allowance (${Math.round(DA_RATE * 100)}%)`, value: da },
-              { label: `HRA – House Rent Allowance (${Math.round(CITIES[city as keyof typeof CITIES].hra * 100)}% – ${city} City)`, value: hra },
-              { label: 'TA – Transport Allowance', value: ta },
+              { l: `Basic Pay (मूल वेतन)`, v: basic, note: '' },
+              { l: `Dearness Allowance – DA (${Math.round(DA_RATE*100)}% of Basic)`, v: da, note: 'Jan 2025 rate' },
+              { l: `HRA – ${city} City (${Math.round(CITY_HRA[city].rate*100)}% of Basic)`, v: hra, note: '7th CPC rate' },
+              { l: `Transport Allowance – TA`, v: ta, note: 'Level based' },
             ].map(item => (
-              <div key={item.label} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
-                <span className="text-sm text-slate-600 font-semibold">{item.label}</span>
-                <span className="text-sm font-black text-slate-800">+ ₹{item.value.toLocaleString('en-IN')}</span>
+              <div key={item.l} className="flex justify-between py-1.5 border-b border-slate-100">
+                <span className="text-slate-600">{item.l} <span className="text-xs text-slate-400">{item.note}</span></span>
+                <span className="font-black text-slate-800">+ ₹{item.v.toLocaleString('en-IN')}</span>
               </div>
             ))}
-            <div className="flex items-center justify-between py-2 bg-green-50 rounded-xl px-3 mt-2">
-              <span className="text-sm font-black text-green-700">Gross Salary</span>
-              <span className="text-sm font-black text-green-700">₹{grossSalary.toLocaleString('en-IN')}</span>
+            <div className="flex justify-between py-2 bg-green-50 rounded-lg px-3 mt-1">
+              <span className="font-black text-green-700">Gross Salary</span>
+              <span className="font-black text-green-700">₹{gross.toLocaleString('en-IN')}</span>
             </div>
 
-            <p className="text-xs font-black uppercase text-red-500 tracking-widest mb-2 mt-4">❌ Deductions (कटौती)</p>
+            <p className="text-xs font-black text-red-500 uppercase tracking-wide mt-3 mb-2">❌ कटौती (Deductions)</p>
             {[
-              { label: 'NPS – National Pension System (10%)', value: nps },
-              { label: 'CGHS – Health Insurance', value: cghs },
+              { l: `NPS – National Pension (10% of Basic+DA)`, v: nps },
+              { l: `CGHS – Health Subscription`, v: cghs },
             ].map(item => (
-              <div key={item.label} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
-                <span className="text-sm text-slate-600 font-semibold">{item.label}</span>
-                <span className="text-sm font-black text-red-500">– ₹{item.value.toLocaleString('en-IN')}</span>
+              <div key={item.l} className="flex justify-between py-1.5 border-b border-slate-100">
+                <span className="text-slate-600">{item.l}</span>
+                <span className="font-black text-red-500">– ₹{item.v.toLocaleString('en-IN')}</span>
               </div>
             ))}
-
-            <div className="flex items-center justify-between py-3 bg-blue-700 rounded-xl px-3 mt-2">
-              <span className="text-sm font-black text-white">🏆 Net In-Hand Salary</span>
-              <span className="text-sm font-black text-white">₹{inHandSalary.toLocaleString('en-IN')}</span>
+            <div className="flex justify-between py-2 bg-blue-700 rounded-lg px-3 mt-1 text-white">
+              <span className="font-black">🏆 Net In-Hand Salary</span>
+              <span className="font-black">₹{inHand.toLocaleString('en-IN')}</span>
             </div>
           </div>
         </div>
       )}
 
-      {/* Disclaimer */}
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-2">
-        <Info className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-        <p className="text-xs text-amber-700 font-semibold">यह calculator approximate है। Actual salary posting, increment aur department ke rules par depend karti hai। DA rate sarkari order se update hoti rehti hai।</p>
+      {/* IMPORTANT DISCLAIMER - Legal protection */}
+      <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-4 space-y-2">
+        <div className="flex gap-2 items-start">
+          <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-xs font-black text-amber-800 mb-1">⚠️ महत्वपूर्ण सूचना (Important Disclaimer)</p>
+            <ul className="text-xs text-amber-700 space-y-1 font-medium list-disc list-inside">
+              <li>यह calculator केवल <strong>अनुमानित (approximate)</strong> जानकारी के लिए है।</li>
+              <li>Actual salary posting location, department, increment aur allowances par depend karti hai।</li>
+              <li>DA rate government order se samay-samay par badlti rehti hai।</li>
+              <li>Income Tax, Professional Tax aur other deductions is calculation mein shamil NAHIN hain।</li>
+              <li>Final salary ke liye apna appointment letter ya department se confirm karein।</li>
+              <li>SarkariJobSeva.com kisi bhi galti ke liye zimmedar NAHIN hai।</li>
+            </ul>
+          </div>
+        </div>
+        <a href="https://doe.gov.in/pay-commission" target="_blank" rel="noopener noreferrer"
+          className="flex items-center gap-1 text-xs text-blue-600 font-bold hover:underline">
+          <ExternalLink className="w-3 h-3" /> Official 7th Pay Commission – Department of Expenditure
+        </a>
       </div>
     </div>
   );
