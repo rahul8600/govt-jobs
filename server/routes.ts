@@ -113,7 +113,7 @@ function requireAuth(req: Request, res: Response, next: NextFunction) {
 }
 
 // Bot detection
-const BOTS = ['googlebot','bingbot','yandex','facebookexternalhit','twitterbot','linkedinbot','whatsapp','telegrambot','applebot','discordbot'];
+const BOTS = ['googlebot','google-inspection-tool','google search console','bingbot','facebookexternalhit','twitterbot','linkedinbot','whatsapp','telegrambot','applebot','discordbot'];
 function isBot(ua: string): boolean { return BOTS.some(b => ua.toLowerCase().includes(b)); }
 function esc(s: string): string { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
