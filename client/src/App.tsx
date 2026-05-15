@@ -13,7 +13,6 @@ import { Disclaimer, PrivacyPolicy, TermsOfService, Syllabus, Contact } from "@/
 import BlogList from "@/pages/Blog";
 import BlogDetail from "@/pages/BlogDetail";
 import SalaryCalculator from "@/pages/SalaryCalculator";
-import { LanguageProvider } from "@/lib/LanguageContext";
 
 function Router() {
   return (
@@ -50,12 +49,10 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <LanguageProvider>
-      <AuthProvider>
+<AuthProvider>
         <Toaster />
         <Router />
       </AuthProvider>
-      </LanguageProvider>
     </QueryClientProvider>
   );
 }
