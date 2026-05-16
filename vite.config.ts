@@ -25,12 +25,21 @@ export default defineConfig({
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
     chunkSizeWarningLimit: 1000,
+    minify: "terser",
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        pure_funcs: ["console.log", "console.info"],
+      },
+    },
     rollupOptions: {
       output: {
         manualChunks: {
           "react-vendor": ["react", "react-dom"],
           "ui-vendor": ["lucide-react", "wouter"],
           "query-vendor": ["@tanstack/react-query"],
+          "salary-page": ["./client/src/pages/SalaryCalculator.tsx"],
         },
       },
     },
