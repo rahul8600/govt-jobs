@@ -1,0 +1,51 @@
+{
+  "name": "SarkariJobSeva",
+  "short_name": "SarkariJob",
+  "description": "India ka #1 Sarkari Naukri Portal - Latest Jobs, Admit Card, Result, Answer Key",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1d4ed8",
+  "theme_color": "#1d4ed8",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "hi-IN",
+  "categories": ["education", "government", "jobs"],
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Latest Jobs",
+      "url": "/latest-jobs",
+      "description": "Latest Government Jobs 2026"
+    },
+    {
+      "name": "Admit Card",
+      "url": "/admit-card",
+      "description": "Download Admit Card"
+    },
+    {
+      "name": "Results",
+      "url": "/results",
+      "description": "Check Exam Results"
+    }
+  ]
+}
