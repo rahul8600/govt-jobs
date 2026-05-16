@@ -7,6 +7,10 @@ import { insertPostSchema } from "@shared/schema";
 import { z } from "zod";
 import { parseJobNotification } from "./jobParser";
 import { dbInfo } from "./db";
+import { writeFile, readdir, unlink, mkdir } from "fs/promises";
+import { existsSync } from "fs";
+import path from "path";
+import { v2 as cloudinary } from "cloudinary";
 
 function generateSlug(title: string): string {
   const yearMatch = title.match(/20\d{2}/);
@@ -116,6 +120,101 @@ function requireAuth(req: Request, res: Response, next: NextFunction) {
 const BOTS = ['googlebot','google-inspection-tool','google search console','bingbot','facebookexternalhit','twitterbot','linkedinbot','whatsapp','telegrambot','applebot','discordbot'];
 function isBot(ua: string): boolean { return BOTS.some(b => ua.toLowerCase().includes(b)); }
 function esc(s: string): string { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+
+// ===== TELEGRAM BOT AUTO POST =====
+async function sendTelegramMessage(message: string): Promise<void> {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHANNEL_ID;
+  if (!token || !chatId) {
+    console.log("Telegram not configured - skipping notification");
+    return;
+  }
+  try {
+    const url = `https://api.telegram.org/bot${token}/sendMessage`;
+    const tgRes = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message,
+        parse_mode: "HTML",
+        disable_web_page_preview: false,
+      }),
+    });
+    const tgData = await tgRes.json();
+    if (tgData.ok) {
+      console.log("✅ Telegram notification sent successfully!");
+    } else {
+      console.error("❌ Telegram error:", JSON.stringify(tgData));
+    }
+  } catch (err) {
+    console.error("Telegram send error:", err);
+  }
+}
+
+// ===== ONESIGNAL PUSH NOTIFICATION =====
+async function sendPushNotification(title: string, message: string, url: string): Promise<void> {
+  const appId = "fd40d63f-bbbd-46e4-8162-c331854a0225";
+  const apiKey = process.env.ONESIGNAL_REST_API_KEY;
+  if (!apiKey) {
+    console.log("OneSignal REST API key not set - skipping push notification");
+    return;
+  }
+  try {
+    const res = await fetch("https://onesignal.com/api/v1/notifications", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Basic ${apiKey}`,
+      },
+      body: JSON.stringify({
+        app_id: appId,
+        included_segments: ["All"],
+        headings: { en: title },
+        contents: { en: message },
+        url: url,
+        chrome_web_icon: "https://sarkarijobseva.com/logo.png",
+      }),
+    });
+    const data = await res.json();
+    console.log("Push notification sent:", data.id || data.errors);
+  } catch (err) {
+    console.error("OneSignal push error:", err);
+  }
+}
+
+// Send both Telegram + Push notification for a post
+async function notifyAllChannels(post: any, req: any): Promise<void> {
+  const postUrl = `https://sarkarijobseva.com/job/${post.slug || post.id}`;
+  const typeEmoji: Record<string, string> = {
+    job: "💼", "admit-card": "🎫", result: "📊", "answer-key": "🔑", admission: "🎓"
+  };
+  const typeLabel: Record<string, string> = {
+    job: "New Job", "admit-card": "Admit Card Out", result: "Result Out", "answer-key": "Answer Key", admission: "Admission"
+  };
+  const emoji = typeEmoji[post.type] || "📢";
+  const label = typeLabel[post.type] || "New Post";
+
+  const telegramMsg = `${emoji} <b>${label}!</b>
+
+📋 <b>${post.title}</b>
+
+🏢 ${post.department || ""}
+📅 Last Date: ${post.lastDate || "N/A"}
+👥 Posts: ${post.totalPost || "N/A"}
+🎓 Qualification: ${post.qualification || "N/A"}
+
+🔗 <a href="${postUrl}">Full Details & Apply</a>
+
+🌐 SarkariJobSeva.com
+📲 Join: https://t.me/sarkarijobse`;
+
+  await sendTelegramMessage(telegramMsg).catch(console.error);
+
+  const pushMsg = `${post.department || ""} | Last Date: ${post.lastDate || "N/A"} | Posts: ${post.totalPost || "N/A"}`;
+  await sendPushNotification(`${emoji} ${label}: ${post.title}`, pushMsg, postUrl).catch(console.error);
+}
 
 export async function registerRoutes(
   httpServer: Server,
@@ -297,7 +396,13 @@ ${postsHtml ? '<ul>' + postsHtml + '</ul>' : ''}
   });
 
   // Get all posts with optional filters
+  // Cache helper
+  function setPublicCache(res: Response, seconds = 60) {
+    res.setHeader("Cache-Control", `public, max-age=${seconds}, stale-while-revalidate=${seconds * 2}`);
+  }
+
   app.get("/api/posts", async (req, res) => {
+    setPublicCache(res, 60);
     try {
       res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
       res.set('Pragma', 'no-cache');
@@ -417,6 +522,8 @@ ${postsHtml ? '<ul>' + postsHtml + '</ul>' : ''}
       }
       const post = await storage.createPost(validatedData);
       res.status(201).json(post);
+      // Auto-notify Telegram + Push
+      notifyAllChannels(post, req).catch(console.error);
     } catch (error) {
       console.error("Error creating post:", error);
       res.status(400).json({ error: "Failed to create post" });
@@ -704,6 +811,89 @@ Sitemap: ${baseUrl}/sitemap.xml
     } catch (error) {
       console.error("Error generating sitemap:", error);
       res.status(500).send('Error generating sitemap');
+    }
+  });
+
+
+  // Manual notify route - send Telegram + Push for any post (admin only)
+  app.post("/api/posts/:id/notify", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const post = await storage.getPost(id);
+      if (!post) return res.status(404).json({ error: "Post not found" });
+      await notifyAllChannels(post, req);
+      res.json({ success: true, message: "Notification sent to Telegram + Push!" });
+    } catch (error) {
+      console.error("Notify error:", error);
+      res.status(500).json({ error: "Failed to send notification" });
+    }
+  });
+
+  // Blog auto-post to Telegram
+  app.post('/api/blogs', requireAuth, async (req, res) => {
+    // handled below - this is just a placeholder
+  });
+
+  // ===== CLOUDINARY IMAGE GALLERY =====
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
+
+  // Upload image to Cloudinary (admin only)
+  app.post("/api/upload-image", requireAuth, async (req, res) => {
+    try {
+      const { base64, filename, mimeType } = req.body;
+      if (!base64) return res.status(400).json({ error: "base64 required" });
+      const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+      if (mimeType && !allowedTypes.includes(mimeType)) {
+        return res.status(400).json({ error: "Only JPG, PNG, WebP, GIF allowed" });
+      }
+      const buffer = Buffer.from(base64, "base64");
+      if (buffer.length > 5 * 1024 * 1024) {
+        return res.status(400).json({ error: "Image too large. Max 5MB." });
+      }
+      const dataUri = `data:${mimeType || "image/jpeg"};base64,${base64}`;
+      const result = await cloudinary.uploader.upload(dataUri, {
+        folder: "sarkarijobseva",
+        resource_type: "image",
+      });
+      res.json({ url: result.secure_url, filename: result.public_id });
+    } catch (error: any) {
+      console.error("Cloudinary upload error:", error);
+      res.status(500).json({ error: "Upload failed: " + (error.message || "unknown") });
+    }
+  });
+
+  // Get gallery from Cloudinary (admin only)
+  app.get("/api/image-gallery", requireAuth, async (req, res) => {
+    try {
+      const result = await cloudinary.api.resources({
+        type: "upload",
+        prefix: "sarkarijobseva/",
+        max_results: 100,
+        resource_type: "image",
+      });
+      const images = result.resources.map((r: any) => ({
+        url: r.secure_url,
+        filename: r.public_id,
+      })).reverse();
+      res.json(images);
+    } catch (error: any) {
+      console.error("Gallery fetch error:", error);
+      res.status(500).json({ error: "Failed to fetch gallery" });
+    }
+  });
+
+  // Delete image from Cloudinary (admin only)
+  app.delete("/api/image-gallery/:filename(*)", requireAuth, async (req, res) => {
+    try {
+      const publicId = req.params.filename;
+      await cloudinary.uploader.destroy(publicId);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Delete failed" });
     }
   });
 
