@@ -691,12 +691,11 @@ Format dates in DD/MM/YYYY or "Month DD, YYYY" format as they appear.`;
   // Create blog (admin only)
   app.post('/api/blogs', requireAuth, async (req, res) => {
     try {
-      const { db } = await import('./db');
       const { title, content: blogContent, excerpt, image_url, category, tags, featured, published } = req.body;
-      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now();
-      const result = await db.execute(
+      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') + '-' + Date.now();
+      const result = await blogPool.query(
         'INSERT INTO blogs (title, slug, content, excerpt, image_url, category, tags, featured, published) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
-        [title, slug, blogContent, excerpt, image_url || '', category || 'job', tags || '', featured || false, published || false]
+        [title, slug, blogContent || '', excerpt || '', image_url || '', category || 'job', tags || '', featured || false, published !== false]
       );
       const blog = result.rows[0];
       res.json(blog);
