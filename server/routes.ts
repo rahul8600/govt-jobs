@@ -676,7 +676,7 @@ Format dates in DD/MM/YYYY or "Month DD, YYYY" format as they appear.`;
       const { db } = await import('./db');
       const { slug } = req.params;
       await db.execute('UPDATE blogs SET views = views + 1 WHERE slug = $1', [slug]);
-      const result = await db.execute('SELECT * FROM blogs WHERE slug = $1 AND published = true', [slug]);
+      const result = await db.execute('SELECT * FROM blogs WHERE slug = $1', [slug]);
       if (!result.rows || result.rows.length === 0) return res.status(404).json({ error: 'Blog not found' });
       res.json(result.rows[0]);
     } catch (error) {
@@ -694,7 +694,25 @@ Format dates in DD/MM/YYYY or "Month DD, YYYY" format as they appear.`;
         'INSERT INTO blogs (title, slug, content, excerpt, image_url, category, tags, featured, published) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
         [title, slug, content, excerpt, image_url || '', category || 'job', tags || '', featured || false, published || false]
       );
-      res.json(result.rows[0]);
+      const blog = result.rows[0];
+      res.json(blog);
+
+      // Auto-post to Telegram
+      try {
+        const blogUrl = `https://sarkarijobseva.com/blog/${blog.slug}`;
+        const telegramMsg = `📝 <b>New Blog Post!</b>
+
+📋 <b>${blog.title}</b>
+
+${blog.excerpt ? blog.excerpt.substring(0, 200) + '...' : ''}
+
+🔗 <a href="${blogUrl}">Read More</a>
+
+🌐 SarkariJobSeva.com
+📲 Join: https://t.me/sarkarijobse`;
+        sendTelegramMessage(telegramMsg).catch(console.error);
+      } catch(e) { console.error("Blog Telegram error:", e); }
+
     } catch (error) {
       console.error('Error creating blog:', error);
       res.status(500).json({ error: 'Failed to create blog' });
@@ -827,11 +845,6 @@ Sitemap: ${baseUrl}/sitemap.xml
       console.error("Notify error:", error);
       res.status(500).json({ error: "Failed to send notification" });
     }
-  });
-
-  // Blog auto-post to Telegram
-  app.post('/api/blogs', requireAuth, async (req, res) => {
-    // handled below - this is just a placeholder
   });
 
   // ===== CLOUDINARY IMAGE GALLERY =====
