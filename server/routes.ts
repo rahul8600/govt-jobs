@@ -271,8 +271,10 @@ ${job.qualification ? '<p>Eligibility: ' + esc(job.qualification) + '</p>' : ''}
         '/results':      { title: 'Sarkari Result 2026', desc: 'Sarkari result 2026 – Check government exam results, merit list, cut off marks at SarkariJobSeva.', type: 'result' },
         '/answer-key':   { title: 'Answer Key Download 2026', desc: 'Download answer key 2026 for SSC, Railway, UPSC, Bank government exams at SarkariJobSeva.', type: 'answer-key' },
         '/admission':    { title: 'Admission Form 2026', desc: 'Government college admission 2026 – Apply online, eligibility, important dates at SarkariJobSeva.', type: 'admission' },
+        '/salary-calculator': { title: '7th Pay Commission Salary Calculator 2026', desc: '7th Pay Commission salary calculator. Sarkari naukri mein kitni salary milegi jaanein.', type: 'all' },
         '/search':       { title: 'Search Sarkari Jobs 2026', desc: 'Search latest sarkari jobs, admit cards, results 2026 at SarkariJobSeva.', type: 'all' },
         '/blog':         { title: 'Sarkari Job Blog', desc: 'Latest sarkari job news, tips, syllabus and updates for government job aspirants.', type: 'blog' },
+        '/salary-calculator': { title: '7th Pay Commission Salary Calculator 2026 – Sarkari Naukri Salary', desc: '7th Pay Commission ke anusar sarkari naukri salary calculate karein. Basic Pay, DA 50%, HRA, TA sab milakaar in-hand salary jaanein.', type: 'all' },
         '/':             { title: 'SarkariJobSeva - Sarkari Result, Naukri, Admit Card 2026', desc: 'India ka #1 sarkari naukri portal. Latest government jobs, admit card, result, answer key 2026.', type: 'all' },
       };
 
