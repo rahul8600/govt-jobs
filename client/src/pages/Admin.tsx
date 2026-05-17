@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useJobs } from '@/lib/useJobs';
 import { Job } from '@/lib/data';
-import { Trash2, Plus, LayoutGrid, Database, Eye, Upload, CheckCircle2, Edit2, X, Lock, LogOut, Sparkles, Loader2, ArrowRight, BarChart3, Users, TrendingUp, Clock, FileText, Image, ImagePlus, RefreshCw, Bell } from 'lucide-react';
+import { Trash2, Plus, LayoutGrid, Database, Eye, Upload, CheckCircle2, Edit2, X, Lock, LogOut, Sparkles, Loader2, ArrowRight, BarChart3, Users, TrendingUp, Clock, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/AuthContext';
 
@@ -50,80 +50,8 @@ export default function Admin() {
   const [blogs, setBlogs] = useState<any[]>([]);
   const [blogsLoading, setBlogsLoading] = useState(false);
   const [blogForm, setBlogForm] = useState({ title: '', slug: '', content: '', excerpt: '', image_url: '', category: 'job', tags: '', featured: false });
-  const [showGallery, setShowGallery] = useState(false);
-  const [galleryImages, setGalleryImages] = useState<{url: string, filename: string}[]>([]);
-  const [galleryLoading, setGalleryLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const imageInputRef = useRef<HTMLInputElement>(null);
   const { jobs, addJob, updateJob, deleteJob } = useJobs();
-
-  const notifyPost = async (id: number, title: string) => {
-    if (!confirm(`"${title}" ka notification Telegram + Website pe bhejna hai?`)) return;
-    try {
-      const res = await fetch(`/api/posts/${id}/notify`, { method: 'POST' });
-      const data = await res.json();
-      if (res.ok) alert('✅ Notification bhej diya! Telegram + Website dono pe!');
-      else alert('❌ Error: ' + (data.error || 'Unknown'));
-    } catch (e) {
-      alert('❌ Network error!');
-    }
-  };
   const { isAdmin, loading: authLoading, refresh: refreshAuth } = useAuth();
-
-  const fetchGallery = useCallback(async () => {
-    setGalleryLoading(true);
-    try {
-      const res = await fetch('/api/image-gallery');
-      if (res.ok) setGalleryImages(await res.json());
-    } catch {
-      // Gallery from server not available, that's ok
-    } finally { setGalleryLoading(false); }
-  }, []);
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { alert('Image too large. Max 5MB.'); return; }
-    setUploading(true);
-    try {
-      const reader = new FileReader();
-      reader.onload = async (ev) => {
-        const base64 = (ev.target?.result as string).split(',')[1];
-        // ImgBB free image hosting - no server needed!
-        const formData = new FormData();
-        formData.append('image', base64);
-        const res = await fetch('https://api.imgbb.com/1/upload?key=f7285863dd846cd7e9683698a7b6cb3a', {
-          method: 'POST',
-          body: formData
-        });
-        if (res.ok) {
-          const data = await res.json();
-          // Use direct URL (permanent) instead of display_url
-          const imageUrl = data.data.url;
-          console.log('ImgBB upload success:', imageUrl);
-          setBlogForm(f => ({ ...f, image_url: imageUrl }));
-          await fetchGallery();
-          alert('✅ Image upload ho gayi! URL: ' + imageUrl);
-        } else {
-          const errText = await res.text();
-          console.error('ImgBB error:', errText);
-          alert('Upload failed: ' + errText);
-        }
-        setUploading(false);
-      };
-      reader.readAsDataURL(file);
-    } catch (err) { 
-      console.error(err);
-      alert('Upload error. Check internet connection.');
-      setUploading(false); 
-    }
-  };
-
-  const deleteGalleryImage = async (filename: string) => {
-    if (!confirm('Delete this image?')) return;
-    await fetch('/api/image-gallery/' + filename, { method: 'DELETE' });
-    await fetchGallery();
-  };
   
   const fetchBlogs = async () => {
     setBlogsLoading(true);
@@ -563,25 +491,25 @@ export default function Admin() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto py-10 px-4">
+    <div className="max-w-6xl mx-auto py-4 md:py-10 px-3 md:px-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg">
             <Database className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-3xl font-black text-slate-900 uppercase tracking-tight">Portal Console</h1>
+            <h1 className="text-xl md:text-3xl font-black text-slate-900 uppercase tracking-tight">Admin Panel</h1>
             <p className="text-muted font-bold text-xs uppercase tracking-widest mt-1">Management Interface v3.0</p>
           </div>
         </div>
         
-        <div className="flex bg-white border border-slate-200 p-1 shadow-sm rounded-xl overflow-hidden">
+        <div className="flex bg-white border border-slate-200 p-1 shadow-sm rounded-xl overflow-x-auto scrollbar-hide">
           <button 
             type="button"
             onClick={() => setActiveTab('list')}
-            className={`flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'list' ? 'bg-primary text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+            className={`flex items-center gap-1.5 px-3 md:px-6 py-2.5 md:py-3 font-black text-xs uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'list' ? 'bg-primary text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
           >
-            <LayoutGrid className="w-4 h-4" /> Live Feed
+            <LayoutGrid className="w-4 h-4" /> <span className="hidden sm:inline">Live Feed</span>
           </button>
           <button 
             type="button"
@@ -590,9 +518,9 @@ export default function Admin() {
               setFormData(initialFormData);
               setActiveTab('add');
             }}
-            className={`flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'add' ? 'bg-primary text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+            className={`flex items-center gap-1.5 px-3 md:px-6 py-2.5 md:py-3 font-black text-xs uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'add' ? 'bg-primary text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
           >
-            <Plus className="w-4 h-4" /> New Post
+            <Plus className="w-4 h-4" /> <span className="hidden sm:inline">New Post</span>
           </button>
           <button 
             type="button"
@@ -602,10 +530,10 @@ export default function Admin() {
               setAiError('');
               setActiveTab('ai');
             }}
-            className={`flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'ai' ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-md' : 'text-violet-600 hover:bg-violet-50'}`}
+            className={`flex items-center gap-1.5 px-3 md:px-6 py-2.5 md:py-3 font-black text-xs uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'ai' ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-md' : 'text-violet-600 hover:bg-violet-50'}`}
             data-testid="button-ai-generator"
           >
-            <Sparkles className="w-4 h-4" /> AI Generator
+            <Sparkles className="w-4 h-4" /> <span className="hidden sm:inline">AI</span>
           </button>
           <input 
             type="file" 
@@ -617,31 +545,31 @@ export default function Admin() {
           <button 
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-50"
+            className="flex items-center gap-1.5 px-3 md:px-6 py-2.5 md:py-3 font-black text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-50 whitespace-nowrap"
           >
-            <Upload className="w-4 h-4" /> Bulk CSV
+            <Upload className="w-4 h-4" /> <span className="hidden sm:inline">CSV</span>
           </button>
           <button 
             type="button"
             onClick={() => setActiveTab('analytics')}
-            className={`flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'analytics' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md' : 'text-emerald-600 hover:bg-emerald-50'}`}
+            className={`flex items-center gap-1.5 px-3 md:px-6 py-2.5 md:py-3 font-black text-xs uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'analytics' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md' : 'text-emerald-600 hover:bg-emerald-50'}`}
             data-testid="button-analytics"
           >
-            <BarChart3 className="w-4 h-4" /> Analytics
+            <BarChart3 className="w-4 h-4" /> <span className="hidden sm:inline">Stats</span>
           </button>
           <button
             onClick={() => { setActiveTab('blog'); fetchBlogs(); }}
-            className={`flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'blog' || activeTab === 'add-blog' ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md' : 'text-pink-600 hover:bg-pink-50'}`}
+            className={`flex items-center gap-1.5 px-3 md:px-6 py-2.5 md:py-3 font-black text-xs uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'blog' || activeTab === 'add-blog' ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md' : 'text-pink-600 hover:bg-pink-50'}`}
           >
             📝 Blog
           </button>
           <button 
             type="button"
             onClick={handleLogout}
-            className="flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest text-rose-500 hover:bg-rose-50"
+            className="flex items-center gap-1.5 px-3 md:px-6 py-2.5 md:py-3 font-black text-xs uppercase tracking-widest text-rose-500 hover:bg-rose-50 whitespace-nowrap"
             data-testid="button-logout"
           >
-            <LogOut className="w-4 h-4" /> Logout
+            <LogOut className="w-4 h-4" /> <span className="hidden sm:inline">Exit</span>
           </button>
         </div>
       </div>
@@ -983,14 +911,6 @@ Visit https://ssc.nic.in and apply online...`}
                         data-testid={`button-edit-${job.id}`}
                       >
                         <Edit2 className="w-5 h-5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => notifyPost(job.id, job.title)}
-                        className="p-3 bg-blue-50 text-blue-500 hover:bg-blue-600 hover:text-white transition-all rounded-xl shadow-sm"
-                        title="Telegram + Push Notification Bhejo"
-                      >
-                        <Bell className="w-5 h-5" />
                       </button>
                       <button 
                         type="button"
@@ -1740,31 +1660,11 @@ Visit https://ssc.nic.in and apply online...`}
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1.5 block">Blog Image</label>
-                    <div className="space-y-2">
-                      {blogForm.image_url && (
-                        <div className="relative w-full h-32 rounded-xl overflow-hidden border border-slate-200">
-                          <img src={blogForm.image_url} alt="preview" className="w-full h-full object-cover" />
-                          <button type="button" onClick={() => setBlogForm(f => ({...f, image_url: ''}))}
-                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold hover:bg-red-600">✕</button>
-                        </div>
-                      )}
-                      <div className="flex gap-2">
-                        <input type="text" value={blogForm.image_url}
-                          onChange={e => setBlogForm({...blogForm, image_url: e.target.value})}
-                          className="flex-1 border border-slate-200 rounded-xl p-2.5 text-sm font-semibold outline-none focus:border-pink-400"
-                          placeholder="https://... ya gallery se chunein" />
-                        <button type="button" onClick={() => { setShowGallery(true); fetchGallery(); }}
-                          className="bg-pink-100 text-pink-700 px-3 py-2 rounded-xl font-bold text-xs hover:bg-pink-200 flex items-center gap-1 whitespace-nowrap">
-                          <Image className="w-3.5 h-3.5" /> Gallery
-                        </button>
-                      </div>
-                      <label className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 cursor-pointer rounded-xl px-3 py-2.5 text-sm font-bold text-slate-600 transition-colors">
-                        <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-                        {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImagePlus className="w-4 h-4" />}
-                        {uploading ? 'Uploading...' : 'Device se upload karo'}
-                      </label>
-                    </div>
+                    <label className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1.5 block">Image URL</label>
+                    <input type="text" value={blogForm.image_url}
+                      onChange={e => setBlogForm({...blogForm, image_url: e.target.value})}
+                      className="w-full border border-slate-200 rounded-xl p-3 text-sm font-semibold outline-none focus:border-pink-400"
+                      placeholder="https://..." />
                   </div>
                 </div>
                 <div>
@@ -1800,57 +1700,6 @@ Visit https://ssc.nic.in and apply online...`}
 
         </div>
       </div>
-
-      {/* Image Gallery Modal */}
-      {showGallery && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{backgroundColor: 'rgba(0,0,0,0.7)'}}>
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden shadow-2xl">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="font-black text-slate-800 text-base">📷 Image Gallery</h3>
-              <div className="flex items-center gap-2">
-                <button type="button" onClick={fetchGallery}
-                  className="p-2 rounded-xl hover:bg-slate-100 text-slate-500">
-                  <RefreshCw className="w-4 h-4" />
-                </button>
-                <label className="bg-pink-600 text-white px-3 py-2 rounded-xl font-bold text-xs cursor-pointer hover:bg-pink-700 flex items-center gap-1">
-                  <input type="file" accept="image/*" className="hidden" onChange={async (e) => { await handleImageUpload(e); fetchGallery(); }} />
-                  <ImagePlus className="w-3.5 h-3.5" /> Upload New
-                </label>
-                <button type="button" onClick={() => setShowGallery(false)}
-                  className="p-2 rounded-xl hover:bg-slate-100 text-slate-500">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4">
-              {galleryLoading ? (
-                <div className="flex items-center justify-center h-40">
-                  <Loader2 className="w-8 h-8 animate-spin text-pink-500" />
-                </div>
-              ) : galleryImages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-40 text-slate-400">
-                  <Image className="w-12 h-12 mb-2 opacity-30" />
-                  <p className="text-sm font-semibold">Koi image nahi hai. Upload karo!</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-3 gap-3">
-                  {galleryImages.map(img => (
-                    <div key={img.filename} className="relative group rounded-xl overflow-hidden border-2 border-transparent hover:border-pink-400 cursor-pointer transition-all"
-                      onClick={() => { setBlogForm(f => ({...f, image_url: img.url})); setShowGallery(false); }}>
-                      <img src={img.url} alt={img.filename} className="w-full h-28 object-cover" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <span className="text-white font-black text-xs bg-pink-600 px-2 py-1 rounded-lg">Select</span>
-                      </div>
-                      <button type="button" onClick={(e) => { e.stopPropagation(); deleteGalleryImage(img.filename); }}
-                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600">✕</button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
