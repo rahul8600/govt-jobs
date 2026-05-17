@@ -292,10 +292,12 @@ ${job.qualification ? '<p>Eligibility: ' + esc(job.qualification) + '</p>' : ''}
           }
         } catch {}
 
-        return res.send(`<!DOCTYPE html><html lang="hi-IN"><head>
+        return res.send(`<!DOCTYPE html>
+<html lang="hi-IN">
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc(catConfig.title)} | SarkariJobSeva</title>
+<title>${esc(catConfig.title)} | SarkariJobSeva.com</title>
 <meta name="description" content="${esc(catConfig.desc)}">
 <meta name="robots" content="index,follow">
 <link rel="canonical" href="${canonical}">
@@ -304,12 +306,68 @@ ${job.qualification ? '<p>Eligibility: ' + esc(job.qualification) + '</p>' : ''}
 <meta property="og:url" content="${canonical}">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="SarkariJobSeva">
-</head><body>
+<style>
+body{font-family:Arial,sans-serif;max-width:1200px;margin:0 auto;padding:16px;background:#f8fafc;color:#1e293b}
+header{background:#1d4ed8;color:white;padding:16px;border-radius:8px;margin-bottom:20px}
+header a{color:white;text-decoration:none;font-size:22px;font-weight:bold}
+h1{color:#1d4ed8;font-size:28px;margin-bottom:8px}
+h2{color:#374151;font-size:20px;margin-top:24px}
+.job-list{list-style:none;padding:0}
+.job-item{background:white;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin-bottom:12px}
+.job-item a{color:#1d4ed8;font-weight:bold;font-size:16px;text-decoration:none}
+.job-item a:hover{text-decoration:underline}
+.job-meta{color:#64748b;font-size:13px;margin-top:4px}
+nav{margin:20px 0;padding:16px;background:white;border-radius:8px;border:1px solid #e2e8f0}
+nav a{color:#1d4ed8;margin-right:16px;text-decoration:none;font-weight:bold}
+footer{margin-top:32px;padding:16px;background:#1e293b;color:#94a3b8;border-radius:8px;text-align:center}
+footer a{color:#60a5fa}
+p{line-height:1.7;color:#374151}
+</style>
+</head>
+<body>
+<header>
+<a href="${baseUrl}">🏛️ SarkariJobSeva.com</a>
+<p style="margin:4px 0 0;font-size:14px;opacity:0.9">भारत का नंबर 1 सरकारी नौकरी पोर्टल | Free Job Alert</p>
+</header>
+<main>
 <h1>${esc(catConfig.title)}</h1>
 <p>${esc(catConfig.desc)}</p>
-${postsHtml ? '<ul>' + postsHtml + '</ul>' : ''}
-<p>Visit <a href="${baseUrl}">SarkariJobSeva.com</a> for more updates.</p>
-</body></html>`);
+<p>SarkariJobSeva.com par aapko latest sarkari naukri, admit card, result aur answer key ki sabse sahi aur updated jankari milti hai. Hamare portal par rojana naye government job notifications add kiye jaate hain. SSC, Railway, UPSC, Bank, Police, Army, Teacher Bharti aur sabhi state government jobs ki poori jankari yahan uplabdh hai.</p>
+
+${postsHtml ? `<h2>📋 Latest Updates (${postsHtml.split('<li').length - 1} posts)</h2><ul class="job-list">${postsHtml}</ul>` : '<p><strong>Abhi is category mein koi update nahi hai.</strong> Jald hi naye posts add honge. Hamare Telegram Channel join karein instant alert ke liye.</p>'}
+
+<h2>📌 Quick Links</h2>
+<nav>
+<a href="${baseUrl}/latest-jobs">🔔 Latest Jobs</a>
+<a href="${baseUrl}/admit-card">📄 Admit Card</a>
+<a href="${baseUrl}/results">📊 Results</a>
+<a href="${baseUrl}/answer-key">🔑 Answer Key</a>
+<a href="${baseUrl}/salary-calculator">💰 Salary Calculator</a>
+<a href="${baseUrl}/blog">📝 Blog</a>
+</nav>
+
+<h2>🎯 Hamare Baare Mein</h2>
+<p>SarkariJobSeva.com ek free government job portal hai jo sarkari naukri ke aspirants ke liye daily job updates provide karta hai. Hum SSC CGL, CHSL, MTS, Railway RRB, NTPC, Group D, UPSC, NDA, CDS, Bank PO, Clerk, Police Constable, Army, Teacher Bharti aur sabhi state government jobs ki jankari dete hain.</p>
+<p>Hamare portal par 10th pass, 12th pass, Graduate aur Post Graduate sabhi levels ke liye government jobs uplabdh hain. UP, Bihar, Rajasthan, MP, Haryana, Punjab, Uttarakhand aur sabhi states ki sarkari naukri yahan mil sakti hai.</p>
+
+<h2>📲 Hume Follow Karein</h2>
+<p>
+<a href="https://t.me/sarkarijobse">📱 Telegram: @sarkarijobse</a> |
+<a href="https://whatsapp.com/channel/0029Vb7dt842ER6rNwc6eB47">💬 WhatsApp Channel</a>
+</p>
+</main>
+
+<footer>
+<p>© 2026 SarkariJobSeva.com | 
+<a href="${baseUrl}/disclaimer">Disclaimer</a> | 
+<a href="${baseUrl}/privacy-policy">Privacy Policy</a> | 
+<a href="${baseUrl}/terms-of-service">Terms</a> | 
+<a href="${baseUrl}/contact">Contact: supportsarkarijobseva@gmail.com</a>
+</p>
+<p>सरकारी नौकरी | Sarkari Naukri | Government Jobs India | Free Job Alert | Rojgar Samachar | नौकरी</p>
+</footer>
+</body>
+</html>`);
       }
 
     } catch(e) { console.error('[Prerender]', e); }
