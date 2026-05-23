@@ -570,18 +570,18 @@ export default function Admin() {
             <Database className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-3xl font-black text-slate-900 uppercase tracking-tight">Portal Console</h1>
+            <h1 className="text-xl md:text-3xl font-black text-slate-900 uppercase tracking-tight">Admin</h1>
             <p className="text-muted font-bold text-xs uppercase tracking-widest mt-1">Management Interface v3.0</p>
           </div>
         </div>
         
-        <div className="flex bg-white border border-slate-200 p-1 shadow-sm rounded-xl overflow-x-auto scrollbar-hide">
+        <div className="grid grid-cols-4 md:flex bg-white border border-slate-200 p-1 shadow-sm rounded-xl gap-1">
           <button 
             type="button"
             onClick={() => setActiveTab('list')}
-            className={`flex items-center gap-2 px-3 md:px-6 py-2 md:py-3 font-black text-[10px] md:text-xs uppercase tracking-widest whitespace-nowrap transition-all ${activeTab === 'list' ? 'bg-primary text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+            className={`flex items-center justify-center gap-1 px-2 py-2.5 font-black text-[10px] uppercase tracking-wide rounded-lg transition-all ${activeTab === 'list' ? 'bg-primary text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
           >
-            <LayoutGrid className="w-4 h-4" /> Live Feed
+            <LayoutGrid className="w-3.5 h-3.5" /> <span>Feed</span>
           </button>
           <button 
             type="button"
@@ -590,9 +590,9 @@ export default function Admin() {
               setFormData(initialFormData);
               setActiveTab('add');
             }}
-            className={`flex items-center gap-2 px-3 md:px-6 py-2 md:py-3 font-black text-[10px] md:text-xs uppercase tracking-widest whitespace-nowrap transition-all ${activeTab === 'add' ? 'bg-primary text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+            className={`flex items-center justify-center gap-1 px-2 py-2.5 font-black text-[10px] uppercase tracking-wide rounded-lg transition-all ${activeTab === 'add' ? 'bg-primary text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
           >
-            <Plus className="w-4 h-4" /> New Post
+            <Plus className="w-3.5 h-3.5" /> <span>New</span>
           </button>
           <button 
             type="button"
@@ -602,10 +602,10 @@ export default function Admin() {
               setAiError('');
               setActiveTab('ai');
             }}
-            className={`flex items-center gap-2 px-3 md:px-6 py-2 md:py-3 font-black text-[10px] md:text-xs uppercase tracking-widest whitespace-nowrap transition-all ${activeTab === 'ai' ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-md' : 'text-violet-600 hover:bg-violet-50'}`}
+            className={`flex items-center justify-center gap-1 px-2 py-2.5 font-black text-[10px] uppercase tracking-wide rounded-lg transition-all ${activeTab === 'ai' ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-md' : 'text-violet-600 hover:bg-violet-50'}`}
             data-testid="button-ai-generator"
           >
-            <Sparkles className="w-4 h-4" /> AI Generator
+            <Sparkles className="w-3.5 h-3.5" /> <span>AI</span>
           </button>
           <input 
             type="file" 
@@ -617,37 +617,37 @@ export default function Admin() {
           <button 
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2 px-3 md:px-6 py-2 md:py-3 font-black text-[10px] md:text-xs uppercase tracking-widest whitespace-nowrap text-slate-500 hover:bg-slate-50"
+            className="flex items-center justify-center gap-1 px-2 py-2.5 font-black text-[10px] uppercase tracking-wide rounded-lg text-slate-500 hover:bg-slate-50"
           >
-            <Upload className="w-4 h-4" /> Bulk CSV
+            <Upload className="w-3.5 h-3.5" /> <span>CSV</span>
           </button>
           <button 
             type="button"
             onClick={() => setActiveTab('analytics')}
-            className={`flex items-center gap-2 px-3 md:px-6 py-2 md:py-3 font-black text-[10px] md:text-xs uppercase tracking-widest whitespace-nowrap transition-all ${activeTab === 'analytics' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md' : 'text-emerald-600 hover:bg-emerald-50'}`}
+            className={`flex items-center justify-center gap-1 px-2 py-2.5 font-black text-[10px] uppercase tracking-wide rounded-lg transition-all ${activeTab === 'analytics' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md' : 'text-emerald-600 hover:bg-emerald-50'}`}
             data-testid="button-analytics"
           >
-            <BarChart3 className="w-4 h-4" /> Analytics
+            <BarChart3 className="w-3.5 h-3.5" /> <span>Stats</span>
           </button>
           <button
             onClick={() => { setActiveTab('blog'); fetchBlogs(); }}
-            className={`flex items-center gap-2 px-3 md:px-6 py-2 md:py-3 font-black text-[10px] md:text-xs uppercase tracking-widest whitespace-nowrap transition-all ${activeTab === 'blog' || activeTab === 'add-blog' ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md' : 'text-pink-600 hover:bg-pink-50'}`}
+            className={`flex items-center justify-center gap-1 px-2 py-2.5 font-black text-[10px] uppercase tracking-wide rounded-lg transition-all ${activeTab === 'blog' || activeTab === 'add-blog' ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md' : 'text-pink-600 hover:bg-pink-50'}`}
           >
-            📝 Blog
+            <span>📝 Blog</span>
           </button>
           <button 
             type="button"
             onClick={handleLogout}
-            className="flex items-center gap-2 px-3 md:px-6 py-2 md:py-3 font-black text-[10px] md:text-xs uppercase tracking-widest whitespace-nowrap text-rose-500 hover:bg-rose-50"
+            className="flex items-center justify-center gap-1 px-2 py-2.5 font-black text-[10px] uppercase tracking-wide rounded-lg text-rose-500 hover:bg-rose-50"
             data-testid="button-logout"
           >
-            <LogOut className="w-4 h-4" /> Logout
+            <LogOut className="w-3.5 h-3.5" /> <span>Exit</span>
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <div className="col-span-1 lg:col-span-4">
+      <div className="grid grid-cols-1 gap-4">
+        <div className="lg:col-span-4">
           {activeTab === 'analytics' ? (
             <div className="space-y-8">
               <div className="portal-card bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
