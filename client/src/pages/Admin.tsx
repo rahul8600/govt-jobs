@@ -575,11 +575,11 @@ export default function Admin() {
           </div>
         </div>
         
-        <div className="flex bg-white border border-slate-200 p-1 shadow-sm rounded-xl overflow-hidden">
+        <div className="flex bg-white border border-slate-200 p-1 shadow-sm rounded-xl overflow-x-auto scrollbar-hide">
           <button 
             type="button"
             onClick={() => setActiveTab('list')}
-            className={`flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'list' ? 'bg-primary text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+            className={`flex items-center gap-2 px-3 md:px-6 py-2 md:py-3 font-black text-[10px] md:text-xs uppercase tracking-widest whitespace-nowrap transition-all ${activeTab === 'list' ? 'bg-primary text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
           >
             <LayoutGrid className="w-4 h-4" /> Live Feed
           </button>
@@ -590,7 +590,7 @@ export default function Admin() {
               setFormData(initialFormData);
               setActiveTab('add');
             }}
-            className={`flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'add' ? 'bg-primary text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+            className={`flex items-center gap-2 px-3 md:px-6 py-2 md:py-3 font-black text-[10px] md:text-xs uppercase tracking-widest whitespace-nowrap transition-all ${activeTab === 'add' ? 'bg-primary text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
           >
             <Plus className="w-4 h-4" /> New Post
           </button>
@@ -602,7 +602,7 @@ export default function Admin() {
               setAiError('');
               setActiveTab('ai');
             }}
-            className={`flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'ai' ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-md' : 'text-violet-600 hover:bg-violet-50'}`}
+            className={`flex items-center gap-2 px-3 md:px-6 py-2 md:py-3 font-black text-[10px] md:text-xs uppercase tracking-widest whitespace-nowrap transition-all ${activeTab === 'ai' ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-md' : 'text-violet-600 hover:bg-violet-50'}`}
             data-testid="button-ai-generator"
           >
             <Sparkles className="w-4 h-4" /> AI Generator
@@ -617,28 +617,28 @@ export default function Admin() {
           <button 
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-50"
+            className="flex items-center gap-2 px-3 md:px-6 py-2 md:py-3 font-black text-[10px] md:text-xs uppercase tracking-widest whitespace-nowrap text-slate-500 hover:bg-slate-50"
           >
             <Upload className="w-4 h-4" /> Bulk CSV
           </button>
           <button 
             type="button"
             onClick={() => setActiveTab('analytics')}
-            className={`flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'analytics' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md' : 'text-emerald-600 hover:bg-emerald-50'}`}
+            className={`flex items-center gap-2 px-3 md:px-6 py-2 md:py-3 font-black text-[10px] md:text-xs uppercase tracking-widest whitespace-nowrap transition-all ${activeTab === 'analytics' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md' : 'text-emerald-600 hover:bg-emerald-50'}`}
             data-testid="button-analytics"
           >
             <BarChart3 className="w-4 h-4" /> Analytics
           </button>
           <button
             onClick={() => { setActiveTab('blog'); fetchBlogs(); }}
-            className={`flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'blog' || activeTab === 'add-blog' ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md' : 'text-pink-600 hover:bg-pink-50'}`}
+            className={`flex items-center gap-2 px-3 md:px-6 py-2 md:py-3 font-black text-[10px] md:text-xs uppercase tracking-widest whitespace-nowrap transition-all ${activeTab === 'blog' || activeTab === 'add-blog' ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md' : 'text-pink-600 hover:bg-pink-50'}`}
           >
             📝 Blog
           </button>
           <button 
             type="button"
             onClick={handleLogout}
-            className="flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest text-rose-500 hover:bg-rose-50"
+            className="flex items-center gap-2 px-3 md:px-6 py-2 md:py-3 font-black text-[10px] md:text-xs uppercase tracking-widest whitespace-nowrap text-rose-500 hover:bg-rose-50"
             data-testid="button-logout"
           >
             <LogOut className="w-4 h-4" /> Logout
@@ -646,8 +646,8 @@ export default function Admin() {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-4 gap-8">
-        <div className="lg:col-span-4">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <div className="col-span-1 lg:col-span-4">
           {activeTab === 'analytics' ? (
             <div className="space-y-8">
               <div className="portal-card bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
@@ -1006,7 +1006,7 @@ Visit https://ssc.nic.in and apply online...`}
               </div>
             </div>
           ) : activeTab === 'blog' || activeTab === 'add-blog' ? null : (
-            <form onSubmit={handleSubmit} className="portal-card bg-white p-8 space-y-10 border border-slate-200 rounded-2xl shadow-sm">
+            <form onSubmit={handleSubmit} className="portal-card bg-white p-4 md:p-8 space-y-6 md:space-y-10 border border-slate-200 rounded-2xl shadow-sm">
               <div className="flex justify-between items-center border-b border-slate-100 pb-6">
                 <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">
                   {editingJobId ? 'Edit Post' : 'Create New Post'}
