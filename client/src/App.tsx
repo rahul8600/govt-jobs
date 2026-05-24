@@ -10,7 +10,7 @@ import Home from "@/pages/Home";
 import JobDetails from "@/pages/JobDetails";
 import Admin from "@/pages/Admin";
 import JobList from "@/pages/JobList";
-import { Disclaimer, PrivacyPolicy, TermsOfService, Syllabus, Contact } from "@/pages/InfoPages";
+import { Disclaimer, PrivacyPolicy, TermsOfService, Syllabus, Contact, AboutUs } from "@/pages/InfoPages";
 import BlogList from "@/pages/Blog";
 import BlogDetail from "@/pages/BlogDetail";
 import SalaryCalculator from "@/pages/SalaryCalculator";
@@ -40,6 +40,8 @@ function Router() {
         <Route path="/terms-of-service" component={TermsOfService} />
         <Route path="/syllabus" component={Syllabus} />
         <Route path="/contact" component={Contact} />
+        <Route path="/about" component={AboutUs} />
+        <Route path="/about-us" component={AboutUs} />
         <Route path="/salary-calculator" component={SalaryCalculator} />
         <Route component={NotFound} />
       </Switch>
