@@ -570,18 +570,18 @@ export default function Admin() {
             <Database className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl md:text-3xl font-black text-slate-900 uppercase tracking-tight">Admin</h1>
+            <h1 className="text-3xl font-black text-slate-900 uppercase tracking-tight">Portal Console</h1>
             <p className="text-muted font-bold text-xs uppercase tracking-widest mt-1">Management Interface v3.0</p>
           </div>
         </div>
         
-        <div className="grid grid-cols-4 md:flex bg-white border border-slate-200 p-1 shadow-sm rounded-xl gap-1">
+        <div className="flex bg-white border border-slate-200 p-1 shadow-sm rounded-xl overflow-hidden">
           <button 
             type="button"
             onClick={() => setActiveTab('list')}
-            className={`flex items-center justify-center gap-1 px-2 py-2.5 font-black text-[10px] uppercase tracking-wide rounded-lg transition-all ${activeTab === 'list' ? 'bg-primary text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+            className={`flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'list' ? 'bg-primary text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
           >
-            <LayoutGrid className="w-3.5 h-3.5" /> <span>Feed</span>
+            <LayoutGrid className="w-4 h-4" /> Live Feed
           </button>
           <button 
             type="button"
@@ -590,9 +590,9 @@ export default function Admin() {
               setFormData(initialFormData);
               setActiveTab('add');
             }}
-            className={`flex items-center justify-center gap-1 px-2 py-2.5 font-black text-[10px] uppercase tracking-wide rounded-lg transition-all ${activeTab === 'add' ? 'bg-primary text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+            className={`flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'add' ? 'bg-primary text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
           >
-            <Plus className="w-3.5 h-3.5" /> <span>New</span>
+            <Plus className="w-4 h-4" /> New Post
           </button>
           <button 
             type="button"
@@ -602,10 +602,10 @@ export default function Admin() {
               setAiError('');
               setActiveTab('ai');
             }}
-            className={`flex items-center justify-center gap-1 px-2 py-2.5 font-black text-[10px] uppercase tracking-wide rounded-lg transition-all ${activeTab === 'ai' ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-md' : 'text-violet-600 hover:bg-violet-50'}`}
+            className={`flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'ai' ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-md' : 'text-violet-600 hover:bg-violet-50'}`}
             data-testid="button-ai-generator"
           >
-            <Sparkles className="w-3.5 h-3.5" /> <span>AI</span>
+            <Sparkles className="w-4 h-4" /> AI Generator
           </button>
           <input 
             type="file" 
@@ -617,36 +617,36 @@ export default function Admin() {
           <button 
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center justify-center gap-1 px-2 py-2.5 font-black text-[10px] uppercase tracking-wide rounded-lg text-slate-500 hover:bg-slate-50"
+            className="flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-50"
           >
-            <Upload className="w-3.5 h-3.5" /> <span>CSV</span>
+            <Upload className="w-4 h-4" /> Bulk CSV
           </button>
           <button 
             type="button"
             onClick={() => setActiveTab('analytics')}
-            className={`flex items-center justify-center gap-1 px-2 py-2.5 font-black text-[10px] uppercase tracking-wide rounded-lg transition-all ${activeTab === 'analytics' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md' : 'text-emerald-600 hover:bg-emerald-50'}`}
+            className={`flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'analytics' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md' : 'text-emerald-600 hover:bg-emerald-50'}`}
             data-testid="button-analytics"
           >
-            <BarChart3 className="w-3.5 h-3.5" /> <span>Stats</span>
+            <BarChart3 className="w-4 h-4" /> Analytics
           </button>
           <button
             onClick={() => { setActiveTab('blog'); fetchBlogs(); }}
-            className={`flex items-center justify-center gap-1 px-2 py-2.5 font-black text-[10px] uppercase tracking-wide rounded-lg transition-all ${activeTab === 'blog' || activeTab === 'add-blog' ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md' : 'text-pink-600 hover:bg-pink-50'}`}
+            className={`flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'blog' || activeTab === 'add-blog' ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md' : 'text-pink-600 hover:bg-pink-50'}`}
           >
-            <span>📝 Blog</span>
+            📝 Blog
           </button>
           <button 
             type="button"
             onClick={handleLogout}
-            className="flex items-center justify-center gap-1 px-2 py-2.5 font-black text-[10px] uppercase tracking-wide rounded-lg text-rose-500 hover:bg-rose-50"
+            className="flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest text-rose-500 hover:bg-rose-50"
             data-testid="button-logout"
           >
-            <LogOut className="w-3.5 h-3.5" /> <span>Exit</span>
+            <LogOut className="w-4 h-4" /> Logout
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid lg:grid-cols-4 gap-8">
         <div className="lg:col-span-4">
           {activeTab === 'analytics' ? (
             <div className="space-y-8">
@@ -960,45 +960,45 @@ Visit https://ssc.nic.in and apply online...`}
               </div>
               <div className="divide-y divide-slate-100">
                 {jobs.map(job => (
-                  <div key={job.id} className="p-6 flex items-center justify-between group hover:bg-blue-50/30 transition-all">
-                    <div className="flex gap-6 items-center">
-                      <div className={`w-14 h-14 border flex items-center justify-center text-[10px] font-black uppercase tracking-widest rounded-xl ${job.type === 'job' ? 'border-blue-100 bg-blue-50 text-blue-700' : job.type === 'admit-card' ? 'border-amber-100 bg-amber-50 text-amber-700' : job.type === 'result' ? 'border-green-100 bg-green-50 text-green-700' : 'border-purple-100 bg-purple-50 text-purple-700'}`}>
-                        {job.type}
+                  <div key={job.id} className="p-3 md:p-6 flex flex-col md:flex-row md:items-center justify-between gap-3 group hover:bg-blue-50/30 transition-all">
+                    <div className="flex gap-3 items-start md:items-center flex-1 min-w-0">
+                      <div className={`w-10 h-10 md:w-14 md:h-14 flex-shrink-0 border flex items-center justify-center text-[8px] md:text-[10px] font-black uppercase tracking-widest rounded-xl ${job.type === 'job' ? 'border-blue-100 bg-blue-50 text-blue-700' : job.type === 'admit-card' ? 'border-amber-100 bg-amber-50 text-amber-700' : job.type === 'result' ? 'border-green-100 bg-green-50 text-green-700' : 'border-purple-100 bg-purple-50 text-purple-700'}`}>
+                        {job.type === 'admit-card' ? 'AC' : job.type === 'answer-key' ? 'AK' : job.type?.slice(0,3)}
                       </div>
-                      <div>
-                        <h3 className="font-black text-slate-900 text-lg leading-tight group-hover:text-primary transition-colors">{job.title}</h3>
-                        <div className="flex gap-4 mt-2">
-                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{job.postDate}</span>
-                          <span className="text-[10px] font-black text-primary/60 uppercase tracking-widest">{job.department}</span>
-                          {job.featured && <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-2 rounded uppercase tracking-widest">Featured</span>}
-                          {job.trending && <span className="text-[10px] font-black text-violet-600 bg-violet-50 px-2 rounded uppercase tracking-widest">Trending</span>}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-black text-slate-900 text-sm md:text-base leading-tight group-hover:text-primary transition-colors line-clamp-2">{job.title}</h3>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          <span className="text-[10px] font-bold text-slate-400">{job.postDate}</span>
+                          <span className="text-[10px] font-bold text-primary/60 truncate max-w-[120px]">{job.department}</span>
+                          {job.featured && <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-1.5 rounded">⭐</span>}
+                          {job.trending && <span className="text-[10px] font-black text-violet-600 bg-violet-50 px-1.5 rounded">🔥</span>}
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-shrink-0">
                       <button 
                         type="button"
                         onClick={() => handleEdit(job)}
-                        className="p-3 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all rounded-xl shadow-sm"
+                        className="p-2 md:p-3 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all rounded-xl shadow-sm"
                         data-testid={`button-edit-${job.id}`}
                       >
-                        <Edit2 className="w-5 h-5" />
+                        <Edit2 className="w-4 h-4 md:w-5 md:h-5" />
                       </button>
                       <button
                         type="button"
                         onClick={() => notifyPost(job.id, job.title)}
-                        className="p-3 bg-blue-50 text-blue-500 hover:bg-blue-600 hover:text-white transition-all rounded-xl shadow-sm"
-                        title="Telegram + Push Notification Bhejo"
+                        className="p-2 md:p-3 bg-blue-50 text-blue-500 hover:bg-blue-600 hover:text-white transition-all rounded-xl shadow-sm"
+                        title="Telegram + Push Notification"
                       >
-                        <Bell className="w-5 h-5" />
+                        <Bell className="w-4 h-4 md:w-5 md:h-5" />
                       </button>
                       <button 
                         type="button"
                         onClick={() => deleteJob(job.id)}
-                        className="p-3 bg-rose-50 text-rose-500 hover:bg-rose-600 hover:text-white transition-all rounded-xl shadow-sm"
+                        className="p-2 md:p-3 bg-rose-50 text-rose-500 hover:bg-rose-600 hover:text-white transition-all rounded-xl shadow-sm"
                         data-testid={`button-delete-${job.id}`}
                       >
-                        <Trash2 className="w-5 h-5" />
+                        <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
                       </button>
                     </div>
                   </div>
@@ -1006,7 +1006,7 @@ Visit https://ssc.nic.in and apply online...`}
               </div>
             </div>
           ) : activeTab === 'blog' || activeTab === 'add-blog' ? null : (
-            <form onSubmit={handleSubmit} className="portal-card bg-white p-4 md:p-8 space-y-6 md:space-y-10 border border-slate-200 rounded-2xl shadow-sm">
+            <form onSubmit={handleSubmit} className="portal-card bg-white p-8 space-y-10 border border-slate-200 rounded-2xl shadow-sm">
               <div className="flex justify-between items-center border-b border-slate-100 pb-6">
                 <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">
                   {editingJobId ? 'Edit Post' : 'Create New Post'}
