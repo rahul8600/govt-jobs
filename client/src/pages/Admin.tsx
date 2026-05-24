@@ -575,38 +575,73 @@ export default function Admin() {
           </div>
         </div>
         
-        <div className="grid grid-cols-4 md:grid-cols-7 gap-1 bg-white border border-slate-200 p-1.5 shadow-sm rounded-xl">
-          <button type="button" onClick={() => setActiveTab('list')}
-            className={`flex flex-col items-center justify-center gap-1 py-2 px-1 font-black text-[9px] md:text-xs uppercase rounded-lg transition-all ${activeTab === 'list' ? 'bg-primary text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}>
-            <LayoutGrid className="w-4 h-4" /><span>Feed</span>
+        <div className="flex bg-white border border-slate-200 p-1 shadow-sm rounded-xl overflow-hidden">
+          <button 
+            type="button"
+            onClick={() => setActiveTab('list')}
+            className={`flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'list' ? 'bg-primary text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+          >
+            <LayoutGrid className="w-4 h-4" /> Live Feed
           </button>
-          <button type="button" onClick={() => { setEditingJobId(null); setFormData(initialFormData); setActiveTab('add'); }}
-            className={`flex flex-col items-center justify-center gap-1 py-2 px-1 font-black text-[9px] md:text-xs uppercase rounded-lg transition-all ${activeTab === 'add' ? 'bg-primary text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}>
-            <Plus className="w-4 h-4" /><span>New</span>
+          <button 
+            type="button"
+            onClick={() => {
+              setEditingJobId(null);
+              setFormData(initialFormData);
+              setActiveTab('add');
+            }}
+            className={`flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'add' ? 'bg-primary text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+          >
+            <Plus className="w-4 h-4" /> New Post
           </button>
-          <button type="button" onClick={() => { setAiParsedData(null); setAiRawText(''); setAiError(''); setActiveTab('ai'); }}
-            className={`flex flex-col items-center justify-center gap-1 py-2 px-1 font-black text-[9px] md:text-xs uppercase rounded-lg transition-all ${activeTab === 'ai' ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-md' : 'text-violet-600 hover:bg-violet-50'}`}
-            data-testid="button-ai-generator">
-            <Sparkles className="w-4 h-4" /><span>AI</span>
+          <button 
+            type="button"
+            onClick={() => {
+              setAiParsedData(null);
+              setAiRawText('');
+              setAiError('');
+              setActiveTab('ai');
+            }}
+            className={`flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'ai' ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-md' : 'text-violet-600 hover:bg-violet-50'}`}
+            data-testid="button-ai-generator"
+          >
+            <Sparkles className="w-4 h-4" /> AI Generator
           </button>
-          <input type="file" ref={fileInputRef} onChange={handleBulkUpload} accept=".csv" className="hidden" />
-          <button type="button" onClick={() => fileInputRef.current?.click()}
-            className="flex flex-col items-center justify-center gap-1 py-2 px-1 font-black text-[9px] md:text-xs uppercase rounded-lg text-slate-500 hover:bg-slate-50">
-            <Upload className="w-4 h-4" /><span>CSV</span>
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleBulkUpload} 
+            accept=".csv" 
+            className="hidden" 
+          />
+          <button 
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-50"
+          >
+            <Upload className="w-4 h-4" /> Bulk CSV
           </button>
-          <button type="button" onClick={() => setActiveTab('analytics')}
-            className={`flex flex-col items-center justify-center gap-1 py-2 px-1 font-black text-[9px] md:text-xs uppercase rounded-lg transition-all ${activeTab === 'analytics' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md' : 'text-emerald-600 hover:bg-emerald-50'}`}
-            data-testid="button-analytics">
-            <BarChart3 className="w-4 h-4" /><span>Stats</span>
+          <button 
+            type="button"
+            onClick={() => setActiveTab('analytics')}
+            className={`flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'analytics' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md' : 'text-emerald-600 hover:bg-emerald-50'}`}
+            data-testid="button-analytics"
+          >
+            <BarChart3 className="w-4 h-4" /> Analytics
           </button>
-          <button onClick={() => { setActiveTab('blog'); fetchBlogs(); }}
-            className={`flex flex-col items-center justify-center gap-1 py-2 px-1 font-black text-[9px] md:text-xs uppercase rounded-lg transition-all ${activeTab === 'blog' || activeTab === 'add-blog' ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md' : 'text-pink-600 hover:bg-pink-50'}`}>
-            <span className="text-base">📝</span><span>Blog</span>
+          <button
+            onClick={() => { setActiveTab('blog'); fetchBlogs(); }}
+            className={`flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'blog' || activeTab === 'add-blog' ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md' : 'text-pink-600 hover:bg-pink-50'}`}
+          >
+            📝 Blog
           </button>
-          <button type="button" onClick={handleLogout}
-            className="flex flex-col items-center justify-center gap-1 py-2 px-1 font-black text-[9px] md:text-xs uppercase rounded-lg text-rose-500 hover:bg-rose-50"
-            data-testid="button-logout">
-            <LogOut className="w-4 h-4" /><span>Exit</span>
+          <button 
+            type="button"
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest text-rose-500 hover:bg-rose-50"
+            data-testid="button-logout"
+          >
+            <LogOut className="w-4 h-4" /> Logout
           </button>
         </div>
       </div>
@@ -925,45 +960,28 @@ Visit https://ssc.nic.in and apply online...`}
               </div>
               <div className="divide-y divide-slate-100">
                 {jobs.map(job => (
-                  <div key={job.id} className="p-6 flex items-center justify-between group hover:bg-blue-50/30 transition-all">
-                    <div className="flex gap-6 items-center">
-                      <div className={`w-14 h-14 border flex items-center justify-center text-[10px] font-black uppercase tracking-widest rounded-xl ${job.type === 'job' ? 'border-blue-100 bg-blue-50 text-blue-700' : job.type === 'admit-card' ? 'border-amber-100 bg-amber-50 text-amber-700' : job.type === 'result' ? 'border-green-100 bg-green-50 text-green-700' : 'border-purple-100 bg-purple-50 text-purple-700'}`}>
-                        {job.type}
-                      </div>
-                      <div>
-                        <h3 className="font-black text-slate-900 text-lg leading-tight group-hover:text-primary transition-colors">{job.title}</h3>
-                        <div className="flex gap-4 mt-2">
-                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{job.postDate}</span>
-                          <span className="text-[10px] font-black text-primary/60 uppercase tracking-widest">{job.department}</span>
-                          {job.featured && <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-2 rounded uppercase tracking-widest">Featured</span>}
-                          {job.trending && <span className="text-[10px] font-black text-violet-600 bg-violet-50 px-2 rounded uppercase tracking-widest">Trending</span>}
-                        </div>
-                      </div>
+                  <div key={job.id} className="p-3 flex items-center gap-2 group hover:bg-blue-50/30 transition-all">
+                    <div className={`w-10 h-10 flex-shrink-0 border flex items-center justify-center text-[8px] font-black uppercase rounded-lg ${job.type === 'job' ? 'border-blue-100 bg-blue-50 text-blue-700' : job.type === 'admit-card' ? 'border-amber-100 bg-amber-50 text-amber-700' : job.type === 'result' ? 'border-green-100 bg-green-50 text-green-700' : 'border-purple-100 bg-purple-50 text-purple-700'}`}>
+                      {job.type === 'admit-card' ? 'AC' : job.type === 'answer-key' ? 'AK' : job.type?.slice(0,3)}
                     </div>
-                    <div className="flex gap-2">
-                      <button 
-                        type="button"
-                        onClick={() => handleEdit(job)}
-                        className="p-3 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all rounded-xl shadow-sm"
-                        data-testid={`button-edit-${job.id}`}
-                      >
-                        <Edit2 className="w-5 h-5" />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-black text-slate-900 text-xs leading-tight line-clamp-1 group-hover:text-primary">{job.title}</h3>
+                      <p className="text-[10px] text-slate-400 truncate">{job.department}</p>
+                    </div>
+                    <div className="flex gap-1 flex-shrink-0">
+                      <button type="button" onClick={() => handleEdit(job)}
+                        className="p-1.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg"
+                        data-testid={`button-edit-${job.id}`}>
+                        <Edit2 className="w-3.5 h-3.5" />
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => notifyPost(job.id, job.title)}
-                        className="p-3 bg-blue-50 text-blue-500 hover:bg-blue-600 hover:text-white transition-all rounded-xl shadow-sm"
-                        title="Telegram + Push Notification Bhejo"
-                      >
-                        <Bell className="w-5 h-5" />
+                      <button type="button" onClick={() => notifyPost(job.id, job.title)}
+                        className="p-1.5 bg-blue-50 text-blue-500 hover:bg-blue-600 hover:text-white rounded-lg">
+                        <Bell className="w-3.5 h-3.5" />
                       </button>
-                      <button 
-                        type="button"
-                        onClick={() => deleteJob(job.id)}
-                        className="p-3 bg-rose-50 text-rose-500 hover:bg-rose-600 hover:text-white transition-all rounded-xl shadow-sm"
-                        data-testid={`button-delete-${job.id}`}
-                      >
-                        <Trash2 className="w-5 h-5" />
+                      <button type="button" onClick={() => deleteJob(job.id)}
+                        className="p-1.5 bg-rose-50 text-rose-500 hover:bg-rose-600 hover:text-white rounded-lg"
+                        data-testid={`button-delete-${job.id}`}>
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
