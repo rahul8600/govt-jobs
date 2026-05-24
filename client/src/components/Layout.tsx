@@ -184,7 +184,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <h4 className="font-bold text-slate-800 mb-4 text-xs uppercase tracking-widest">Legal</h4>
             <ul className="space-y-2.5 text-sm text-slate-500">
               {[
-                { href: "/disclaimer",     label: "Disclaimer" },
+                { href: "/about",          label: "About Us" },
+              { href: "/disclaimer",     label: "Disclaimer" },
                 { href: "/privacy-policy", label: "Privacy Policy" },
                 { href: "/terms-of-service",label: "Terms of Service" },
                 { href: "/contact",        label: "Contact Us" },
