@@ -186,3 +186,58 @@ export function Contact() {
     </InfoPage>
   );
 }
+
+export function AboutUs() {
+  return (
+    <InfoPage title="About Us">
+      <section>
+        <h2 className="text-xl font-bold text-slate-800 mb-3">SarkariJobSeva के बारे में</h2>
+        <p>SarkariJobSeva.com भारत का एक विश्वसनीय सरकारी नौकरी सूचना पोर्टल है। हमारा उद्देश्य देश के हर कोने में बैठे युवाओं तक सरकारी नौकरियों की सटीक और समय पर जानकारी पहुंचाना है।</p>
+        <p>हम SSC, Railway, UPSC, Bank, State Government, Defense और अन्य सरकारी विभागों की भर्तियों की जानकारी एकत्रित करके आप तक पहुंचाते हैं — बिल्कुल मुफ्त।</p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-bold text-slate-800 mb-3">हमारा मिशन</h2>
+        <p>भारत में लाखों युवा हर साल सरकारी नौकरी की तैयारी करते हैं। हमारा मिशन है कि कोई भी जरूरी अधिसूचना (Notification) से वंचित न रहे। हम रोज नई भर्तियां, Admit Card, Result और Answer Key अपडेट करते हैं।</p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-bold text-slate-800 mb-3">हम क्या प्रदान करते हैं</h2>
+        <ul className="list-disc pl-6 space-y-2">
+          <li><strong>Latest Jobs:</strong> SSC, Railway, Bank, UPSC, State PSC और अन्य सभी सरकारी भर्तियां</li>
+          <li><strong>Admit Card:</strong> सभी परीक्षाओं के Admit Card की जानकारी और डाउनलोड लिंक</li>
+          <li><strong>Results:</strong> परीक्षा परिणाम की तुरंत जानकारी</li>
+          <li><strong>Answer Key:</strong> सभी परीक्षाओं की Answer Key</li>
+          <li><strong>Admission:</strong> विभिन्न कोर्सेज में Admission की जानकारी</li>
+          <li><strong>Blog:</strong> सरकारी नौकरी की तैयारी से जुड़े उपयोगी लेख</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-bold text-slate-800 mb-3">हमारी विशेषताएं</h2>
+        <ul className="list-disc pl-6 space-y-2">
+          <li>✅ रोज अपडेट — Daily updated content</li>
+          <li>✅ आधिकारिक स्रोत — Official government websites से verified जानकारी</li>
+          <li>✅ 100% मुफ्त — सभी जानकारी बिल्कुल निःशुल्क</li>
+          <li>✅ मोबाइल फ्रेंडली — Mobile पर आसानी से उपयोग करें</li>
+          <li>✅ Fast और Reliable — तेज और भरोसेमंद वेबसाइट</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-bold text-slate-800 mb-3">Important Notice</h2>
+        <p><strong>SarkariJobSeva.com एक निजी सूचना पोर्टल है।</strong> यह किसी भी सरकारी विभाग या मंत्रालय से संबद्ध नहीं है। हम केवल जानकारी प्रदान करते हैं। आवेदन करने से पहले हमेशा Official Website पर जाकर Notification ध्यान से पढ़ें।</p>
+        <p>हम किसी भी भर्ती प्रक्रिया में कोई शुल्क नहीं लेते। यदि कोई हमारे नाम पर पैसे मांगे तो तुरंत Report करें।</p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-bold text-slate-800 mb-3">संपर्क करें</h2>
+        <p>किसी भी जानकारी, सुझाव या शिकायत के लिए हमसे संपर्क करें:</p>
+        <p>📧 Email: <a href="mailto:supportsarkarijobseva@gmail.com" className="text-blue-600 font-semibold hover:underline">supportsarkarijobseva@gmail.com</a></p>
+        <p>🌐 Website: <a href="https://sarkarijobseva.com" className="text-blue-600 font-semibold hover:underline">www.sarkarijobseva.com</a></p>
+      </section>
+
+      <p className="text-sm text-slate-500">Last updated: May 2026</p>
+    </InfoPage>
+  );
+}
