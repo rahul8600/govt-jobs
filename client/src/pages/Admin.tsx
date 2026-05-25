@@ -50,6 +50,7 @@ export default function Admin() {
   const [blogs, setBlogs] = useState<any[]>([]);
   const [blogsLoading, setBlogsLoading] = useState(false);
   const [blogForm, setBlogForm] = useState({ title: '', slug: '', content: '', excerpt: '', image_url: '', category: 'job', tags: '', featured: false });
+  const [blogEditId, setBlogEditId] = useState<number | null>(null);
   const [showGallery, setShowGallery] = useState(false);
   const [galleryImages, setGalleryImages] = useState<{url: string, filename: string}[]>([]);
   const [galleryLoading, setGalleryLoading] = useState(false);
@@ -925,45 +926,45 @@ Visit https://ssc.nic.in and apply online...`}
               </div>
               <div className="divide-y divide-slate-100">
                 {jobs.map(job => (
-                  <div key={job.id} className="p-3 md:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-2 group hover:bg-blue-50/30 transition-all">
-                    <div className="flex gap-3 items-start flex-1 min-w-0">
-                      <div className={`w-10 h-10 md:w-14 md:h-14 flex-shrink-0 border flex items-center justify-center text-[9px] font-black uppercase tracking-widest rounded-xl ${job.type === 'job' ? 'border-blue-100 bg-blue-50 text-blue-700' : job.type === 'admit-card' ? 'border-amber-100 bg-amber-50 text-amber-700' : job.type === 'result' ? 'border-green-100 bg-green-50 text-green-700' : 'border-purple-100 bg-purple-50 text-purple-700'}`}>
-                        {job.type?.split('-')[0]}
+                  <div key={job.id} className="p-6 flex items-center justify-between group hover:bg-blue-50/30 transition-all">
+                    <div className="flex gap-6 items-center">
+                      <div className={`w-14 h-14 border flex items-center justify-center text-[10px] font-black uppercase tracking-widest rounded-xl ${job.type === 'job' ? 'border-blue-100 bg-blue-50 text-blue-700' : job.type === 'admit-card' ? 'border-amber-100 bg-amber-50 text-amber-700' : job.type === 'result' ? 'border-green-100 bg-green-50 text-green-700' : 'border-purple-100 bg-purple-50 text-purple-700'}`}>
+                        {job.type}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-black text-slate-900 text-sm md:text-lg leading-tight group-hover:text-primary transition-colors">{job.title}</h3>
-                        <div className="flex flex-wrap gap-1.5 mt-1.5">
+                      <div>
+                        <h3 className="font-black text-slate-900 text-lg leading-tight group-hover:text-primary transition-colors">{job.title}</h3>
+                        <div className="flex gap-4 mt-2">
                           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{job.postDate}</span>
-                          <span className="text-[10px] font-black text-primary/60 uppercase tracking-widest">{job.department?.substring(0, 30)}</span>
-                          {job.featured && <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-1.5 rounded uppercase tracking-widest">Featured</span>}
-                          {job.trending && <span className="text-[10px] font-black text-violet-600 bg-violet-50 px-1.5 rounded uppercase tracking-widest">Trending</span>}
+                          <span className="text-[10px] font-black text-primary/60 uppercase tracking-widest">{job.department}</span>
+                          {job.featured && <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-2 rounded uppercase tracking-widest">Featured</span>}
+                          {job.trending && <span className="text-[10px] font-black text-violet-600 bg-violet-50 px-2 rounded uppercase tracking-widest">Trending</span>}
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-2 flex-shrink-0 self-end md:self-center">
+                    <div className="flex gap-2">
                       <button 
                         type="button"
                         onClick={() => handleEdit(job)}
-                        className="p-2 md:p-3 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all rounded-xl shadow-sm"
+                        className="p-3 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all rounded-xl shadow-sm"
                         data-testid={`button-edit-${job.id}`}
                       >
-                        <Edit2 className="w-4 h-4 md:w-5 md:h-5" />
+                        <Edit2 className="w-5 h-5" />
                       </button>
                       <button
                         type="button"
                         onClick={() => notifyPost(job.id, job.title)}
-                        className="p-2 md:p-3 bg-blue-50 text-blue-500 hover:bg-blue-600 hover:text-white transition-all rounded-xl shadow-sm"
+                        className="p-3 bg-blue-50 text-blue-500 hover:bg-blue-600 hover:text-white transition-all rounded-xl shadow-sm"
                         title="Telegram + Push Notification Bhejo"
                       >
-                        <Bell className="w-4 h-4 md:w-5 md:h-5" />
+                        <Bell className="w-5 h-5" />
                       </button>
                       <button 
                         type="button"
                         onClick={() => deleteJob(job.id)}
-                        className="p-2 md:p-3 bg-rose-50 text-rose-500 hover:bg-rose-600 hover:text-white transition-all rounded-xl shadow-sm"
+                        className="p-3 bg-rose-50 text-rose-500 hover:bg-rose-600 hover:text-white transition-all rounded-xl shadow-sm"
                         data-testid={`button-delete-${job.id}`}
                       >
-                        <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
+                        <Trash2 className="w-5 h-5" />
                       </button>
                     </div>
                   </div>
@@ -1643,14 +1644,32 @@ Visit https://ssc.nic.in and apply online...`}
                         <p className="font-bold text-slate-800 text-sm line-clamp-1">{blog.title}</p>
                         <p className="text-xs text-slate-400 mt-0.5">{blog.category} • {blog.views || 0} views</p>
                       </div>
-                      <button onClick={async () => {
-                        if (confirm('Delete this blog?')) {
-                          await fetch(`/api/blogs/${blog.id}`, { method: 'DELETE', credentials: 'include' });
-                          fetchBlogs();
-                        }
-                      }} className="text-red-500 text-xs font-bold px-3 py-1.5 rounded-lg border border-red-200 hover:bg-red-50">
-                        Delete
-                      </button>
+                      <div className="flex gap-2">
+                        <button onClick={() => {
+                          setBlogForm({
+                            title: blog.title || '',
+                            slug: blog.slug || '',
+                            content: blog.content || '',
+                            excerpt: blog.excerpt || '',
+                            image_url: blog.image_url || '',
+                            category: blog.category || 'job',
+                            tags: blog.tags || '',
+                            featured: blog.featured || false,
+                          });
+                          setBlogEditId(blog.id);
+                          setActiveTab('add-blog');
+                        }} className="text-blue-600 text-xs font-bold px-3 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-50 flex items-center gap-1">
+                          <Edit2 className="w-3.5 h-3.5" /> Edit
+                        </button>
+                        <button onClick={async () => {
+                          if (confirm('Delete this blog?')) {
+                            await fetch(`/api/blogs/${blog.id}`, { method: 'DELETE', credentials: 'include' });
+                            fetchBlogs();
+                          }
+                        }} className="text-red-500 text-xs font-bold px-3 py-1.5 rounded-lg border border-red-200 hover:bg-red-50">
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1663,21 +1682,24 @@ Visit https://ssc.nic.in and apply online...`}
             <div className="space-y-6">
               <div className="flex items-center gap-3">
                 <button onClick={() => setActiveTab('blog')} className="text-slate-500 hover:text-blue-600 font-bold text-sm">← Back</button>
-                <h2 className="font-black text-slate-800 text-lg">Add New Blog</h2>
+                <h2 className="font-black text-slate-800 text-lg">{blogEditId ? "Edit Blog" : "Add New Blog"}</h2>
               </div>
               <form onSubmit={async (e) => {
                 e.preventDefault();
                 try {
                   const slug = blogForm.slug || blogForm.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-                  const res = await fetch('/api/blogs', {
-                    method: 'POST',
+                  const url = blogEditId ? `/api/blogs/${blogEditId}` : '/api/blogs';
+                  const method = blogEditId ? 'PUT' : 'POST';
+                  const res = await fetch(url, {
+                    method,
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
-                    body: JSON.stringify({ ...blogForm, slug }),
+                    body: JSON.stringify({ ...blogForm, slug, published: true }),
                   });
                   if (res.ok) {
-                    toast({ title: 'Blog published!' });
+                    toast({ title: blogEditId ? 'Blog Updated!' : 'Blog Published!' });
                     setBlogForm({ title: '', slug: '', content: '', excerpt: '', image_url: '', category: 'job', tags: '', featured: false });
+                    setBlogEditId(null);
                     setActiveTab('blog');
                     fetchBlogs();
                   } else {
