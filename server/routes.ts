@@ -789,10 +789,12 @@ ${blog.excerpt ? blog.excerpt.substring(0, 200) + '...' : ''}
       const { title, content: blogContent, excerpt, image_url, category, tags, featured, published } = req.body;
       const result = await blogPool.query(
         'UPDATE blogs SET title=$1, content=$2, excerpt=$3, image_url=$4, category=$5, tags=$6, featured=$7, published=$8, updated_at=NOW() WHERE id=$9 RETURNING *',
-        [title, content, excerpt, image_url, category, tags, featured, published, id]
+        [title, blogContent || '', excerpt || '', image_url || '', category || 'job', tags || '', featured || false, published !== false, id]
       );
+      if (!result.rows[0]) return res.status(404).json({ error: 'Blog not found' });
       res.json(result.rows[0]);
     } catch (error) {
+      console.error('Blog update error:', error);
       res.status(500).json({ error: 'Failed to update blog' });
     }
   });
