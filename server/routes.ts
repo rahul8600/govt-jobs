@@ -117,7 +117,7 @@ function requireAuth(req: Request, res: Response, next: NextFunction) {
 }
 
 // Bot detection
-const BOTS = ['googlebot','google-inspection-tool','google search console','bingbot','facebookexternalhit','twitterbot','linkedinbot','whatsapp','telegrambot','applebot','discordbot'];
+const BOTS = ['googlebot','google-inspection-tool','google search console','bingbot','facebookexternalhit','twitterbot','linkedinbot','whatsapp','telegrambot','applebot','discordbot','google-read-aloud','apis-google','feedfetcher','mediapartners-google','adsbot-google','yandexbot','baiduspider','duckduckbot'];
 function isBot(ua: string): boolean { return BOTS.some(b => ua.toLowerCase().includes(b)); }
 function esc(s: string): string { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
@@ -237,10 +237,72 @@ export async function registerRoutes(
         try { job = await storage.getPostBySlug(slug); } catch {}
         if (!job) { try { job = await storage.getPost(parseInt(slug)); } catch {} }
         if (job) {
+          const jobSlug = job.slug || job.id;
+          // Redirect if slug is null/invalid
+          if (!jobSlug || jobSlug === 'null') {
+            return res.status(404).send('Not Found');
+          }
           const title = esc(job.title) + ' - Apply Online, Last Date, Eligibility | SarkariJobSeva';
-          const desc = esc((job.shortInfo || job.title).slice(0, 155));
-          const canonical = baseUrl + '/job/' + (job.slug || job.id);
-          return res.send(`<!DOCTYPE html><html lang="hi-IN"><head>
+          const descText = job.shortInfo || job.eligibilityDetails || job.title || '';
+          const desc = esc(descText.slice(0, 155));
+          const canonical = baseUrl + '/job/' + jobSlug;
+          // JobPosting Schema for Google
+          const jobSchema = JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "JobPosting",
+            "title": job.title,
+            "description": (job.shortInfo || job.eligibilityDetails || job.title || '').slice(0, 500),
+            "hiringOrganization": {
+              "@type": "Organization",
+              "name": job.department || "Government of India",
+              "sameAs": job.officialWebsiteUrl || "https://sarkarijobseva.com"
+            },
+            "jobLocation": {
+              "@type": "Place",
+              "address": {
+                "@type": "PostalAddress",
+                "addressCountry": "IN"
+              }
+            },
+            "datePosted": job.createdAt ? new Date(job.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            "employmentType": "FULL_TIME",
+            "url": canonical,
+            "educationRequirements": job.qualification || "See notification",
+            "identifier": {
+              "@type": "PropertyValue",
+              "name": "SarkariJobSeva",
+              "value": String(job.id)
+            }
+          });
+
+          // Build vacancy details HTML
+          const vacancyHtml = Array.isArray(job.vacancyDetails) ? job.vacancyDetails.map((v: any) =>
+            `<tr><td>${esc(v.postName || '')}</td><td>${esc(v.totalPost || '')}</td><td>${esc(v.eligibility || '')}</td></tr>`
+          ).join('') : '';
+
+          // Build important dates HTML
+          const datesHtml = Array.isArray(job.importantDates) ? job.importantDates.map((d: any) =>
+            `<tr><td>${esc(d.label || '')}</td><td><strong>${esc(d.date || '')}</strong></td></tr>`
+          ).join('') : '';
+
+          // Build fee HTML
+          const feeHtml = Array.isArray(job.applicationFee) ? job.applicationFee.map((f: any) =>
+            `<tr><td>${esc(f.category || '')}</td><td><strong>Rs. ${esc(f.fee || '')}</strong></td></tr>`
+          ).join('') : '';
+
+          // Build age HTML
+          const ageHtml = Array.isArray(job.ageLimit) ? job.ageLimit.map((a: any) =>
+            `<tr><td>${esc(a.category || '')}</td><td>${esc(a.minAge || '18')} - ${esc(a.maxAge || '')} Years</td></tr>`
+          ).join('') : '';
+
+          // Build links HTML
+          const linksHtml = Array.isArray(job.links) ? job.links.map((l: any) =>
+            `<a href="${esc(l.url || '#')}" target="_blank" rel="noopener" style="display:inline-block;margin:6px;padding:10px 16px;background:#1d4ed8;color:white;border-radius:6px;text-decoration:none;font-weight:bold">${esc(l.label || 'Link')}</a>`
+          ).join('') : '';
+
+          return res.send(`<!DOCTYPE html>
+<html lang="hi-IN">
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${title}</title>
@@ -252,14 +314,63 @@ export async function registerRoutes(
 <meta property="og:url" content="${canonical}">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="SarkariJobSeva">
-<meta property="og:image" content="${baseUrl}/og-image.png">
+<meta property="og:image" content="${baseUrl}/logo.png">
 <meta name="twitter:card" content="summary_large_image">
-</head><body>
+<script type="application/ld+json">${jobSchema}</script>
+<style>
+body{font-family:Arial,sans-serif;max-width:900px;margin:0 auto;padding:16px;background:#f8fafc;color:#1e293b}
+h1{color:#1d4ed8;font-size:24px;margin-bottom:8px}
+h2{color:#374151;font-size:18px;margin:20px 0 8px;padding:8px;background:#eff6ff;border-left:4px solid #1d4ed8}
+table{width:100%;border-collapse:collapse;margin:12px 0}
+th{background:#1d4ed8;color:white;padding:10px;text-align:left}
+td{padding:8px 10px;border:1px solid #e2e8f0}
+tr:nth-child(even){background:#f8fafc}
+.badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:bold;background:#dbeafe;color:#1d4ed8;margin:4px}
+.dept{color:#64748b;font-size:14px;margin-bottom:12px}
+.links-section{margin:16px 0;padding:16px;background:white;border-radius:8px;border:1px solid #e2e8f0}
+header{background:#1d4ed8;color:white;padding:12px 16px;border-radius:8px;margin-bottom:16px}
+header a{color:white;text-decoration:none;font-size:20px;font-weight:bold}
+footer{margin-top:24px;padding:12px;background:#1e293b;color:#94a3b8;border-radius:8px;text-align:center;font-size:13px}
+footer a{color:#60a5fa}
+</style>
+</head>
+<body>
+<header><a href="${baseUrl}">🏛️ SarkariJobSeva.com</a></header>
+
+<span class="badge">${esc(job.type || 'Job').toUpperCase()}</span>
+${job.qualification ? `<span class="badge">${esc(job.qualification)}</span>` : ''}
+${job.trending ? '<span class="badge" style="background:#fef3c7;color:#92400e">🔥 TRENDING</span>' : ''}
+
 <h1>${esc(job.title)}</h1>
-<p>${esc(job.department)}</p>
-<p>${esc(job.shortInfo || '')}</p>
-${job.lastDate ? '<p>Last Date: ' + esc(job.lastDate) + '</p>' : ''}
-${job.qualification ? '<p>Eligibility: ' + esc(job.qualification) + '</p>' : ''}
+<p class="dept">🏢 ${esc(job.department || '')} ${job.lastDate ? '| 📅 Last Date: <strong>' + esc(job.lastDate) + '</strong>' : ''}</p>
+
+<p style="line-height:1.7;background:white;padding:12px;border-radius:8px;border:1px solid #e2e8f0">${esc(job.shortInfo || job.eligibilityDetails || '')}</p>
+
+${datesHtml ? `<h2>📅 Important Dates</h2><table><tr><th>Event</th><th>Date</th></tr>${datesHtml}</table>` : ''}
+
+${feeHtml ? `<h2>💰 Application Fee</h2><table><tr><th>Category</th><th>Fee</th></tr>${feeHtml}</table>` : ''}
+
+${ageHtml ? `<h2>🎂 Age Limit</h2><table><tr><th>Category</th><th>Age</th></tr>${ageHtml}</table>` : ''}
+
+${vacancyHtml ? `<h2>📊 Vacancy Details</h2><table><tr><th>Post Name</th><th>Total Posts</th><th>Eligibility</th></tr>${vacancyHtml}</table>` : ''}
+
+${job.eligibilityDetails ? `<h2>📋 Eligibility Details</h2><p style="line-height:1.7;background:white;padding:12px;border-radius:8px;border:1px solid #e2e8f0">${esc(job.eligibilityDetails)}</p>` : ''}
+
+${Array.isArray(job.selectionProcess) && job.selectionProcess.length ? `<h2>🎯 Selection Process</h2><ol>${job.selectionProcess.map((s: any) => `<li style="margin:6px 0">${esc(s)}</li>`).join('')}</ol>` : ''}
+
+${linksHtml ? `<h2>🔗 Important Links</h2><div class="links-section">${linksHtml}</div>` : ''}
+
+<p style="margin-top:16px;font-size:13px;color:#94a3b8;font-style:italic">⚠️ Disclaimer: Hamesha official website par jakar notification zaroor padhen. SarkariJobSeva ek information portal hai.</p>
+
+<footer>
+© 2026 SarkariJobSeva.com | 
+<a href="${baseUrl}/latest-jobs">Latest Jobs</a> | 
+<a href="${baseUrl}/admit-card">Admit Card</a> | 
+<a href="${baseUrl}/results">Results</a> | 
+<a href="${baseUrl}/disclaimer">Disclaimer</a> | 
+<a href="${baseUrl}/privacy-policy">Privacy Policy</a>
+<br>सरकारी नौकरी | Sarkari Naukri | Government Jobs India | Free Job Alert
+</footer>
 </body></html>`);
         }
       }
@@ -271,7 +382,6 @@ ${job.qualification ? '<p>Eligibility: ' + esc(job.qualification) + '</p>' : ''}
         '/results':      { title: 'Sarkari Result 2026', desc: 'Sarkari result 2026 – Check government exam results, merit list, cut off marks at SarkariJobSeva.', type: 'result' },
         '/answer-key':   { title: 'Answer Key Download 2026', desc: 'Download answer key 2026 for SSC, Railway, UPSC, Bank government exams at SarkariJobSeva.', type: 'answer-key' },
         '/admission':    { title: 'Admission Form 2026', desc: 'Government college admission 2026 – Apply online, eligibility, important dates at SarkariJobSeva.', type: 'admission' },
-        '/salary-calculator': { title: '7th Pay Commission Salary Calculator 2026', desc: '7th Pay Commission salary calculator. Sarkari naukri mein kitni salary milegi jaanein.', type: 'all' },
         '/search':       { title: 'Search Sarkari Jobs 2026', desc: 'Search latest sarkari jobs, admit cards, results 2026 at SarkariJobSeva.', type: 'all' },
         '/blog':         { title: 'Sarkari Job Blog', desc: 'Latest sarkari job news, tips, syllabus and updates for government job aspirants.', type: 'blog' },
         '/salary-calculator': { title: '7th Pay Commission Salary Calculator 2026 – Sarkari Naukri Salary', desc: '7th Pay Commission ke anusar sarkari naukri salary calculate karein. Basic Pay, DA 50%, HRA, TA sab milakaar in-hand salary jaanein.', type: 'all' },
@@ -286,11 +396,13 @@ ${job.qualification ? '<p>Eligibility: ' + esc(job.qualification) + '</p>' : ''}
         try {
           if (catConfig.type !== 'all' && catConfig.type !== 'blog') {
             const posts = await storage.getFilteredPosts({ type: catConfig.type }, 1, 20);
-            postsHtml = posts.slice(0, 10).map((p: any) => 
-              `<li><a href="${baseUrl}/job/${p.slug || p.id}">${esc(p.title)}</a>${p.lastDate ? ' – Last Date: ' + esc(p.lastDate) : ''}</li>`
-            ).join('');
+            postsHtml = posts.slice(0, 15).map((p: any) => {
+              const slug = p.slug || p.id;
+              if (!slug || slug === 'null') return '';
+              return `<li class="job-item"><a href="${baseUrl}/job/${slug}">${esc(p.title)}</a><div class="job-meta">${esc(p.department || '')}${p.lastDate ? ' | Last Date: ' + esc(p.lastDate) : ''}${p.qualification ? ' | Qualification: ' + esc(p.qualification) : ''}</div></li>`;
+            }).filter(Boolean).join('');
           }
-        } catch {}
+        } catch(e) { console.error('[Prerender posts]', e); }
 
         return res.send(`<!DOCTYPE html>
 <html lang="hi-IN">
@@ -874,16 +986,40 @@ Sitemap: ${baseUrl}/sitemap.xml
       }
 
       for (const post of posts) {
+        // Skip posts with null/undefined slug that would create bad URLs
         const slug = post.slug || post.id;
+        if (!slug || slug === 'null' || slug === 'undefined') continue;
+        
+        // Set priority based on post type
+        const priority = (post.featured || post.trending) ? '0.9' : '0.7';
         const lastmod = post.createdAt ? new Date(post.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
         xml += `  <url>
     <loc>${baseUrl}/job/${slug}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>${priority}</priority>
   </url>
 `;
       }
+      
+      // Add blog posts to sitemap
+      try {
+        const { Pool } = await import('pg').then(m => m.default || m);
+        const blogPool = new Pool({ connectionString: process.env.DATABASE_URL });
+        const blogResult = await blogPool.query("SELECT slug, updated_at FROM blogs WHERE published = true");
+        for (const blog of blogResult.rows) {
+          if (!blog.slug) continue;
+          const lastmod = blog.updated_at ? new Date(blog.updated_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+          xml += `  <url>
+    <loc>${baseUrl}/blog/${blog.slug}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+`;
+        }
+        await blogPool.end();
+      } catch {}
 
       xml += `</urlset>`;
 
