@@ -953,81 +953,98 @@ Sitemap: ${baseUrl}/sitemap.xml
 `);
   });
 
-  // sitemap.xml
+  // sitemap.xml - Google validated
   app.get("/sitemap.xml", async (req, res) => {
     try {
-      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      // Always use canonical domain
+      const baseUrl = 'https://sarkarijobseva.com';
+      const today = new Date().toISOString().split('T')[0];
       const posts = await storage.getAllPosts();
-      
+
       const staticPages = [
-        { loc: '/', priority: '1.0', changefreq: 'daily' },
-        { loc: '/latest-jobs', priority: '0.9', changefreq: 'daily' },
-        { loc: '/admit-card', priority: '0.9', changefreq: 'daily' },
-        { loc: '/results', priority: '0.9', changefreq: 'daily' },
-        { loc: '/answer-key', priority: '0.8', changefreq: 'daily' },
-        { loc: '/admission', priority: '0.8', changefreq: 'daily' },
-        { loc: '/search', priority: '0.7', changefreq: 'weekly' },
-        { loc: '/disclaimer', priority: '0.3', changefreq: 'monthly' },
-        { loc: '/privacy-policy', priority: '0.3', changefreq: 'monthly' },
-        { loc: '/terms-of-service', priority: '0.3', changefreq: 'monthly' },
+        { loc: '/',                priority: '1.0', changefreq: 'daily',   lastmod: today },
+        { loc: '/latest-jobs',     priority: '0.9', changefreq: 'daily',   lastmod: today },
+        { loc: '/admit-card',      priority: '0.9', changefreq: 'daily',   lastmod: today },
+        { loc: '/results',         priority: '0.9', changefreq: 'daily',   lastmod: today },
+        { loc: '/answer-key',      priority: '0.8', changefreq: 'weekly',  lastmod: today },
+        { loc: '/admission',       priority: '0.8', changefreq: 'daily',   lastmod: today },
+        { loc: '/blog',            priority: '0.7', changefreq: 'daily',   lastmod: today },
+        { loc: '/about',           priority: '0.5', changefreq: 'monthly', lastmod: today },
+        { loc: '/contact',         priority: '0.4', changefreq: 'monthly', lastmod: today },
+        { loc: '/disclaimer',      priority: '0.3', changefreq: 'monthly', lastmod: today },
+        { loc: '/privacy-policy',  priority: '0.3', changefreq: 'monthly', lastmod: today },
       ];
 
-      let xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-`;
-      
+      // Helper to escape XML special chars
+      const xmlEsc = (s: string) => String(s || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+
+      let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+      xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n';
+      xml += '  xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n';
+
+      // Static pages
       for (const page of staticPages) {
-        xml += `  <url>
-    <loc>${baseUrl}${page.loc}</loc>
-    <changefreq>${page.changefreq}</changefreq>
-    <priority>${page.priority}</priority>
-  </url>
-`;
+        xml += `  <url>\n`;
+        xml += `    <loc>${baseUrl}${page.loc}</loc>\n`;
+        xml += `    <lastmod>${page.lastmod}</lastmod>\n`;
+        xml += `    <changefreq>${page.changefreq}</changefreq>\n`;
+        xml += `    <priority>${page.priority}</priority>\n`;
+        xml += `  </url>\n`;
       }
 
+      // Job posts
       for (const post of posts) {
-        // Skip posts with null/undefined slug that would create bad URLs
         const slug = post.slug || post.id;
-        if (!slug || slug === 'null' || slug === 'undefined') continue;
-        
-        // Set priority based on post type
+        if (!slug || String(slug) === 'null' || String(slug) === 'undefined') continue;
+        const cleanSlug = String(slug).trim();
+        if (!cleanSlug) continue;
+
         const priority = (post.featured || post.trending) ? '0.9' : '0.7';
-        const lastmod = post.createdAt ? new Date(post.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
-        xml += `  <url>
-    <loc>${baseUrl}/job/${slug}</loc>
-    <lastmod>${lastmod}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>${priority}</priority>
-  </url>
-`;
+        const lastmod = post.createdAt
+          ? new Date(post.createdAt).toISOString().split('T')[0]
+          : today;
+
+        xml += `  <url>\n`;
+        xml += `    <loc>${baseUrl}/job/${xmlEsc(cleanSlug)}</loc>\n`;
+        xml += `    <lastmod>${lastmod}</lastmod>\n`;
+        xml += `    <changefreq>weekly</changefreq>\n`;
+        xml += `    <priority>${priority}</priority>\n`;
+        xml += `  </url>\n`;
       }
-      
-      // Add blog posts to sitemap
+
+      // Blog posts
       try {
-        const { Pool } = await import('pg').then(m => m.default || m);
-        const blogPool = new Pool({ connectionString: process.env.DATABASE_URL });
-        const blogResult = await blogPool.query("SELECT slug, updated_at FROM blogs WHERE published = true");
+        const blogResult = await blogPool.query(
+          "SELECT slug, updated_at FROM blogs WHERE published = true AND slug IS NOT NULL AND slug != ''"
+        );
         for (const blog of blogResult.rows) {
           if (!blog.slug) continue;
-          const lastmod = blog.updated_at ? new Date(blog.updated_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
-          xml += `  <url>
-    <loc>${baseUrl}/blog/${blog.slug}</loc>
-    <lastmod>${lastmod}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-`;
+          const lastmod = blog.updated_at
+            ? new Date(blog.updated_at).toISOString().split('T')[0]
+            : today;
+          xml += `  <url>\n`;
+          xml += `    <loc>${baseUrl}/blog/${xmlEsc(blog.slug)}</loc>\n`;
+          xml += `    <lastmod>${lastmod}</lastmod>\n`;
+          xml += `    <changefreq>monthly</changefreq>\n`;
+          xml += `    <priority>0.6</priority>\n`;
+          xml += `  </url>\n`;
         }
-        await blogPool.end();
-      } catch {}
+      } catch(e) { console.error('[Sitemap blogs]', e); }
 
-      xml += `</urlset>`;
+      xml += '</urlset>';
 
-      res.type('application/xml');
+      res.set('Content-Type', 'application/xml; charset=utf-8');
+      res.set('Cache-Control', 'public, max-age=3600');
       res.send(xml);
+
     } catch (error) {
       console.error("Error generating sitemap:", error);
-      res.status(500).send('Error generating sitemap');
+      res.status(500).type('text/plain').send('Error generating sitemap');
     }
   });
 
