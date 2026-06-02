@@ -395,11 +395,20 @@ ${linksHtml ? `<h2>🔗 Important Links</h2><div class="links-section">${linksHt
         
         try {
           if (catConfig.type !== 'all' && catConfig.type !== 'blog') {
-            const posts = await storage.getFilteredPosts({ type: catConfig.type }, 1, 20);
-            postsHtml = posts.slice(0, 15).map((p: any) => {
+            // Use direct DB query for reliability
+            const dbResult = await blogPool.query(
+              `SELECT id, title, slug, department, last_date, qualification, type 
+               FROM posts 
+               WHERE type = $1 
+               ORDER BY created_at DESC 
+               LIMIT 20`,
+              [catConfig.type]
+            );
+            const posts = dbResult.rows || [];
+            postsHtml = posts.map((p: any) => {
               const slug = p.slug || p.id;
-              if (!slug || slug === 'null') return '';
-              return `<li class="job-item"><a href="${baseUrl}/job/${slug}">${esc(p.title)}</a><div class="job-meta">${esc(p.department || '')}${p.lastDate ? ' | Last Date: ' + esc(p.lastDate) : ''}${p.qualification ? ' | Qualification: ' + esc(p.qualification) : ''}</div></li>`;
+              if (!slug || String(slug) === 'null') return '';
+              return `<li class="job-item"><a href="${baseUrl}/job/${slug}">${esc(p.title)}</a><div class="job-meta">🏢 ${esc(p.department || '')}${p.last_date ? ' | 📅 Last Date: <strong>' + esc(p.last_date) + '</strong>' : ''}${p.qualification ? ' | 🎓 ' + esc(p.qualification) : ''}</div></li>`;
             }).filter(Boolean).join('');
           }
         } catch(e) { console.error('[Prerender posts]', e); }
