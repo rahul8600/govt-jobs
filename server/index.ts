@@ -43,9 +43,11 @@ app.use(helmet({
 // Block known bad bots and spam user-agents
 app.use((req, res, next) => {
   const ua = req.headers["user-agent"] || "";
+  // NOTE: Do NOT add googlebot, bingbot, or other legitimate crawlers here.
+  // Those are handled (pre-rendered) by server/static.ts bot middleware.
   const badBots = [
     "ahrefsbot", "semrushbot", "dotbot", "mj12bot", "blexbot",
-    "petalbot", "sogou", "yandexbot", "baiduspider", "scrapy",
+    "petalbot", "sogou", "scrapy",
     "python-requests", "go-http-client", "libwww", "masscan",
     "zgrab", "nikto", "sqlmap", "nmap"
   ];
