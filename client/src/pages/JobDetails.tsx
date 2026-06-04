@@ -162,6 +162,12 @@ export default function JobDetails() {
       <div className="bg-white p-10 rounded-2xl border border-slate-200/80 shadow-lg shadow-slate-200/50 space-y-6">
         <h1 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight leading-snug text-center job-details-title" data-testid="text-job-title">
           {job.title}
+          {job.department && (
+            <span className="block text-sm font-semibold text-slate-500 mt-1">
+              {job.department}
+              {job.lastDate ? ` – Last Date: ${job.lastDate}` : ''}
+            </span>
+          )}
         </h1>
         <div className="flex flex-wrap justify-center gap-3 text-xs font-bold text-slate-500">
           <span className="flex items-center gap-2 bg-slate-100 px-4 py-2 rounded-lg"><MapPin className="w-4 h-4" /> {job.department}</span>
@@ -171,7 +177,13 @@ export default function JobDetails() {
         
         {hasText(job.shortInfo) && (
           <div className="bg-gradient-to-br from-slate-50 to-blue-50/30 p-7 rounded-xl border border-slate-100">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3 job-details-short-heading">Short Information</h3>
+            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3 job-details-short-heading">
+              {job.type === 'admit-card' ? 'Admit Card Overview' :
+               job.type === 'result' ? 'Result Overview' :
+               job.type === 'answer-key' ? 'Answer Key Overview' :
+               job.type === 'admission' ? 'Admission Overview' :
+               'Job Overview / Short Information'}
+            </h2>
             <p className="text-sm font-medium text-slate-600 leading-relaxed whitespace-pre-line job-details-short-text" data-testid="text-short-info">{job.shortInfo}</p>
           </div>
         )}
