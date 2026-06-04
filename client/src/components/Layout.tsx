@@ -1,10 +1,13 @@
-import { Link, useLocation } from "wouter";
+import { Link, useLocation, useRouter } from "wouter";
 import { useLang } from "@/lib/LanguageContext";
-import { Home, Briefcase, FileText, CheckSquare, GraduationCap, Search } from "lucide-react";
+import { Home, Briefcase, FileText, CheckSquare, GraduationCap, Search, Calculator, X } from "lucide-react";
+import { useState } from "react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const { lang } = useLang();
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const navItems = [
     { href: "/",            label: "Home",       icon: Home },
     { href: "/latest-jobs", label: "Jobs",       icon: Briefcase },
@@ -47,11 +50,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
               </svg>
             </a>
-            <Link href="/search">
-              <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center cursor-pointer hover:bg-blue-500 transition-colors">
-                <Search className="w-5 h-5 text-white" />
-              </div>
-            </Link>
+            <button
+              onClick={() => { setSearchOpen(true); setSearchQuery(""); }}
+              className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center cursor-pointer hover:bg-blue-500 transition-colors"
+              aria-label="Search"
+            >
+              <Search className="w-5 h-5 text-white" />
+            </button>
           </div>
         </div>
 
@@ -98,7 +103,74 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      {/* ===== MAIN ===== */}
+
+      {/* ===== SEARCH MODAL ===== */}
+      {searchOpen && (
+        <div className="fixed inset-0 z-[999] flex flex-col">
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSearchOpen(false)} />
+          {/* Modal box */}
+          <div className="relative z-10 bg-white mx-3 mt-16 rounded-2xl shadow-2xl overflow-hidden">
+            {/* Input row */}
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100">
+              <Search className="w-5 h-5 text-blue-500 flex-shrink-0" />
+              <input
+                autoFocus
+                type="text"
+                placeholder="Jobs, Admit Card, Result search karo..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === "Enter" && searchQuery.trim()) {
+                    setSearchOpen(false);
+                    navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                  }
+                }}
+                className="flex-1 text-base font-medium text-slate-800 outline-none placeholder:text-slate-400"
+              />
+              <button onClick={() => setSearchOpen(false)} className="text-slate-400 hover:text-slate-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            {/* Quick links */}
+            <div className="p-4">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">Quick Links</p>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { label: "🗂 Latest Jobs",   href: "/latest-jobs" },
+                  { label: "🪪 Admit Card",    href: "/admit-card" },
+                  { label: "📊 Results",       href: "/results" },
+                  { label: "🔑 Answer Key",    href: "/answer-key" },
+                  { label: "🎓 Admission",     href: "/admission" },
+                  { label: "💰 Salary Calc",   href: "/salary-calculator" },
+                ].map(({ label, href }) => (
+                  <Link key={href} href={href}>
+                    <div
+                      onClick={() => setSearchOpen(false)}
+                      className="bg-slate-50 hover:bg-blue-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 hover:text-blue-700 cursor-pointer transition-colors"
+                    >
+                      {label}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              {searchQuery.trim() && (
+                <button
+                  onClick={() => {
+                    setSearchOpen(false);
+                    navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                  }}
+                  className="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-sm transition-colors"
+                >
+                  🔍 "{searchQuery}" search karo
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== MAIN ===== */
       <main className="flex-grow pb-20 md:pb-0 pt-4">
         <div className="max-w-6xl mx-auto px-3 md:px-6">
           {children}
@@ -113,7 +185,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             { href: "/latest-jobs",        label: "Jobs",    icon: Briefcase },
             { href: "/admit-card",         label: "Admit",   icon: FileText },
             { href: "/results",            label: "Results", icon: CheckSquare },
-            { href: "/salary-calculator",  label: "Salary",  icon: Search },
+            { href: "/salary-calculator",  label: "Salary",  icon: Calculator },
           ].map(({ href, label, icon: Icon }) => (
             <Link key={href} href={href}>
               <div className={`flex flex-col items-center justify-center h-full gap-0.5 cursor-pointer transition-colors ${
