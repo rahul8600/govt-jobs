@@ -80,6 +80,7 @@ function buildJobHTML(job: any, canonical: string): string {
   // ── Body sections ──
   let body = `
     <h1>${esc(job.title)}</h1>
+    <p class="dept-tag"><strong>${esc(job.department)}</strong>${job.lastDate ? ` — Last Date: <strong>${esc(job.lastDate)}</strong>` : ''}</p>
 
     <section class="info-box">
       <table>
@@ -93,7 +94,13 @@ function buildJobHTML(job: any, canonical: string): string {
     </section>
 
     <section class="short-info">
-      <h2>Job Overview</h2>
+      <h2>${
+        job.type === 'admit-card' ? 'Admit Card Overview – ' + safe(job.title) :
+        job.type === 'result' ? 'Result Overview – ' + safe(job.title) :
+        job.type === 'answer-key' ? 'Answer Key Overview – ' + safe(job.title) :
+        job.type === 'admission' ? 'Admission Overview – ' + safe(job.title) :
+        'Job Overview – ' + safe(job.title)
+      }</h2>
       <p>${esc(rawDesc)}</p>
     </section>`;
 
