@@ -971,18 +971,30 @@ Sitemap: ${baseUrl}/sitemap.xml
       const posts = await storage.getAllPosts();
 
       const staticPages = [
-        { loc: '/',                priority: '1.0', changefreq: 'daily',   lastmod: today },
-        { loc: '/latest-jobs',     priority: '0.9', changefreq: 'daily',   lastmod: today },
-        { loc: '/admit-card',      priority: '0.9', changefreq: 'daily',   lastmod: today },
-        { loc: '/results',         priority: '0.9', changefreq: 'daily',   lastmod: today },
-        { loc: '/answer-key',      priority: '0.8', changefreq: 'weekly',  lastmod: today },
-        { loc: '/admission',       priority: '0.8', changefreq: 'daily',   lastmod: today },
-        { loc: '/blog',            priority: '0.7', changefreq: 'daily',   lastmod: today },
-        { loc: '/about',           priority: '0.5', changefreq: 'monthly', lastmod: today },
-        { loc: '/contact',         priority: '0.4', changefreq: 'monthly', lastmod: today },
-        { loc: '/disclaimer',      priority: '0.3', changefreq: 'monthly', lastmod: today },
-        { loc: '/privacy-policy',  priority: '0.3', changefreq: 'monthly', lastmod: today },
+        { loc: "/",                    priority: "1.0", changefreq: "daily",   lastmod: today },
+        { loc: "/latest-jobs",         priority: "0.9", changefreq: "daily",   lastmod: today },
+        { loc: "/admit-card",          priority: "0.9", changefreq: "daily",   lastmod: today },
+        { loc: "/results",             priority: "0.9", changefreq: "daily",   lastmod: today },
+        { loc: "/answer-key",          priority: "0.8", changefreq: "weekly",  lastmod: today },
+        { loc: "/admission",           priority: "0.8", changefreq: "daily",   lastmod: today },
+        { loc: "/jobs/10th-pass",      priority: "0.8", changefreq: "daily",   lastmod: today },
+        { loc: "/jobs/12th-pass",      priority: "0.8", changefreq: "daily",   lastmod: today },
+        { loc: "/jobs/graduation",     priority: "0.8", changefreq: "daily",   lastmod: today },
+        { loc: "/jobs/post-graduate",  priority: "0.7", changefreq: "daily",   lastmod: today },
+        { loc: "/salary-calculator",   priority: "0.7", changefreq: "monthly", lastmod: today },
+        { loc: "/blog",                priority: "0.7", changefreq: "daily",   lastmod: today },
+        { loc: "/about",               priority: "0.5", changefreq: "monthly", lastmod: today },
+        { loc: "/contact",             priority: "0.4", changefreq: "monthly", lastmod: today },
+        { loc: "/disclaimer",          priority: "0.3", changefreq: "monthly", lastmod: today },
+        { loc: "/privacy-policy",      priority: "0.3", changefreq: "monthly", lastmod: today },
+        { loc: "/terms-of-service",    priority: "0.3", changefreq: "monthly", lastmod: today },
       ];
+
+
+
+
+
+
 
       // Helper to escape XML special chars
       const xmlEsc = (s: string) => String(s || '')
