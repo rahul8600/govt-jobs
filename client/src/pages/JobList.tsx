@@ -375,6 +375,171 @@ export default function JobList() {
           )}
         </div>
       </div>
+
+      {/* SEO Content Block — intro + coverage + FAQ — only on category pages */}
+      {!matchSearch && config.type !== "all" && (
+        <PageSEOBlock type={config.type} />
+      )}
+
+    </div>
+  );
+}
+
+// ─── Per-page SEO Content Blocks ─────────────────────────────────────────────
+
+const PAGE_CONTENT: Record<string, {
+  intro: string;
+  points: string[];
+  faqs: { q: string; a: string }[];
+}> = {
+  job: {
+    intro: "SarkariJobSeva.com पर आपका स्वागत है — भारत का सबसे तेज़ और भरोसेमंद सरकारी नौकरी पोर्टल। यहां SSC, Railway, UPSC, Bank, Police, Army, Anganwadi, Teacher Bharti समेत केंद्र और राज्य सरकार की सभी नई भर्तियां रोज़ अपडेट होती हैं। 10वीं, 12वीं, Graduation और Post Graduate — हर योग्यता के लिए jobs यहां मिलेंगी।",
+    points: [
+      "SSC CGL, CHSL, MTS, GD — Staff Selection Commission की सभी भर्तियां",
+      "Railway RRB ALP, Group D, NTPC, JE — Indian Railways की latest vacancies",
+      "UPSC Civil Services, NDA, CDS, CAPF — Union Public Service Commission",
+      "IBPS PO, Clerk, SO, RRB — Bank jobs की सम्पूर्ण जानकारी",
+      "UP Police, Bihar Police, Rajasthan Police — State Police Bharti",
+      "Army, Navy, Airforce — Defense Sector Recruitment",
+      "Teacher Bharti — CTET, STET, UP TET, Bihar TET, KVS, NVS",
+      "Anganwadi, ASHA Worker, Home Guard, Peon — Non-Technical Posts",
+    ],
+    faqs: [
+      { q: "नई सरकारी नौकरी कैसे ढूंढें?", a: "ऊपर दिए Search Box में Job Title या Department का नाम डालें। या Qualification और State Filter use करें। हर job card पर click करके पूरी जानकारी — Vacancy Details, Important Dates, Apply Link — सब मिलेगा।" },
+      { q: "Apply Online कैसे करें?", a: "किसी भी Job पर click करें। Important Links section में Apply Online का Direct Official Link मिलेगा। Official Website पर जाकर Registration करें, Form भरें, Fee Pay करें और Submit करें। Confirmation Print कर लें।" },
+      { q: "10वीं पास के लिए कौन सी Jobs हैं?", a: "Railway Group D, SSC GD, SSC MTS, Army GD, Navy MR/SSR, UP Police Constable, Home Guard, Anganwadi Worker, Peon, Sweeper, Fire Fighter। Filter में '10th Pass' select करें।" },
+      { q: "Qualification Filter कैसे काम करता है?", a: "Left sidebar में Qualification section से 10th Pass, 12th Pass, Graduation या Post Graduate select करें। Jobs automatically filter हो जाएंगी। State भी select कर सकते हैं — अपने State की Jobs अलग देखें।" },
+      { q: "Last Date निकल जाए तो क्या करें?", a: "जिस job की Last Date निकल गई हो उसमें Apply नहीं हो सकता। लेकिन उसी Department की अगली Bharti के लिए तैयार रहें। हमारी site Bookmark करें — नई vacancy आते ही यहां दिखेगी।" },
+    ],
+  },
+  "admit-card": {
+    intro: "SarkariJobSeva.com पर सभी सरकारी परीक्षाओं के Admit Card / Hall Ticket का Direct Download Link मिलता है। SSC, Railway, UPSC, Bank, Police, Army, Teacher Exam — सभी के Admit Card यहां समय पर अपडेट होते हैं। Exam से पहले Admit Card ज़रूर Download करें।",
+    points: [
+      "SSC CGL, CHSL, MTS, GD, CPO — Tier 1, Tier 2 सभी Admit Card",
+      "Railway RRB ALP, Group D, NTPC, JE, RPF — Hall Ticket",
+      "UPSC Civil Services Prelims, Mains, NDA, CDS — Call Letter",
+      "IBPS PO, Clerk, SO, RRB PO, Clerk — Bank Exam Admit Card",
+      "UP Police, Bihar Police, BPSC, UPPSC — State Exam Hall Ticket",
+      "CTET, UP TET, Bihar TET, HTET — Teacher Exam Admit Card",
+      "KVS, NVS, Army, Navy, Airforce Admit Card",
+    ],
+    faqs: [
+      { q: "Admit Card Download कैसे करें?", a: "इस page पर अपनी परीक्षा ढूंढें। Post पर click करें — Important Links में Admit Card Download का Direct Link मिलेगा। Official Website पर जाकर Registration Number और Date of Birth डालें और Download करें।" },
+      { q: "Admit Card में क्या-क्या होता है?", a: "Candidate का नाम, Registration Number, Roll Number, Exam Date, Exam Time, Exam Center का नाम और पता, Photo, Signature और Exam के Instructions। सब details ध्यान से check करें।" },
+      { q: "Admit Card में गलती हो तो क्या करें?", a: "तुरंत Official Website पर जाएं और Helpdesk / Contact section में complaint करें। Exam से कम से कम 2-3 दिन पहले करें। अपने Documents साथ रखें।" },
+      { q: "Admit Card Exam में कब तक ज़रूरी है?", a: "Admit Card Exam के दिन अनिवार्य है — इसके बिना Exam Hall में Entry नहीं मिलती। साथ में एक Photo ID (Aadhar, Voter Card, PAN) भी लेकर जाएं।" },
+      { q: "Admit Card Print नहीं हो रहा तो क्या करें?", a: "Browser में PDF Download करें और Print करें। या किसी Cyber Cafe पर जाकर Print करवाएं। Black & White Print भी accepted होती है। Color Photo ज़रूरी है तो Notification check करें।" },
+    ],
+  },
+  result: {
+    intro: "SarkariJobSeva.com पर सभी सरकारी परीक्षाओं के Results, Merit List और Cut-off Marks सबसे पहले Update होते हैं। SSC, Railway, UPSC, Bank, Police, Army — सभी के Exam Results का Direct Official Link यहां मिलता है। Result देखने के बाद Next Step की जानकारी भी यहां पाएं।",
+    points: [
+      "SSC CGL, CHSL, MTS, GD, CPO — Tier 1, Tier 2, Final Result",
+      "Railway RRB Group D, ALP, NTPC, RPF — Selection List",
+      "UPSC Civil Services Prelims, Mains, Final — IAS Result",
+      "IBPS PO, Clerk, SO — Score Card और Final Merit List",
+      "UP Police, Bihar Police, BPSC, UPPSC — State Exam Result",
+      "CTET, UP TET, Bihar TET — Teacher Eligibility Result",
+      "KVS, NVS, Army, Navy, Airforce — Final Selection List",
+    ],
+    faqs: [
+      { q: "Sarkari Result कैसे देखें?", a: "इस page पर अपनी परीक्षा ढूंढें। Post पर click करें — Important Links में Result Check का Direct Official Link मिलेगा। Official Website पर Roll Number या Registration Number डालकर Result देख सकते हैं।" },
+      { q: "Cut-off Marks क्या होती है?", a: "Cut-off वह Minimum Score है जो Selected होने के लिए ज़रूरी है। Category-wise (General, OBC, SC, ST, EWS) अलग-अलग Cut-off होती है। Merit List में वही Candidates होते हैं जो Cut-off से ऊपर Marks लाते हैं।" },
+      { q: "Result के बाद Document Verification कब होगा?", a: "Merit List जारी होने के बाद Official Website पर Document Verification / DV की Date और Schedule दी जाती है। हमारी site पर भी यह Update होती है। अपने सभी Original Documents तैयार रखें।" },
+      { q: "Score Card Download कैसे करें?", a: "Result के साथ Official Website पर Score Card भी Available होता है। इसे Download करके Print कर लें — Future Reference के लिए ज़रूरी होता है। Score Card पर Marks, Percentile और Cut-off लिखी होती है।" },
+      { q: "Result में नाम नहीं है तो क्या करें?", a: "पहले पूरी Merit List ध्यान से check करें। यदि फिर भी नाम नहीं है तो Official Website पर Grievance Portal में complaint करें। Waiting List भी check करें — कभी-कभी बाद में जारी होती है।" },
+    ],
+  },
+  "answer-key": {
+    intro: "SarkariJobSeva.com पर सभी सरकारी परीक्षाओं की Official Answer Key सबसे पहले Upload होती है। Answer Key से परीक्षा में अपने Marks का अनुमान लगाएं। यदि कोई Answer गलत लगे तो Official Objection भी यहां से कर सकते हैं।",
+    points: [
+      "SSC CGL, CHSL, MTS, GD, CPO — Tier 1, Tier 2 Answer Key",
+      "Railway RRB Group D, ALP, NTPC — Official Answer Key",
+      "UPSC NDA, CDS, CAPF — Answer Key PDF",
+      "IBPS PO, Clerk, SO, RRB — Bank Exam Answer Key",
+      "UP Police, Bihar Police — State Exam Answer Key",
+      "CTET, UP TET, Bihar TET — Teacher Exam Answer Key",
+    ],
+    faqs: [
+      { q: "Answer Key क्या होती है?", a: "Answer Key वह Official Document है जिसमें परीक्षा के सभी सवालों के सही जवाब दिए होते हैं। इससे आप परीक्षा देने के बाद अपने Marks calculate कर सकते हैं।" },
+      { q: "Answer Key से Marks कैसे Calculate करें?", a: "Answer Key से अपने सही जवाबों की संख्या गिनें। Positive Marking: सही जवाब × marks। Negative Marking हो तो: गलत जवाब × penalty। फिर जोड़ें — यही आपका अनुमानित Score है।" },
+      { q: "Answer Key पर Objection कैसे करें?", a: "यदि कोई Answer गलत लगे तो Official Website के Objection Portal पर जाएं। Roll Number और Password से Login करें। सवाल select करें, अपना जवाब और Reference (Book, Notification) दें। Fee Pay करें और Submit करें।" },
+      { q: "Objection की Last Date क्या होती है?", a: "आमतौर पर Answer Key जारी होने के 2-5 दिन बाद Objection की Last Date होती है। इसे Official Notification में check करें। Last Date निकलने के बाद Objection Accept नहीं होता।" },
+      { q: "Objection सही निकला तो क्या होता है?", a: "यदि आपका Objection सही पाया जाता है तो Revised Answer Key जारी होती है और उस सवाल के Marks सभी Candidates को मिलते हैं या उसे Deleted किया जाता है।" },
+    ],
+  },
+  admission: {
+    intro: "SarkariJobSeva.com पर सरकारी College और University Admissions की सम्पूर्ण जानकारी मिलती है। B.Ed, D.El.Ed, ITI, Polytechnic, University UG/PG Admission — सभी के Form Date, Eligibility और Direct Apply Link यहां Update होते हैं।",
+    points: [
+      "B.Ed Admission — UP B.Ed, Bihar B.Ed, Rajasthan B.Ed JET",
+      "D.El.Ed / BTC — Primary Teacher Training Admission",
+      "ITI Admission — Industrial Training Institute Admission Form",
+      "Polytechnic — UP Polytechnic JEECUP, Bihar Polytechnic BCECE",
+      "University UG Admission — BA, BSc, BCom Admission Form",
+      "University PG Admission — MA, MSc, MCom, MBA Admission",
+      "Medical Admission — NEET, AIIMS — Government Medical College",
+      "Law Admission — CLAT, State Law College Admission",
+    ],
+    faqs: [
+      { q: "Government College में Admission कैसे होता है?", a: "ज़्यादातर Government Colleges में Merit-based या Entrance Exam based Admission होता है। Form भरें, Exam दें (अगर हो), Merit List check करें और Documents Verification कराएं। Fees सरकारी colleges में बहुत कम होती है।" },
+      { q: "B.Ed Admission के लिए Eligibility क्या है?", a: "B.Ed के लिए Graduation (किसी भी stream में) 50% Marks के साथ ज़रूरी है। SC/ST/OBC को relaxation मिलती है। State-wise अलग-अलग Entrance Exam होता है — UP B.Ed JEE, Bihar B.Ed CET।" },
+      { q: "ITI Admission के लिए क्या चाहिए?", a: "ITI Admission के लिए 8वीं या 10वीं Pass ज़रूरी है (Trade के अनुसार)। Merit-based Admission होता है। ITI करने के बाद Government Job के बहुत मौके मिलते हैं — Railway, PWD, CPWD।" },
+      { q: "Admission Form की Last Date कैसे पता करें?", a: "इस page पर अपना Course ढूंढें। Post में Important Dates section में Form Date, Last Date और Exam Date दी होती है। समय पर Form भरें — Last Date Extension हमेशा नहीं होती।" },
+      { q: "Documents Verification में क्या लाना होता है?", a: "10वीं और 12वीं की Marksheet और Certificate, Graduation Marksheet (अगर ज़रूरी हो), Caste Certificate (SC/ST/OBC), Income Certificate (EWS), Domicile Certificate, Aadhar Card, Photo और Admission Form की Copy।" },
+    ],
+  },
+};
+
+export function PageSEOBlock({ type }: { type: string }) {
+  const content = PAGE_CONTENT[type];
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+  if (!content) return null;
+
+  return (
+    <div className="space-y-4 mt-6">
+      {/* Intro */}
+      <div className="bg-blue-50 border border-blue-100 rounded-xl p-5">
+        <p className="text-slate-700 text-sm leading-relaxed">{content.intro}</p>
+      </div>
+
+      {/* Coverage Points */}
+      <div className="bg-white border border-slate-200 rounded-xl p-5">
+        <h2 className="font-black text-slate-800 text-sm uppercase tracking-wide mb-3 flex items-center gap-2">
+          <span className="w-1 h-4 bg-blue-600 rounded-full" /> हम यहां Cover करते हैं:
+        </h2>
+        <ul className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+          {content.points.map((pt, i) => (
+            <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
+              <span className="text-blue-500 mt-0.5 flex-shrink-0">✓</span> {pt}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* FAQ */}
+      <div className="bg-white border border-slate-200 rounded-xl p-5">
+        <h2 className="font-black text-slate-800 text-sm uppercase tracking-wide mb-3 flex items-center gap-2">
+          <span className="w-1 h-4 bg-blue-600 rounded-full" /> अक्सर पूछे जाने वाले सवाल
+        </h2>
+        <div className="space-y-2">
+          {content.faqs.map((faq, i) => (
+            <div key={i} className="border border-slate-100 rounded-lg overflow-hidden">
+              <button
+                className="w-full text-left px-4 py-3 flex items-center justify-between gap-3 hover:bg-slate-50 transition-colors"
+                onClick={() => setOpenFaq(openFaq === i ? null : i)}
+              >
+                <span className="text-sm font-bold text-slate-800">{faq.q}</span>
+                <span className="text-slate-400 flex-shrink-0 text-lg">{openFaq === i ? "−" : "+"}</span>
+              </button>
+              {openFaq === i && (
+                <div className="px-4 pb-3 text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-2.5">
+                  {faq.a}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
