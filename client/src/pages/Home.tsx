@@ -4,7 +4,7 @@ import { useJobs } from "@/lib/useJobs";
 import { useQuery } from "@tanstack/react-query";
 import { useSEO, generateHomeMeta } from "@/components/SEO";
 import { usePageTracker } from "@/lib/usePageTracker";
-import { ChevronRight, Briefcase, FileText, CheckSquare, Key, GraduationCap, BookOpen } from "lucide-react";
+import { ChevronRight, Briefcase, FileText, CheckSquare, Key, GraduationCap } from "lucide-react";
 
 const CATEGORIES = [
   { title: "Latest Jobs",  type: "job",        href: "/latest-jobs", color: "bg-blue-600",   light: "bg-blue-50  text-blue-700  border-blue-200",  dot: "bg-blue-500",   icon: Briefcase },
@@ -18,7 +18,6 @@ function CategoryCard({ cat, jobs }: { cat: typeof CATEGORIES[0]; jobs: any[] })
   const Icon = cat.icon;
   return (
     <div className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
-      {/* Header */}
       <div className={`${cat.color} px-4 py-3 flex items-center justify-between`}>
         <div className="flex items-center gap-2">
           <Icon className="w-4 h-4 text-white" />
@@ -30,27 +29,19 @@ function CategoryCard({ cat, jobs }: { cat: typeof CATEGORIES[0]; jobs: any[] })
           </div>
         </Link>
       </div>
-
-      {/* List */}
       <div className="divide-y divide-slate-100">
         {jobs.slice(0, 8).map(job => (
           <Link key={job.id} href={`/job/${job.slug || job.id}`}>
             <div className="flex items-start gap-2.5 px-3 py-2.5 hover:bg-slate-50 active:bg-slate-100 cursor-pointer transition-colors">
               <span className={`mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0 ${cat.dot}`} />
-              <span className="text-slate-700 text-sm font-medium leading-snug line-clamp-2">
-                {job.title}
-              </span>
+              <span className="text-slate-700 text-sm font-medium leading-snug line-clamp-2">{job.title}</span>
             </div>
           </Link>
         ))}
         {jobs.length === 0 && (
-          <div className="py-8 text-center text-slate-400 text-sm">
-            No updates yet
-          </div>
+          <div className="py-8 text-center text-slate-400 text-sm">No updates yet</div>
         )}
       </div>
-
-      {/* Footer */}
       <Link href={cat.href}>
         <div className="border-t border-slate-100 py-2.5 text-center cursor-pointer hover:bg-slate-50 transition-colors">
           <span className={`text-xs font-bold uppercase tracking-wide ${cat.light.split(' ')[1]}`}>VIEW ALL {cat.title} →</span>
@@ -87,14 +78,7 @@ function LatestBlogs() {
             <div className="bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg hover:border-blue-300 transition-all cursor-pointer group">
               <div className="w-full h-40 bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center overflow-hidden">
                 {blog.image_url ? (
-                  <img 
-                    src={blog.image_url} 
-                    alt={blog.title} 
-                    className="w-full h-40 object-cover"
-                    width="400" height="160"
-                    loading="lazy"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }}
-                  />
+                  <img src={blog.image_url} alt={blog.title} className="w-full h-40 object-cover" width="400" height="160" loading="lazy" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
                 ) : (
                   <span className="text-4xl">📋</span>
                 )}
@@ -112,6 +96,157 @@ function LatestBlogs() {
   );
 }
 
+// ── About Section ─────────────────────────────────────────────────────────────
+function AboutSection() {
+  return (
+    <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 md:p-8">
+      <div className="flex items-center gap-2 mb-5">
+        <span className="w-1 h-5 bg-blue-600 rounded-full" />
+        <h2 className="font-black text-slate-800 text-base uppercase tracking-wide">🏛️ SarkariJobSeva के बारे में</h2>
+      </div>
+
+      <p className="text-slate-600 text-sm leading-relaxed mb-4">
+        <strong>SarkariJobSeva.com</strong> भारत का एक विश्वसनीय और निःशुल्क सरकारी नौकरी सूचना पोर्टल है। हम देश के कोने-कोने में बैठे युवाओं तक सरकारी भर्तियों की सटीक, समय पर और सम्पूर्ण जानकारी पहुंचाते हैं — बिल्कुल मुफ्त। हमारी टीम हर दिन नई Vacancy, Admit Card, Result और Answer Key अपडेट करती है ताकि आप कोई भी अवसर न चूकें।
+      </p>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+        {/* Latest Jobs Box */}
+        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+          <h3 className="font-bold text-blue-800 text-sm mb-2 flex items-center gap-1.5">
+            <Briefcase className="w-4 h-4" /> Latest Sarkari Jobs
+          </h3>
+          <p className="text-blue-700 text-xs leading-relaxed">
+            SSC, Railway, UPSC, Bank, Police, Army, Anganwadi, Teacher Bharti और तमाम Central व State Government की नई भर्तियां रोज़ अपडेट होती हैं। 10वीं, 12वीं, Graduation और Post Graduate — सभी योग्यता के लिए jobs मिलेंगी यहां।
+          </p>
+          <Link href="/latest-jobs">
+            <span className="inline-block mt-2 text-xs font-bold text-blue-600 hover:underline cursor-pointer">देखें Latest Jobs →</span>
+          </Link>
+        </div>
+
+        {/* Admit Card Box */}
+        <div className="bg-green-50 border border-green-100 rounded-xl p-4">
+          <h3 className="font-bold text-green-800 text-sm mb-2 flex items-center gap-1.5">
+            <FileText className="w-4 h-4" /> Admit Card
+          </h3>
+          <p className="text-green-700 text-xs leading-relaxed">
+            SSC CGL, CHSL, MTS, Railway RRB ALP, Group D, UPSC, IBPS, SBI PO/Clerk, UP Police, Rajasthan Police, Bihar Police समेत सभी सरकारी परीक्षाओं के Admit Card का Direct Download Link यहां मिलेगा।
+          </p>
+          <Link href="/admit-card">
+            <span className="inline-block mt-2 text-xs font-bold text-green-600 hover:underline cursor-pointer">Download Admit Card →</span>
+          </Link>
+        </div>
+
+        {/* Results Box */}
+        <div className="bg-red-50 border border-red-100 rounded-xl p-4">
+          <h3 className="font-bold text-red-800 text-sm mb-2 flex items-center gap-1.5">
+            <CheckSquare className="w-4 h-4" /> Sarkari Result
+          </h3>
+          <p className="text-red-700 text-xs leading-relaxed">
+            सरकारी परीक्षाओं के Result, Merit List और Cut-off Marks की जानकारी सबसे पहले यहां मिलती है। SSC, Railway, UPSC, Bank, State PSC सभी के Results एक जगह।
+          </p>
+          <Link href="/results">
+            <span className="inline-block mt-2 text-xs font-bold text-red-600 hover:underline cursor-pointer">Check Results →</span>
+          </Link>
+        </div>
+
+        {/* Answer Key Box */}
+        <div className="bg-purple-50 border border-purple-100 rounded-xl p-4">
+          <h3 className="font-bold text-purple-800 text-sm mb-2 flex items-center gap-1.5">
+            <Key className="w-4 h-4" /> Answer Key
+          </h3>
+          <p className="text-purple-700 text-xs leading-relaxed">
+            सरकारी परीक्षाओं की Official Answer Key और Objection Form की जानकारी। परीक्षा देने के बाद अपने Marks का अनुमान लगाएं और जरूरत पड़े तो Objection भी डालें।
+          </p>
+          <Link href="/answer-key">
+            <span className="inline-block mt-2 text-xs font-bold text-purple-600 hover:underline cursor-pointer">Download Answer Key →</span>
+          </Link>
+        </div>
+      </div>
+
+      {/* Stats Row */}
+      <div className="grid grid-cols-3 gap-3 pt-4 border-t border-slate-100">
+        {[
+          { num: "500+", label: "Active Job Posts" },
+          { num: "Daily", label: "Updates" },
+          { num: "100%", label: "Free Service" },
+        ].map(({ num, label }) => (
+          <div key={label} className="text-center">
+            <p className="text-xl font-black text-blue-700">{num}</p>
+            <p className="text-xs text-slate-500 font-medium">{label}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ── FAQ Section ───────────────────────────────────────────────────────────────
+const FAQS = [
+  {
+    q: "SarkariJobSeva क्या है?",
+    a: "SarkariJobSeva.com एक निःशुल्क सरकारी नौकरी सूचना पोर्टल है। हम SSC, Railway, UPSC, Bank, Police, Army, Teacher Bharti समेत तमाम केंद्र और राज्य सरकार की भर्तियों की जानकारी एकत्रित करके आप तक पहुंचाते हैं। यह किसी सरकारी विभाग की Official Website नहीं है।",
+  },
+  {
+    q: "Sarkari Job के लिए Apply कैसे करें?",
+    a: "किसी भी Job Post पर click करें। वहां Important Links section में Apply Online का Direct Link मिलेगा। हमेशा Official Website से ही Apply करें। Application Fee भरने से पहले Notification ध्यान से पढ़ें।",
+  },
+  {
+    q: "Admit Card कैसे Download करें?",
+    a: "Admit Card section में जाएं, अपनी परीक्षा ढूंढें और Direct Link पर click करें। Official Website पर जाकर Registration Number और Date of Birth डालकर Admit Card Download करें। Exam से कम से कम 3-4 दिन पहले Download कर लें।",
+  },
+  {
+    q: "क्या यहां Free Job Alert मिलती है?",
+    a: "हां, Push Notification Allow करें — नई vacancy आने पर तुरंत notification मिलेगी। आप हमारी site को Bookmark भी कर सकते हैं और रोज़ check कर सकते हैं। सभी updates बिल्कुल मुफ्त हैं।",
+  },
+  {
+    q: "10वीं / 12वीं Pass के लिए कौन सी Sarkari Jobs हैं?",
+    a: "Railway Group D, SSC GD, SSC MTS, Army GD, UP Police Constable, Anganwadi Worker, Home Guard, Peon/Chowkidar, Sweeper, Fire Fighter जैसी jobs 10वीं पास के लिए होती हैं। 12वीं पास के लिए SSC CHSL, Railway ALP/Technician, Bank Clerk, Army Clerk जैसी बहुत सी jobs हैं।",
+  },
+  {
+    q: "Result या Merit List कहां देखें?",
+    a: "Results section में जाएं और अपनी परीक्षा ढूंढें। हम Official Result का Direct Link provide करते हैं। Cut-off Marks और Merit List की जानकारी भी वहां मिलती है।",
+  },
+  {
+    q: "Answer Key में Objection कैसे करें?",
+    a: "Answer Key section से अपनी परीक्षा की Answer Key Download करें। यदि कोई Answer गलत लगे तो Official Website पर Objection Form भरें। Objection की Last Date Notification में दी होती है — उससे पहले ही करें।",
+  },
+  {
+    q: "क्या SarkariJobSeva कोई Fee लेती है?",
+    a: "नहीं। SarkariJobSeva.com की सभी सेवाएं पूरी तरह निःशुल्क हैं। हम Job Application Fee नहीं लेते। यदि कोई हमारे नाम पर पैसे मांगे तो वह Fraud है — तुरंत Report करें।",
+  },
+];
+
+function FAQSection() {
+  const [open, setOpen] = useState<number | null>(null);
+  return (
+    <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 md:p-8">
+      <div className="flex items-center gap-2 mb-5">
+        <span className="w-1 h-5 bg-blue-600 rounded-full" />
+        <h2 className="font-black text-slate-800 text-base uppercase tracking-wide">❓ अक्सर पूछे जाने वाले सवाल (FAQ)</h2>
+      </div>
+      <div className="space-y-2">
+        {FAQS.map((faq, i) => (
+          <div key={i} className="border border-slate-200 rounded-xl overflow-hidden">
+            <button
+              className="w-full text-left px-4 py-3.5 flex items-center justify-between gap-3 hover:bg-slate-50 transition-colors"
+              onClick={() => setOpen(open === i ? null : i)}
+            >
+              <span className="text-sm font-bold text-slate-800">{faq.q}</span>
+              <span className="text-slate-400 text-lg flex-shrink-0">{open === i ? "−" : "+"}</span>
+            </button>
+            {open === i && (
+              <div className="px-4 pb-4 text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
+                {faq.a}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ── Main Export ───────────────────────────────────────────────────────────────
 export default function Home() {
   const [, navigate] = useLocation();
   const [homeSearch, setHomeSearch] = useState("");
@@ -178,18 +313,10 @@ export default function Home() {
                   <div className="flex items-start gap-2">
                     <div className="flex-1">
                       <div className="flex items-center gap-1.5 mb-1.5">
-                        <span className="text-[10px] bg-yellow-100 text-yellow-700 font-bold px-2 py-0.5 rounded-full border border-yellow-200">
-                          🔥 Hot
-                        </span>
-                        {job.lastDate && (
-                          <span className="text-[10px] text-red-600 font-bold">
-                            Last: {job.lastDate}
-                          </span>
-                        )}
+                        <span className="text-[10px] bg-yellow-100 text-yellow-700 font-bold px-2 py-0.5 rounded-full border border-yellow-200">🔥 Hot</span>
+                        {job.lastDate && <span className="text-[10px] text-red-600 font-bold">Last: {job.lastDate}</span>}
                       </div>
-                      <p className="text-sm font-bold text-slate-800 group-hover:text-blue-700 leading-snug transition-colors">
-                        {job.title}
-                      </p>
+                      <p className="text-sm font-bold text-slate-800 group-hover:text-blue-700 leading-snug transition-colors">{job.title}</p>
                       <p className="text-xs text-slate-500 mt-1 font-medium">{job.department}</p>
                     </div>
                     <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-500 flex-shrink-0 mt-1 transition-colors" />
@@ -218,21 +345,35 @@ export default function Home() {
         })}
       </div>
 
-      {/* Main Grid — Mobile 1 col, Desktop 3 col */}
+      {/* Main Category Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {CATEGORIES.slice(0, 3).map(cat => (
           <CategoryCard key={cat.type} cat={cat} jobs={jobsByType(cat.type)} />
         ))}
       </div>
 
+      {/* About SarkariJobSeva — SEO content block */}
+      <AboutSection />
+
       {/* Latest Blogs */}
       <LatestBlogs />
 
-      {/* Secondary Grid */}
+      {/* Secondary Category Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {CATEGORIES.slice(3).map(cat => (
           <CategoryCard key={cat.type} cat={cat} jobs={jobsByType(cat.type)} />
         ))}
+      </div>
+
+      {/* FAQ Section — SEO + AdSense content */}
+      <FAQSection />
+
+      {/* Bottom notice */}
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
+        <p className="text-xs text-amber-800 font-medium">
+          ⚠️ <strong>Important Notice:</strong> SarkariJobSeva.com एक निजी सूचना पोर्टल है। यह किसी सरकारी विभाग से संबद्ध नहीं है।
+          Apply करने से पहले हमेशा Official Website पर जाकर Notification ध्यान से पढ़ें।
+        </p>
       </div>
 
     </div>
