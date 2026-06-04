@@ -76,11 +76,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="md:hidden border-t border-blue-600 overflow-x-auto scrollbar-hide">
           <div className="flex gap-2 px-3 py-2 w-max">
             {[
-              { href: "/latest-jobs", label: "🗂 Jobs" },
-              { href: "/admit-card",  label: "🪪 Admit Card" },
-              { href: "/results",     label: "📊 Results" },
-              { href: "/answer-key",  label: "🔑 Answer Key" },
-              { href: "/admission",   label: "🎓 Admission" },
+              { href: "/latest-jobs",       label: "🗂 Jobs" },
+              { href: "/admit-card",         label: "🪪 Admit Card" },
+              { href: "/results",            label: "📊 Results" },
+              { href: "/answer-key",         label: "🔑 Answer Key" },
+              { href: "/admission",          label: "🎓 Admission" },
+              { href: "/salary-calculator",  label: "💰 Salary" },
+              { href: "/blog",               label: "📝 Blog" },
             ].map(({ href, label }) => (
               <Link key={href} href={href}>
                 <span className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer transition-all ${
@@ -107,11 +109,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50 shadow-2xl">
         <div className="grid grid-cols-5 h-16">
           {[
-            { href: "/",            label: "Home",    icon: Home },
-            { href: "/latest-jobs", label: "Jobs",    icon: Briefcase },
-            { href: "/admit-card",  label: "Admit",   icon: FileText },
-            { href: "/results",     label: "Results", icon: CheckSquare },
-            { href: "/admission",   label: "Admission", icon: GraduationCap },
+            { href: "/",                   label: "Home",    icon: Home },
+            { href: "/latest-jobs",        label: "Jobs",    icon: Briefcase },
+            { href: "/admit-card",         label: "Admit",   icon: FileText },
+            { href: "/results",            label: "Results", icon: CheckSquare },
+            { href: "/salary-calculator",  label: "Salary",  icon: Search },
           ].map(({ href, label, icon: Icon }) => (
             <Link key={href} href={href}>
               <div className={`flex flex-col items-center justify-center h-full gap-0.5 cursor-pointer transition-colors ${
