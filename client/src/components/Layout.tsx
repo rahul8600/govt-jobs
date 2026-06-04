@@ -170,7 +170,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
-      {/* ===== MAIN ===== */
+      {/* ===== MAIN ===== */}
       <main className="flex-grow pb-20 md:pb-0 pt-4">
         <div className="max-w-6xl mx-auto px-3 md:px-6">
           {children}
