@@ -486,6 +486,201 @@ export default function JobDetails() {
         </div>
       </div>
 
+      {/* Fallback: Important Dates missing */}
+      {!showDates && (
+        <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-md">
+          <h2 className="bg-[#800000] text-white p-4 text-sm font-bold uppercase tracking-widest">Important Dates</h2>
+          <div className="p-5">
+            <p className="text-sm text-slate-600 mb-3">इस भर्ती की Important Dates जल्द Update की जाएंगी। Official Notification ज़रूर पढ़ें।</p>
+            <ul className="space-y-2 text-sm text-slate-600">
+              <li className="flex gap-2"><span className="text-blue-500 font-bold">•</span> Notification जारी होने की तारीख — Official Website देखें</li>
+              <li className="flex gap-2"><span className="text-blue-500 font-bold">•</span> Online Form भरने की Start Date — Notification में दी जाएगी</li>
+              <li className="flex gap-2"><span className="text-blue-500 font-bold">•</span> Last Date to Apply — Notification में दी जाएगी</li>
+              <li className="flex gap-2"><span className="text-blue-500 font-bold">•</span> Admit Card Download Date — Exam से 2-3 हफ्ते पहले</li>
+              <li className="flex gap-2"><span className="text-blue-500 font-bold">•</span> Exam Date — Notification में दी जाएगी</li>
+            </ul>
+            <p className="text-xs text-slate-400 mt-3 italic">⚠️ Exact dates ke liye official notification zaroor check karein.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Fallback: Application Fee missing */}
+      {!showFee && (
+        <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-md">
+          <h2 className="bg-[#006400] text-white p-4 text-sm font-bold uppercase tracking-widest">Application Fee</h2>
+          <div className="p-5">
+            <p className="text-sm text-slate-600 mb-3">Application Fee की जानकारी Official Notification में दी जाएगी। आमतौर पर सरकारी भर्तियों में category-wise fee होती है:</p>
+            <table className="w-full border-collapse text-sm">
+              <tbody>
+                {[
+                  ["General / OBC / EWS", "₹100 – ₹1000 (Exam अनुसार)"],
+                  ["SC / ST", "₹0 – ₹500 (Relaxation मिलती है)"],
+                  ["PWD / Ex-Serviceman", "प्रायः निःशुल्क (Free)"],
+                  ["Female Candidates", "कई भर्तियों में Free होती है"],
+                ].map(([cat, fee], i) => (
+                  <tr key={i} className="border-b border-slate-100 hover:bg-blue-50/30">
+                    <td className="p-4 text-slate-600 font-medium w-1/2">{cat}</td>
+                    <td className="p-4 text-blue-700 font-bold">{fee}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="text-xs text-slate-400 mt-3 italic">⚠️ Exact fee ke liye official notification zaroor check karein.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Fallback: Age Limit missing */}
+      {!showAgeLimit && (
+        <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-md">
+          <h2 className="bg-[#800000] text-white p-4 text-sm font-bold uppercase tracking-widest">Age Limit</h2>
+          <div className="p-5">
+            <p className="text-sm text-slate-600 mb-3">इस भर्ती की Age Limit Official Notification में दी जाएगी। सरकारी नौकरियों में आमतौर पर:</p>
+            <table className="w-full border-collapse text-sm">
+              <tbody>
+                {[
+                  ["General", "18 – 27 वर्ष (Post अनुसार)"],
+                  ["OBC", "3 साल की Relaxation"],
+                  ["SC / ST", "5 साल की Relaxation"],
+                  ["PWD", "10 साल की Relaxation"],
+                  ["Ex-Serviceman", "Service Period + 3 साल"],
+                ].map(([cat, age], i) => (
+                  <tr key={i} className="border-b border-slate-100 hover:bg-blue-50/30">
+                    <td className="p-4 text-slate-600 font-medium w-1/2">{cat}</td>
+                    <td className="p-4 text-blue-700 font-bold">{age}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="text-xs text-slate-400 mt-3 italic">⚠️ Exact age limit ke liye official notification zaroor check karein.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Fallback: Vacancy Details missing */}
+      {!showVacancy && (
+        <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-md">
+          <h2 className="bg-[#006400] text-white p-4 text-sm font-bold uppercase tracking-widest text-center">Vacancy Details</h2>
+          <div className="p-5">
+            <p className="text-sm text-slate-600 mb-2">इस भर्ती की Post-wise Vacancy Details Official Notification में दी गई हैं। Apply करने से पहले:</p>
+            <ul className="space-y-2 text-sm text-slate-600">
+              <li className="flex gap-2"><span className="text-green-500 font-bold">✓</span> Notification में Total Vacancy check करें</li>
+              <li className="flex gap-2"><span className="text-green-500 font-bold">✓</span> Category-wise Vacancy (General/OBC/SC/ST/EWS) देखें</li>
+              <li className="flex gap-2"><span className="text-green-500 font-bold">✓</span> अपनी Post के लिए Eligibility check करें</li>
+              <li className="flex gap-2"><span className="text-green-500 font-bold">✓</span> State/Region wise vacancy भी हो सकती है</li>
+            </ul>
+            <p className="text-xs text-slate-400 mt-3 italic">⚠️ Exact vacancy ke liye official notification zaroor padhen.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Fallback: Selection Process missing */}
+      {!showSelection && (
+        <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-md">
+          <h2 className="bg-[#800000] text-white p-4 text-sm font-bold uppercase tracking-widest">Selection Process</h2>
+          <div className="p-7">
+            <p className="text-sm text-slate-600 mb-4">इस भर्ती का Selection Process Official Notification में दिया गया है। सामान्यतः सरकारी भर्ती में ये steps होती हैं:</p>
+            <ul className="space-y-3">
+              {[
+                "Written Exam / Computer Based Test (CBT)",
+                "Physical Test (PST/PET) — Police, Army, Railway जैसी भर्तियों में",
+                "Document Verification (DV)",
+                "Medical Examination",
+                "Final Merit List & Appointment",
+              ].map((step, i) => (
+                <li key={i} className="flex gap-4 items-center text-sm font-medium text-slate-600">
+                  <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-xs font-bold shrink-0">{i + 1}</div>
+                  {step}
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs text-slate-400 mt-4 italic">⚠️ Exact selection process ke liye official notification zaroor check karein.</p>
+          </div>
+        </div>
+      )}
+
+      {/* PERMANENT: How to Apply — always visible on every post */}
+      <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-md">
+        <h2 className="bg-blue-700 text-white p-4 text-sm font-bold uppercase tracking-widest text-center">
+          {job.type === 'admit-card' ? 'Admit Card Download कैसे करें?' :
+           job.type === 'result' ? 'Result कैसे देखें?' :
+           job.type === 'answer-key' ? 'Answer Key Download कैसे करें?' :
+           'Apply Online कैसे करें?'}
+        </h2>
+        <div className="p-6">
+          {job.type === 'admit-card' ? (
+            <ol className="space-y-3">
+              {[
+                "ऊपर दिए 'Download Admit Card' button पर click करें",
+                "Official Website पर जाएं",
+                "Admit Card / Hall Ticket link पर click करें",
+                "Registration Number / Roll Number और Date of Birth डालें",
+                "Submit करें — Admit Card screen पर आ जाएगा",
+                "Download करें और Print निकालें — Color या Black & White दोनों चलते हैं",
+                "Exam वाले दिन Admit Card + Photo ID (Aadhar/Voter Card) साथ ले जाएं",
+              ].map((step, i) => (
+                <li key={i} className="flex gap-3 text-sm text-slate-600">
+                  <span className="w-6 h-6 bg-green-100 text-green-700 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{i+1}</span>
+                  {step}
+                </li>
+              ))}
+            </ol>
+          ) : job.type === 'result' ? (
+            <ol className="space-y-3">
+              {[
+                "ऊपर दिए 'Download Result' button पर click करें",
+                "Official Website पर जाएं",
+                "Result / Score Card link पर click करें",
+                "Roll Number / Registration Number डालें",
+                "Submit करें — Result screen पर दिखेगा",
+                "Score Card Download करें और Print कर लें",
+                "Cut-off check करें — अगर ऊपर हैं तो Next Round के लिए तैयार रहें",
+              ].map((step, i) => (
+                <li key={i} className="flex gap-3 text-sm text-slate-600">
+                  <span className="w-6 h-6 bg-green-100 text-green-700 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{i+1}</span>
+                  {step}
+                </li>
+              ))}
+            </ol>
+          ) : job.type === 'answer-key' ? (
+            <ol className="space-y-3">
+              {[
+                "ऊपर दिए 'Download Answer Key' button पर click करें",
+                "Official Website पर जाएं",
+                "Answer Key PDF Download करें",
+                "अपने Answers से मिलाएं और Marks Calculate करें",
+                "यदि कोई Answer गलत लगे — Objection Portal पर जाएं",
+                "Objection Form भरें, Reference दें और Fee Pay करें",
+                "Objection की Last Date से पहले Submit करें",
+              ].map((step, i) => (
+                <li key={i} className="flex gap-3 text-sm text-slate-600">
+                  <span className="w-6 h-6 bg-green-100 text-green-700 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{i+1}</span>
+                  {step}
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <ol className="space-y-3">
+              {[
+                "पहले Official Notification ध्यान से पढ़ें — Eligibility check करें",
+                "ऊपर 'Apply Online' button पर click करें",
+                "Official Website पर New Registration करें — Email और Mobile डालें",
+                "Online Application Form भरें — सभी details सही भरें",
+                "Photo और Signature Upload करें (Size और Format Notification में बताया होगा)",
+                "Application Fee Online Pay करें (Net Banking / UPI / Debit Card)",
+                "Form Preview check करें और Final Submit करें",
+                "Application Confirmation / Acknowledgement Print कर लें — भविष्य के लिए रखें",
+              ].map((step, i) => (
+                <li key={i} className="flex gap-3 text-sm text-slate-600">
+                  <span className="w-6 h-6 bg-green-100 text-green-700 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{i+1}</span>
+                  {step}
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+      </div>
+
       {/* Disclaimer */}
       <div className="bg-amber-50 p-8 rounded-xl border border-amber-200">
         <h4 className="text-xs font-bold uppercase tracking-widest text-amber-700 mb-3 flex items-center gap-2">
