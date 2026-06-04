@@ -123,7 +123,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 onKeyDown={e => {
                   if (e.key === "Enter" && searchQuery.trim()) {
                     setSearchOpen(false);
-                    navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                    window.location.href = `/search?q=${encodeURIComponent(searchQuery.trim())}`;
                   }
                 }}
                 className="flex-1 text-base font-medium text-slate-800 outline-none placeholder:text-slate-400"
@@ -158,7 +158,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <button
                   onClick={() => {
                     setSearchOpen(false);
-                    navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                    window.location.href = `/search?q=${encodeURIComponent(searchQuery.trim())}`;
                   }}
                   className="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-sm transition-colors"
                 >
