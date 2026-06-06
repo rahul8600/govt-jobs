@@ -1,169 +1,97 @@
 import express, { type Express, type Request, type Response } from "express";
 import fs from "fs";
 import path from "path";
-import { storage } from "./storage";
 
-// ─── Bot Detection ────────────────────────────────────────────────────────────
-const GOOD_BOTS = [
-  'googlebot', 'google-inspection-tool', 'apis-google',
-  'mediapartners-google', 'adsbot-google', 'bingbot',
-  'facebookexternalhit', 'twitterbot', 'linkedinbot',
-  'whatsapp', 'telegrambot', 'applebot', 'discordbot',
-  'slackbot', 'chrome-lighthouse', 'developers.google.com',
-  'w3c_validator',
+// ALL bots + Google Inspection Tool
+const BOT_AGENTS = [
+  'googlebot', 'google-inspection-tool', 'google-site-verification',
+  'apis-google', 'mediapartners-google', 'adsbot-google',
+  'bingbot', 'yandex', 'baiduspider', 'facebookexternalhit',
+  'twitterbot', 'linkedinbot', 'whatsapp', 'telegrambot',
+  'applebot', 'discordbot', 'slackbot', 'chrome-lighthouse',
+  'developers.google.com', 'w3c_validator', 'ahrefsbot', 'semrushbot'
 ];
 
-function isGoodBot(ua: string): boolean {
-  const u = ua.toLowerCase();
-  // Google Search Console "Inspect URL" uses desktop Chrome UA
-  if (u.includes('chrome') && u.includes('compatible') && u.includes('google')) return true;
-  return GOOD_BOTS.some(b => u.includes(b));
+function isBot(userAgent: string): boolean {
+  const ua = (userAgent || '').toLowerCase();
+  // Also catch Google Inspection Tool which uses smartphone UA
+  if (ua.includes('mobile') && ua.includes('chrome') && !ua.includes('android')) return true;
+  return BOT_AGENTS.some(bot => ua.includes(bot));
 }
 
-// ─── HTML Escape ──────────────────────────────────────────────────────────────
-function esc(val: unknown): string {
-  return String(val ?? '')
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+function esc(str: string): string {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
-function safe(val: unknown): string {
-  return String(val ?? '').trim();
-}
-
-// ─── Rich Job Page HTML ───────────────────────────────────────────────────────
-function buildJobHTML(job: any, canonical: string): string {
-  const title = `${safe(job.title)} – Notification, Apply Online, Eligibility | SarkariJobSeva`;
-  const rawDesc = safe(job.shortInfo || `${job.title} government job notification. Department: ${job.department}. Apply online at SarkariJobSeva.`);
-  const metaDesc = esc(rawDesc.slice(0, 155));
-
-  const vacancyDetails: any[] = Array.isArray(job.vacancyDetails) ? job.vacancyDetails : [];
-  const importantDates: any[] = Array.isArray(job.importantDates) ? job.importantDates : [];
-  const selectionProcess: string[] = Array.isArray(job.selectionProcess) ? job.selectionProcess : [];
-  const applicationFee: any[] = Array.isArray(job.applicationFee) ? job.applicationFee : [];
-  const ageLimit: any[] = Array.isArray(job.ageLimit) ? job.ageLimit : [];
-  const links: any[] = Array.isArray(job.links) ? job.links : [];
-
-  const schema: any = {
+function generateJobHTML(job: any, canonical: string): string {
+  const title = `${job.title} – Apply Online, Eligibility, Last Date | SarkariJobSeva`;
+  const desc = esc((job.shortInfo || `${job.title} – ${job.department}. Apply online for government job at SarkariJobSeva.com`).slice(0, 155));
+  const schema = JSON.stringify({
     "@context": "https://schema.org",
-    "@type": "JobPosting",
-    "title": safe(job.title),
-    "description": rawDesc,
-    "datePosted": safe(job.postDate || job.createdAt),
-    "employmentType": "FULL_TIME",
-    "jobLocationType": "TELECOMMUTE",
+    "@type": job.type === 'job' ? "JobPosting" : "Article",
+    "title": job.title,
+    "description": job.shortInfo || job.title,
+    "datePosted": job.postDate,
+    "validThrough": job.lastDate || undefined,
     "hiringOrganization": {
       "@type": "Organization",
-      "name": safe(job.department),
-      "sameAs": "https://sarkarijobseva.com"
+      "name": job.department,
     },
     "jobLocation": {
       "@type": "Place",
       "address": {
         "@type": "PostalAddress",
         "addressCountry": "IN",
-        "addressRegion": safe(job.state || "India")
       }
     },
-    "applicantLocationRequirements": { "@type": "Country", "name": "India" },
-    "directApply": true,
-  };
-  if (job.lastDate) schema.validThrough = safe(job.lastDate);
-  if (vacancyDetails.length > 0) {
-    const total = vacancyDetails.reduce((s: number, v: any) => {
-      const n = parseInt(v.totalPost || '0', 10);
-      return s + (isNaN(n) ? 0 : n);
-    }, 0);
-    if (total > 0) schema.totalJobOpenings = total;
-  }
+    "applicantLocationRequirements": {
+      "@type": "Country",
+      "name": "India"
+    }
+  });
 
-  // ── Body sections ──
-  let body = `
+  // Full content for Google to read
+  let bodyContent = `
     <h1>${esc(job.title)}</h1>
-    <p class="dept-tag"><strong>${esc(job.department)}</strong>${job.lastDate ? ` — Last Date: <strong>${esc(job.lastDate)}</strong>` : ''}</p>
+    <p><strong>Department:</strong> ${esc(job.department)}</p>
+    <p>${esc(job.shortInfo || '')}</p>
+    ${job.lastDate ? `<p><strong>Last Date to Apply:</strong> ${esc(job.lastDate)}</p>` : ''}
+    ${job.qualification ? `<p><strong>Eligibility:</strong> ${esc(job.qualification)}</p>` : ''}
+    ${job.eligibilityDetails ? `<p><strong>Eligibility Details:</strong> ${esc(job.eligibilityDetails)}</p>` : ''}
+    ${job.postDate ? `<p><strong>Post Date:</strong> ${esc(job.postDate)}</p>` : ''}
+  `;
 
-    <section class="info-box">
-      <table>
-        <tr><th>Department / Organization</th><td>${esc(job.department)}</td></tr>
-        <tr><th>Post Date</th><td>${esc(job.postDate || '')}</td></tr>
-        ${job.lastDate ? `<tr><th>Last Date to Apply</th><td><strong>${esc(job.lastDate)}</strong></td></tr>` : ''}
-        ${job.qualification ? `<tr><th>Qualification Required</th><td>${esc(job.qualification)}</td></tr>` : ''}
-        ${job.state ? `<tr><th>State / Location</th><td>${esc(job.state)}</td></tr>` : ''}
-        ${job.category ? `<tr><th>Category</th><td>${esc(job.category)}</td></tr>` : ''}
-      </table>
-    </section>
-
-    <section class="short-info">
-      <h2>${
-        job.type === 'admit-card' ? 'Admit Card Overview – ' + safe(job.title) :
-        job.type === 'result' ? 'Result Overview – ' + safe(job.title) :
-        job.type === 'answer-key' ? 'Answer Key Overview – ' + safe(job.title) :
-        job.type === 'admission' ? 'Admission Overview – ' + safe(job.title) :
-        'Job Overview – ' + safe(job.title)
-      }</h2>
-      <p>${esc(rawDesc)}</p>
-    </section>`;
-
-  if (job.eligibilityDetails) {
-    body += `<section><h2>Eligibility / Qualification Details</h2><p>${esc(job.eligibilityDetails)}</p></section>`;
-  }
-
-  if (vacancyDetails.length > 0) {
-    body += `<section><h2>Vacancy Details – Post-wise</h2><table><thead><tr><th>Post Name</th><th>Total Posts</th><th>Eligibility</th></tr></thead><tbody>`;
-    vacancyDetails.forEach((v: any) => {
-      if (v.postName) body += `<tr><td>${esc(v.postName)}</td><td>${esc(v.totalPost || 'N/A')}</td><td>${esc(v.eligibility || '')}</td></tr>`;
+  // Add vacancy details
+  if (job.vacancyDetails && Array.isArray(job.vacancyDetails) && job.vacancyDetails.length > 0) {
+    bodyContent += `<h2>Vacancy Details</h2><ul>`;
+    job.vacancyDetails.forEach((v: any) => {
+      if (v.postName) bodyContent += `<li>${esc(v.postName)} – ${esc(v.totalPost || 'NA')} Posts – ${esc(v.eligibility || '')}</li>`;
     });
-    body += `</tbody></table></section>`;
+    bodyContent += `</ul>`;
   }
 
-  if (importantDates.length > 0) {
-    body += `<section><h2>Important Dates</h2><table><thead><tr><th>Event</th><th>Date</th></tr></thead><tbody>`;
-    importantDates.forEach((d: any) => {
-      if (d.label) body += `<tr><td>${esc(d.label)}</td><td>${esc(d.date || '')}</td></tr>`;
+  // Add important dates
+  if (job.importantDates && Array.isArray(job.importantDates) && job.importantDates.length > 0) {
+    bodyContent += `<h2>Important Dates</h2><ul>`;
+    job.importantDates.forEach((d: any) => {
+      if (d.label) bodyContent += `<li>${esc(d.label)}: ${esc(d.date || '')}</li>`;
     });
-    body += `</tbody></table></section>`;
+    bodyContent += `</ul>`;
   }
 
-  if (applicationFee.length > 0) {
-    body += `<section><h2>Application Fee</h2><table><thead><tr><th>Category</th><th>Fee</th></tr></thead><tbody>`;
-    applicationFee.forEach((f: any) => {
-      if (f.category) body += `<tr><td>${esc(f.category)}</td><td>${esc(f.fee || '')}</td></tr>`;
+  // Add selection process
+  if (job.selectionProcess && Array.isArray(job.selectionProcess) && job.selectionProcess.length > 0) {
+    bodyContent += `<h2>Selection Process</h2><ol>`;
+    job.selectionProcess.forEach((s: string) => {
+      if (s) bodyContent += `<li>${esc(s)}</li>`;
     });
-    body += `</tbody></table></section>`;
+    bodyContent += `</ol>`;
   }
-
-  if (ageLimit.length > 0) {
-    body += `<section><h2>Age Limit</h2><table><thead><tr><th>Category</th><th>Min Age</th><th>Max Age</th></tr></thead><tbody>`;
-    ageLimit.forEach((a: any) => {
-      if (a.category) body += `<tr><td>${esc(a.category)}</td><td>${esc(a.minAge || '')}</td><td>${esc(a.maxAge || '')}</td></tr>`;
-    });
-    body += `</tbody></table></section>`;
-  }
-
-  if (selectionProcess.length > 0) {
-    body += `<section><h2>Selection Process</h2><ol>`;
-    selectionProcess.forEach((s: string) => { if (s) body += `<li>${esc(s)}</li>`; });
-    body += `</ol></section>`;
-  }
-
-  // HTML sections from DB (already formatted)
-  if (job.vacancyDetailsHtml) body += `<section><h2>Vacancy Details</h2>${job.vacancyDetailsHtml}</section>`;
-  if (job.importantDatesHtml) body += `<section><h2>Important Dates</h2>${job.importantDatesHtml}</section>`;
-  if (job.applicationFeeHtml) body += `<section><h2>Application Fee</h2>${job.applicationFeeHtml}</section>`;
-  if (job.ageLimitHtml) body += `<section><h2>Age Limit</h2>${job.ageLimitHtml}</section>`;
-  if (job.selectionProcessHtml) body += `<section><h2>Selection Process</h2>${job.selectionProcessHtml}</section>`;
-  if (job.physicalStandardHtml) body += `<section><h2>Physical Standard</h2>${job.physicalStandardHtml}</section>`;
-  if (job.importantLinksHtml) body += `<section><h2>Important Links</h2>${job.importantLinksHtml}</section>`;
-
-  if (links.length > 0) {
-    body += `<section><h2>Apply / Download Links</h2><ul>`;
-    links.forEach((l: any) => {
-      if (l.label && l.url) body += `<li><a href="${esc(l.url)}" rel="nofollow">${esc(l.label)}</a></li>`;
-    });
-    body += `</ul></section>`;
-  }
-
-  if (job.applyOnlineUrl) body += `<p><strong>Apply Online:</strong> <a href="${esc(job.applyOnlineUrl)}" rel="nofollow">${esc(job.applyOnlineUrl)}</a></p>`;
 
   return `<!DOCTYPE html>
 <html lang="hi-IN">
@@ -171,68 +99,93 @@ function buildJobHTML(job: any, canonical: string): string {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${esc(title)}</title>
-  <meta name="description" content="${metaDesc}">
-  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
-  <link rel="canonical" href="${esc(canonical)}">
+  <meta name="description" content="${desc}">
+  <meta name="robots" content="index, follow, max-snippet:-1">
+  <link rel="canonical" href="${canonical}">
   <meta property="og:title" content="${esc(title)}">
-  <meta property="og:description" content="${metaDesc}">
-  <meta property="og:url" content="${esc(canonical)}">
+  <meta property="og:description" content="${desc}">
+  <meta property="og:url" content="${canonical}">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="SarkariJobSeva">
-  <meta property="og:image" content="https://sarkarijobseva.com/opengraph.jpg">
+  <meta property="og:image" content="https://sarkarijobseva.com/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
-  <script type="application/ld+json">${JSON.stringify(schema)}</script>
+  <meta name="twitter:title" content="${esc(title)}">
+  <meta name="twitter:description" content="${desc}">
+  <script type="application/ld+json">${schema}</script>
+</head>
+<body>
+  <header><a href="https://sarkarijobseva.com">SarkariJobSeva</a></header>
+  <main>${bodyContent}</main>
+  <footer><p>Visit <a href="https://sarkarijobseva.com">SarkariJobSeva.com</a> for latest government jobs.</p></footer>
+</body>
+</html>`;
+}
+
+function generateBlogHTML(blog: any, canonical: string): string {
+  const title = esc(`${blog.title} | SarkariJobSeva`);
+  const desc = esc((blog.excerpt || blog.title || '').slice(0, 155));
+  const content = blog.content || '';
+  const schema = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": blog.title,
+    "description": blog.excerpt || blog.title,
+    "author": { "@type": "Organization", "name": "SarkariJobSeva" },
+    "publisher": { "@type": "Organization", "name": "SarkariJobSeva", "url": "https://sarkarijobseva.com" },
+    "url": canonical,
+    "mainEntityOfPage": canonical
+  });
+
+  return `<!DOCTYPE html>
+<html lang="hi-IN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title}</title>
+  <meta name="description" content="${desc}">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="${canonical}">
+  <meta property="og:title" content="${title}">
+  <meta property="og:description" content="${desc}">
+  <meta property="og:url" content="${canonical}">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="SarkariJobSeva">
+  <script type="application/ld+json">${schema}</script>
   <style>
-    body{font-family:Arial,sans-serif;max-width:900px;margin:0 auto;padding:16px;color:#222;line-height:1.6}
-    h1{color:#1d4ed8;font-size:1.5em;margin-bottom:8px}
-    h2{color:#1e40af;font-size:1.1em;border-bottom:2px solid #dbeafe;padding-bottom:4px;margin-top:24px}
-    table{width:100%;border-collapse:collapse;margin:8px 0}
-    th,td{padding:8px 12px;border:1px solid #e2e8f0;text-align:left;font-size:.9em}
-    th{background:#eff6ff;font-weight:600;width:40%}
-    section{margin-bottom:20px}
-    header a{color:#1d4ed8;font-weight:700;font-size:1.1em;text-decoration:none}
-    footer{margin-top:32px;padding-top:12px;border-top:1px solid #e2e8f0;font-size:.85em;color:#64748b}
-    .info-box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:12px;margin:16px 0}
+    body { font-family: Arial, sans-serif; max-width: 860px; margin: 0 auto; padding: 16px; color: #222; }
+    h1 { font-size: 1.6rem; color: #1a1a2e; }
+    h2 { font-size: 1.2rem; color: #16213e; margin-top: 1.5rem; }
+    p { line-height: 1.7; }
+    ul, ol { line-height: 1.9; }
+    a { color: #0066cc; }
+    header { padding: 10px 0; border-bottom: 2px solid #e63946; margin-bottom: 20px; }
+    footer { margin-top: 30px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 0.85rem; color: #666; }
   </style>
 </head>
 <body>
-  <header>
-    <a href="https://sarkarijobseva.com">🏛️ SarkariJobSeva – सरकारी नौकरी पोर्टल</a>
-    <nav style="margin-top:8px;font-size:.85em">
-      <a href="https://sarkarijobseva.com/latest-jobs">Latest Jobs</a> |
-      <a href="https://sarkarijobseva.com/admit-card">Admit Card</a> |
-      <a href="https://sarkarijobseva.com/results">Results</a> |
-      <a href="https://sarkarijobseva.com/answer-key">Answer Key</a>
-    </nav>
-  </header>
-  <main>${body}</main>
+  <header><a href="https://sarkarijobseva.com"><strong>SarkariJobSeva</strong></a> – Sarkari Naukri, Admit Card, Result 2026</header>
+  <main>
+    <h1>${esc(blog.title)}</h1>
+    <div class="blog-content">${content}</div>
+  </main>
   <footer>
-    <p>© 2026 <a href="https://sarkarijobseva.com">SarkariJobSeva.com</a> – India's trusted government job portal. Latest sarkari naukri, admit card, result updates daily.</p>
-    <p><a href="https://sarkarijobseva.com/latest-jobs">Latest Jobs</a> | <a href="https://sarkarijobseva.com/about">About Us</a> | <a href="https://sarkarijobseva.com/contact">Contact</a> | <a href="https://sarkarijobseva.com/privacy-policy">Privacy Policy</a></p>
+    <p>Latest Sarkari Jobs ke liye visit karein <a href="https://sarkarijobseva.com">SarkariJobSeva.com</a> | <a href="https://sarkarijobseva.com/latest-jobs">Latest Jobs</a> | <a href="https://sarkarijobseva.com/admit-card">Admit Card</a> | <a href="https://sarkarijobseva.com/results">Results</a></p>
   </footer>
 </body>
 </html>`;
 }
 
-// ─── Category Page HTML ───────────────────────────────────────────────────────
-function buildCategoryHTML(config: { title: string; desc: string; posts?: any[] }, canonical: string): string {
-  const { title, desc, posts = [] } = config;
-
+function generateCategoryHTML(config: {title: string; desc: string; posts?: any[]}, canonical: string): string {
   let postsHtml = '';
-  if (posts.length > 0) {
-    postsHtml = `<section><h2>Latest Updates</h2>
-    <table>
-      <thead><tr><th>Job Title</th><th>Department</th><th>Last Date</th></tr></thead>
-      <tbody>`;
-    posts.forEach((p: any) => {
-      const href = `https://sarkarijobseva.com/job/${p.slug || p.id}`;
-      postsHtml += `<tr>
-        <td><a href="${href}">${esc(p.title)}</a></td>
-        <td>${esc(p.department || '')}</td>
-        <td>${esc(p.lastDate || p.last_date || 'N/A')}</td>
-      </tr>`;
+  if (config.posts && config.posts.length > 0) {
+    postsHtml = `<h2>Latest Updates</h2><ul>`;
+    config.posts.forEach((p: any) => {
+      postsHtml += `<li><a href="https://sarkarijobseva.com/job/${p.slug || p.id}">${esc(p.title)}</a>`;
+      if (p.lastDate) postsHtml += ` – Last Date: ${esc(p.lastDate)}`;
+      if (p.department) postsHtml += ` | ${esc(p.department)}`;
+      postsHtml += `</li>`;
     });
-    postsHtml += `</tbody></table></section>`;
+    postsHtml += `</ul>`;
   }
 
   return `<!DOCTYPE html>
@@ -240,233 +193,126 @@ function buildCategoryHTML(config: { title: string; desc: string; posts?: any[] 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${esc(title)} | SarkariJobSeva</title>
-  <meta name="description" content="${esc(desc)}">
+  <title>${esc(config.title)} | SarkariJobSeva</title>
+  <meta name="description" content="${esc(config.desc)}">
   <meta name="robots" content="index, follow, max-snippet:-1">
-  <link rel="canonical" href="${esc(canonical)}">
-  <meta property="og:title" content="${esc(title)} | SarkariJobSeva">
-  <meta property="og:description" content="${esc(desc)}">
-  <meta property="og:url" content="${esc(canonical)}">
+  <link rel="canonical" href="${canonical}">
+  <meta property="og:title" content="${esc(config.title)} | SarkariJobSeva">
+  <meta property="og:description" content="${esc(config.desc)}">
+  <meta property="og:url" content="${canonical}">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="SarkariJobSeva">
-  <meta property="og:image" content="https://sarkarijobseva.com/opengraph.jpg">
-  <script type="application/ld+json">${JSON.stringify({
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    "name": title,
-    "description": desc,
-    "url": canonical,
-    "publisher": { "@type": "Organization", "name": "SarkariJobSeva", "url": "https://sarkarijobseva.com" }
-  })}</script>
-  <style>
-    body{font-family:Arial,sans-serif;max-width:900px;margin:0 auto;padding:16px;color:#222;line-height:1.6}
-    h1{color:#1d4ed8;font-size:1.5em}
-    h2{color:#1e40af;font-size:1.1em;border-bottom:2px solid #dbeafe;padding-bottom:4px;margin-top:24px}
-    table{width:100%;border-collapse:collapse;margin:8px 0}
-    th,td{padding:8px 12px;border:1px solid #e2e8f0;text-align:left;font-size:.9em}
-    th{background:#eff6ff;font-weight:600}
-    a{color:#1d4ed8}
-    header a{font-weight:700;font-size:1.1em;text-decoration:none}
-    footer{margin-top:32px;padding-top:12px;border-top:1px solid #e2e8f0;font-size:.85em;color:#64748b}
-  </style>
 </head>
 <body>
-  <header>
-    <a href="https://sarkarijobseva.com">🏛️ SarkariJobSeva – सरकारी नौकरी पोर्टल</a>
-    <nav style="margin-top:8px;font-size:.85em">
-      <a href="https://sarkarijobseva.com/latest-jobs">Latest Jobs</a> |
-      <a href="https://sarkarijobseva.com/admit-card">Admit Card</a> |
-      <a href="https://sarkarijobseva.com/results">Results</a> |
-      <a href="https://sarkarijobseva.com/answer-key">Answer Key</a>
-    </nav>
-  </header>
+  <header><a href="https://sarkarijobseva.com">SarkariJobSeva</a></header>
   <main>
-    <h1>${esc(title)}</h1>
-    <p>${esc(desc)}</p>
+    <h1>${esc(config.title)}</h1>
+    <p>${esc(config.desc)}</p>
     ${postsHtml}
-    ${posts.length === 0 ? '<p>Abhi koi updates nahi hain. Jaldi aayenge – bookmark karein SarkariJobSeva.com</p>' : ''}
+    <p>Visit <a href="https://sarkarijobseva.com">SarkariJobSeva.com</a> for more updates.</p>
   </main>
-  <footer>
-    <p>© 2026 <a href="https://sarkarijobseva.com">SarkariJobSeva.com</a> – India's trusted government job portal.</p>
-    <p><a href="https://sarkarijobseva.com/latest-jobs">Latest Jobs</a> | <a href="https://sarkarijobseva.com/about">About Us</a> | <a href="https://sarkarijobseva.com/contact">Contact</a> | <a href="https://sarkarijobseva.com/privacy-policy">Privacy Policy</a></p>
-  </footer>
 </body>
 </html>`;
 }
 
-// ─── Category Map ─────────────────────────────────────────────────────────────
-const CATEGORY_MAP: Record<string, { title: string; desc: string; type?: string }> = {
-  '/': {
-    title: 'SarkariJobSeva – Latest Sarkari Naukri, Admit Card, Result 2026',
-    desc: 'India ka #1 sarkari naukri portal. Latest government jobs, admit card, result, answer key 2026. SSC, Railway, UPSC, Bank, State Govt jobs daily updates.',
-  },
-  '/latest-jobs': {
-    title: 'Latest Government Jobs 2026 – Sarkari Naukri',
-    desc: 'Latest sarkari naukri 2026 – SSC CGL, Railway RRB, UPSC, Bank, State Govt jobs. Daily new vacancy updates. Apply online at SarkariJobSeva.',
-    type: 'job',
-  },
-  '/admit-card': {
-    title: 'Admit Card Download 2026 – Hall Ticket Sarkari Exam',
-    desc: 'Download admit card 2026 for SSC, Railway, UPSC, Bank exams. Sarkari exam hall ticket download at SarkariJobSeva.',
-    type: 'admit-card',
-  },
-  '/results': {
-    title: 'Sarkari Result 2026 – Government Exam Results, Merit List',
-    desc: 'Check sarkari result 2026. Government exam results, merit list, cut off marks for SSC, Railway, UPSC, Bank at SarkariJobSeva.',
-    type: 'result',
-  },
-  '/answer-key': {
-    title: 'Answer Key 2026 – Government Exam Official Answer Keys',
-    desc: 'Download answer key 2026 for SSC, Railway, UPSC, Bank government exams. Raise objections online.',
-    type: 'answer-key',
-  },
-  '/admission': {
-    title: 'Admission Form 2026 – Government College Admission',
-    desc: 'Government college admission 2026. B.Ed, University, polytechnic admission forms and important dates.',
-    type: 'admission',
-  },
-  '/search': {
-    title: 'Search Sarkari Jobs 2026 – Find Government Jobs',
-    desc: 'Search latest sarkari jobs, admit cards, results 2026 at SarkariJobSeva.',
-  },
-  '/blog': {
-    title: 'Sarkari Job Blog – Government Job Tips, Exam Syllabus & News',
-    desc: 'Latest sarkari job news, exam tips, syllabus, preparation strategy for SSC, Railway, UPSC, Bank exams.',
-  },
-  '/jobs/10th-pass': {
-    title: '10th Pass Government Jobs 2026 – Matric Sarkari Naukri',
-    desc: 'Latest 10th pass sarkari naukri 2026. Government jobs for 10th pass / matriculation candidates in Railway, Police, Army.',
-    type: 'job',
-  },
-  '/jobs/12th-pass': {
-    title: '12th Pass Government Jobs 2026 – Inter Sarkari Naukri',
-    desc: 'Latest 12th pass sarkari naukri 2026. Government jobs for 12th / intermediate pass candidates.',
-    type: 'job',
-  },
-  '/jobs/graduation': {
-    title: 'Graduation Level Government Jobs 2026 – Sarkari Naukri',
-    desc: 'Latest graduation level sarkari naukri 2026. Government jobs for graduate candidates – SSC CGL, Bank, Railway.',
-    type: 'job',
-  },
-  '/jobs/post-graduate': {
-    title: 'Post Graduate Government Jobs 2026 – PG Sarkari Naukri',
-    desc: 'Latest post graduate sarkari naukri 2026. Government jobs for PG / Masters degree holders.',
-    type: 'job',
-  },
-  '/disclaimer': { title: 'Disclaimer – SarkariJobSeva', desc: 'Disclaimer for SarkariJobSeva.com. Read before using this government job portal.' },
-  '/privacy-policy': { title: 'Privacy Policy – SarkariJobSeva', desc: 'Privacy policy of SarkariJobSeva.com. How we collect, use and protect your data.' },
-  '/terms-of-service': { title: 'Terms of Service – SarkariJobSeva', desc: 'Terms of service for using SarkariJobSeva.com government job portal.' },
-  '/about': { title: 'About Us – SarkariJobSeva', desc: "About SarkariJobSeva – India's trusted government job portal. Our mission and team." },
-  '/about-us': { title: 'About Us – SarkariJobSeva', desc: "About SarkariJobSeva – India's trusted government job portal." },
-  '/contact': { title: 'Contact Us – SarkariJobSeva', desc: 'Contact SarkariJobSeva for queries about government jobs, admit cards, and results.' },
-  '/salary-calculator': { title: '7th Pay Commission Salary Calculator 2026 – SarkariJobSeva', desc: 'Calculate government job salary with 7th Pay Commission calculator. Basic pay, HRA, DA, TA.' },
+const CATEGORY_MAP: Record<string, {title: string; desc: string; type?: string}> = {
+  '/': { title: 'SarkariJobSeva – Latest Sarkari Naukri, Admit Card, Result 2026', desc: 'India ka #1 sarkari naukri portal. Latest government jobs, admit card, result, answer key 2026. SSC, Railway, UPSC, Bank, State Govt jobs daily updates.' },
+  '/latest-jobs': { title: 'Latest Government Jobs 2026 – Sarkari Naukri', desc: 'Latest sarkari naukri 2026 – SSC CGL, Railway RRB ALP, UPSC, Bank, State Govt jobs. Apply online for latest government jobs at SarkariJobSeva.', type: 'job' },
+  '/admit-card': { title: 'Admit Card Download 2026 – Hall Ticket', desc: 'Download admit card 2026 for all government exams – SSC, Railway, UPSC, Bank. Hall ticket download link at SarkariJobSeva.', type: 'admit-card' },
+  '/results': { title: 'Sarkari Result 2026 – Government Exam Results', desc: 'Sarkari result 2026 – Check government exam results, merit list, cut off marks. SSC, Railway, UPSC, Bank exam results at SarkariJobSeva.', type: 'result' },
+  '/answer-key': { title: 'Answer Key 2026 – Government Exam Answer Keys', desc: 'Download answer key 2026 for government exams – SSC, Railway, UPSC, Bank. Official answer keys at SarkariJobSeva.', type: 'answer-key' },
+  '/admission': { title: 'Admission Form 2026 – Government College Admission', desc: 'Government college admission 2026 – Apply online, eligibility, important dates. B.Ed, University admission at SarkariJobSeva.', type: 'admission' },
+  '/search': { title: 'Search Sarkari Jobs 2026 – Find Government Jobs', desc: 'Search latest sarkari jobs, admit cards, results 2026 at SarkariJobSeva. Find SSC, Railway, UPSC, Bank jobs.' },
+  '/blog': { title: 'Sarkari Job Blog – Government Job Tips & Updates', desc: 'Latest sarkari job news, tips, syllabus and updates for government job aspirants at SarkariJobSeva.' },
 };
 
-// ─── Main Export ──────────────────────────────────────────────────────────────
 export function serveStatic(app: Express) {
   const distPath = path.resolve(__dirname, "public");
   if (!fs.existsSync(distPath)) {
-    throw new Error(`Build directory not found: ${distPath}. Run npm run build first.`);
+    throw new Error(`Could not find the build directory: ${distPath}, make sure to build the client first`);
   }
 
-  // ── Bot Pre-render Middleware ──────────────────────────────────────────────
+  // ===== UNIFIED BOT PRERENDER MIDDLEWARE =====
   app.use(async (req: Request, res: Response, next: Function) => {
     const ua = req.headers['user-agent'] || '';
-    if (!isGoodBot(ua)) return next();
+    if (!isBot(ua)) return next();
 
     const urlPath = req.path;
-    const canonical = `https://sarkarijobseva.com${urlPath}`;
-    console.log(`[Prerender] ${ua.slice(0, 50)} → ${urlPath}`);
+    const baseUrl = process.env.SITE_URL || 'https://sarkarijobseva.com';
+    const canonical = `${baseUrl}${urlPath}`;
 
     try {
-      // 1. /job/:slug  – individual job detail page
-      const jobMatch = urlPath.match(/^\/job\/([^/?#]+)/);
+      // 1. Job/Post pages
+      const jobMatch = urlPath.match(/^\/job\/([^/?]+)/);
       if (jobMatch) {
-        const slug = decodeURIComponent(jobMatch[1]);
-        let post: any = await storage.getPostBySlug(slug);
-
-        // fallback: maybe it's a numeric id
-        if (!post) {
-          const numId = parseInt(slug, 10);
-          if (!isNaN(numId)) post = await storage.getPost(numId);
+        const slug = jobMatch[1];
+        let job: any = null;
+        
+        // Try slug first, then ID
+        try {
+          const r1 = await fetch(`${baseUrl}/api/posts/slug/${slug}`);
+          if (r1.ok) job = await r1.json();
+        } catch {}
+        
+        if (!job) {
+          try {
+            const r2 = await fetch(`${baseUrl}/api/posts/${slug}`);
+            if (r2.ok) job = await r2.json();
+          } catch {}
         }
 
-        if (post?.title) {
+        if (job && job.title) {
           res.setHeader('Content-Type', 'text/html; charset=utf-8');
           res.setHeader('X-Prerendered', '1');
-          return res.send(buildJobHTML(post, canonical));
+          return res.send(generateJobHTML(job, canonical));
         }
-
-        // post truly not found – send 404 so Google doesn't soft-404
-        res.status(404).setHeader('Content-Type', 'text/html; charset=utf-8');
-        return res.send(`<!DOCTYPE html><html><head><title>404 Not Found</title>
-          <meta name="robots" content="noindex"></head>
-          <body><h1>Page Not Found</h1><p><a href="https://sarkarijobseva.com">Go to Home</a></p></body></html>`);
       }
 
-      // 2. /blog/:slug
-      const blogMatch = urlPath.match(/^\/blog\/([^/?#]+)/);
+      // 2. Blog pages
+      const blogMatch = urlPath.match(/^\/blog\/([^/?]+)/);
       if (blogMatch) {
-        // Use direct storage if blog table is in same DB, else skip
+        const slug = blogMatch[1];
         try {
-          const { db } = await import('./db');
-          const result = await (db as any).execute(
-            `SELECT * FROM blogs WHERE slug = $1 LIMIT 1`,
-            [decodeURIComponent(blogMatch[1])]
-          );
-          const blog = result?.rows?.[0];
-          if (blog?.title) {
-            res.setHeader('Content-Type', 'text/html; charset=utf-8');
-            res.setHeader('X-Prerendered', '1');
-            return res.send(buildCategoryHTML({
-              title: blog.title,
-              desc: (blog.excerpt || blog.title).slice(0, 155),
-            }, canonical));
+          const r = await fetch(`${baseUrl}/api/blogs/${slug}`);
+          if (r.ok) {
+            const blog = await r.json();
+            if (blog && blog.title) {
+              const html = generateBlogHTML(blog, canonical);
+              res.setHeader('Content-Type', 'text/html; charset=utf-8');
+              res.setHeader('X-Prerendered', '1');
+              return res.send(html);
+            }
           }
-        } catch (e) {
-          console.error('[Prerender] blog fetch error:', e);
-        }
-        return next();
+        } catch {}
       }
 
-      // 3. /jobs/state/:state
-      const stateMatch = urlPath.match(/^\/jobs\/state\/([^/?#]+)/);
-      if (stateMatch) {
-        const stateName = decodeURIComponent(stateMatch[1]).replace(/-/g, ' ');
-        const posts = await storage.getPostsByState(stateName);
-        const label = stateName.charAt(0).toUpperCase() + stateName.slice(1);
-        res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        res.setHeader('X-Prerendered', '1');
-        return res.send(buildCategoryHTML({
-          title: `${label} Government Jobs 2026 – Sarkari Naukri`,
-          desc: `Latest ${label} sarkari naukri 2026. State government and central government jobs for ${label} candidates.`,
-          posts,
-        }, canonical));
-      }
-
-      // 4. Qualification pages + known static categories
+      // 3. Category pages
       const catConfig = CATEGORY_MAP[urlPath];
       if (catConfig) {
         let posts: any[] = [];
         if (catConfig.type) {
-          posts = await storage.getPostsByType(catConfig.type);
-        } else if (urlPath === '/') {
-          posts = await storage.getAllPosts(1, 30);
+          try {
+            const r = await fetch(`${baseUrl}/api/posts?type=${catConfig.type}&page=1&limit=20`);
+            if (r.ok) {
+              const data = await r.json();
+              posts = Array.isArray(data) ? data : (data.data || []);
+            }
+          } catch {}
         }
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         res.setHeader('X-Prerendered', '1');
-        return res.send(buildCategoryHTML({ ...catConfig, posts }, canonical));
+        return res.send(generateCategoryHTML({ ...catConfig, posts }, canonical));
       }
 
-    } catch (err) {
-      console.error('[Prerender Error]', err);
+    } catch (e) {
+      console.error('[Prerender Error]', e);
     }
 
     next();
   });
-  // ── End Pre-render ─────────────────────────────────────────────────────────
+  // ===== END PRERENDER =====
 
-  // Static assets (JS, CSS, images etc.)
+  // Static files
   app.use(express.static(distPath, {
     maxAge: "1y",
     etag: true,
@@ -479,7 +325,7 @@ export function serveStatic(app: Express) {
     },
   }));
 
-  // SPA fallback for all other routes
+  // SPA fallback
   app.use("*", (_req: Request, res: Response) => {
     res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
     res.sendFile(path.resolve(distPath, "index.html"));
