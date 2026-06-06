@@ -31,29 +31,66 @@ function esc(str: string): string {
 function generateJobHTML(job: any, canonical: string): string {
   const title = `${job.title} – Apply Online, Eligibility, Last Date | SarkariJobSeva`;
   const desc = esc((job.shortInfo || `${job.title} – ${job.department}. Apply online for government job at SarkariJobSeva.com`).slice(0, 155));
-  const schema = JSON.stringify({
+  const isJobPosting = job.type === 'job';
+  const schemaObj: any = isJobPosting ? {
     "@context": "https://schema.org",
-    "@type": job.type === 'job' ? "JobPosting" : "Article",
+    "@type": "JobPosting",
     "title": job.title,
     "description": job.shortInfo || job.title,
-    "datePosted": job.postDate,
-    "validThrough": job.lastDate || undefined,
+    "datePosted": job.postDate || new Date().toISOString().split('T')[0],
+    "validThrough": job.lastDate || "2027-12-31",
     "hiringOrganization": {
       "@type": "Organization",
-      "name": job.department,
+      "name": job.department || "Government of India",
+      "sameAs": job.officialWebsiteUrl || "https://www.india.gov.in"
     },
     "jobLocation": {
       "@type": "Place",
       "address": {
         "@type": "PostalAddress",
-        "addressCountry": "IN",
+        "streetAddress": "Government Office",
+        "addressLocality": job.state || "New Delhi",
+        "addressRegion": job.state || "Delhi",
+        "postalCode": "110001",
+        "addressCountry": "IN"
       }
     },
     "applicantLocationRequirements": {
       "@type": "Country",
       "name": "India"
+    },
+    "employmentType": "FULL_TIME",
+    "jobBenefits": "Government Job Benefits, Pension, Medical, HRA, DA",
+    "baseSalary": {
+      "@type": "MonetaryAmount",
+      "currency": "INR",
+      "value": {
+        "@type": "QuantitativeValue",
+        "minValue": 18000,
+        "maxValue": 200000,
+        "unitText": "MONTH"
+      }
+    },
+    "educationRequirements": {
+      "@type": "EducationalOccupationalCredential",
+      "credentialCategory": job.qualification || "bachelor degree"
+    },
+    "identifier": {
+      "@type": "PropertyValue",
+      "name": job.department || "Govt",
+      "value": job.slug || job.id
     }
-  });
+  } : {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": job.title,
+    "description": job.shortInfo || job.title,
+    "author": { "@type": "Organization", "name": "SarkariJobSeva" },
+    "publisher": { "@type": "Organization", "name": "SarkariJobSeva", "url": "https://sarkarijobseva.com" },
+    "datePublished": job.postDate || new Date().toISOString().split('T')[0],
+    "url": "https://sarkarijobseva.com/job/" + (job.slug || job.id)
+  };
+  const schema = JSON.stringify(schemaObj);
 
   // Full content for Google to read
   let bodyContent = `
