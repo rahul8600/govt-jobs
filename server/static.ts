@@ -121,60 +121,6 @@ function generateJobHTML(job: any, canonical: string): string {
 </html>`;
 }
 
-function generateBlogHTML(blog: any, canonical: string): string {
-  const title = esc(`${blog.title} | SarkariJobSeva`);
-  const desc = esc((blog.excerpt || blog.title || '').slice(0, 155));
-  const content = blog.content || '';
-  const schema = JSON.stringify({
-    "@context": "https://schema.org",
-    "@type": "Article",
-    "headline": blog.title,
-    "description": blog.excerpt || blog.title,
-    "author": { "@type": "Organization", "name": "SarkariJobSeva" },
-    "publisher": { "@type": "Organization", "name": "SarkariJobSeva", "url": "https://sarkarijobseva.com" },
-    "url": canonical,
-    "mainEntityOfPage": canonical
-  });
-
-  return `<!DOCTYPE html>
-<html lang="hi-IN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title}</title>
-  <meta name="description" content="${desc}">
-  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
-  <link rel="canonical" href="${canonical}">
-  <meta property="og:title" content="${title}">
-  <meta property="og:description" content="${desc}">
-  <meta property="og:url" content="${canonical}">
-  <meta property="og:type" content="article">
-  <meta property="og:site_name" content="SarkariJobSeva">
-  <script type="application/ld+json">${schema}</script>
-  <style>
-    body { font-family: Arial, sans-serif; max-width: 860px; margin: 0 auto; padding: 16px; color: #222; }
-    h1 { font-size: 1.6rem; color: #1a1a2e; }
-    h2 { font-size: 1.2rem; color: #16213e; margin-top: 1.5rem; }
-    p { line-height: 1.7; }
-    ul, ol { line-height: 1.9; }
-    a { color: #0066cc; }
-    header { padding: 10px 0; border-bottom: 2px solid #e63946; margin-bottom: 20px; }
-    footer { margin-top: 30px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 0.85rem; color: #666; }
-  </style>
-</head>
-<body>
-  <header><a href="https://sarkarijobseva.com"><strong>SarkariJobSeva</strong></a> – Sarkari Naukri, Admit Card, Result 2026</header>
-  <main>
-    <h1>${esc(blog.title)}</h1>
-    <div class="blog-content">${content}</div>
-  </main>
-  <footer>
-    <p>Latest Sarkari Jobs ke liye visit karein <a href="https://sarkarijobseva.com">SarkariJobSeva.com</a> | <a href="https://sarkarijobseva.com/latest-jobs">Latest Jobs</a> | <a href="https://sarkarijobseva.com/admit-card">Admit Card</a> | <a href="https://sarkarijobseva.com/results">Results</a></p>
-  </footer>
-</body>
-</html>`;
-}
-
 function generateCategoryHTML(config: {title: string; desc: string; posts?: any[]}, canonical: string): string {
   let postsHtml = '';
   if (config.posts && config.posts.length > 0) {
@@ -277,9 +223,10 @@ export function serveStatic(app: Express) {
           if (r.ok) {
             const blog = await r.json();
             if (blog && blog.title) {
-              const html = generateBlogHTML(blog, canonical);
+              const title = `${blog.title} | SarkariJobSeva`;
+              const desc = (blog.excerpt || blog.title).slice(0, 155);
+              const html = generateCategoryHTML({ title, desc }, canonical);
               res.setHeader('Content-Type', 'text/html; charset=utf-8');
-              res.setHeader('X-Prerendered', '1');
               return res.send(html);
             }
           }
