@@ -14,9 +14,14 @@ const BOT_AGENTS = [
 
 function isBot(userAgent: string): boolean {
   const ua = (userAgent || '').toLowerCase();
-  // Also catch Google Inspection Tool which uses smartphone UA
-  if (ua.includes('mobile') && ua.includes('chrome') && !ua.includes('android')) return true;
-  return BOT_AGENTS.some(bot => ua.includes(bot));
+  if (!ua) return false;
+  // Check bot agents list
+  if (BOT_AGENTS.some(bot => ua.includes(bot))) return true;
+  // Google Inspection Tool uses Android/iPhone Chrome UA — catch all
+  if (ua.includes('google')) return true;
+  // Any mobile chrome = potential Google crawler
+  if (ua.includes('mobile') && ua.includes('chrome')) return true;
+  return false;
 }
 
 function esc(str: string): string {
