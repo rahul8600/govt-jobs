@@ -14,15 +14,9 @@ const BOT_AGENTS = [
 
 function isBot(userAgent: string): boolean {
   const ua = (userAgent || '').toLowerCase();
-  if (!ua) return false;
-  // Direct bot list check
-  if (BOT_AGENTS.some(bot => ua.includes(bot))) return true;
-  // Google Inspection Tool uses iPhone/smartphone UA — always treat as bot
-  // Pattern: Mozilla/5.0 (Linux; Android ...) or (iPhone; CPU iPhone OS ...)
-  if (ua.includes('google')) return true;
-  // Catch any mobile chrome that could be Google crawler
-  if (ua.includes('mobile') && ua.includes('chrome')) return true;
-  return false;
+  // Also catch Google Inspection Tool which uses smartphone UA
+  if (ua.includes('mobile') && ua.includes('chrome') && !ua.includes('android')) return true;
+  return BOT_AGENTS.some(bot => ua.includes(bot));
 }
 
 function esc(str: string): string {
@@ -42,9 +36,9 @@ function generateJobHTML(job: any, canonical: string): string {
     "@context": "https://schema.org",
     "@type": "JobPosting",
     "title": job.title,
-    "description": job.shortInfo || job.title,
+    "description": (job.shortInfo || job.title || '').slice(0, 500),
     "datePosted": job.postDate || new Date().toISOString().split('T')[0],
-    "validThrough": job.lastDate || "2027-12-31",
+    "validThrough": (job.lastDate && job.lastDate !== 'N/A') ? job.lastDate : "2027-12-31",
     "hiringOrganization": {
       "@type": "Organization",
       "name": job.department || "Government of India",
@@ -66,7 +60,6 @@ function generateJobHTML(job: any, canonical: string): string {
       "name": "India"
     },
     "employmentType": "FULL_TIME",
-    "jobBenefits": "Government Job Benefits, Pension, Medical, HRA, DA",
     "baseSalary": {
       "@type": "MonetaryAmount",
       "currency": "INR",
@@ -80,19 +73,14 @@ function generateJobHTML(job: any, canonical: string): string {
     "educationRequirements": {
       "@type": "EducationalOccupationalCredential",
       "credentialCategory": job.qualification || "bachelor degree"
-    },
-    "identifier": {
-      "@type": "PropertyValue",
-      "name": job.department || "Govt",
-      "value": job.slug || job.id
     }
   } : {
     "@context": "https://schema.org",
     "@type": "Article",
     "headline": job.title,
-    "description": job.shortInfo || job.title,
-    "author": { "@type": "Organization", "name": "SarkariJobSeva" },
-    "publisher": { "@type": "Organization", "name": "SarkariJobSeva", "url": "https://sarkarijobseva.com" },
+    "description": (job.shortInfo || job.title || '').slice(0, 500),
+    "author": {"@type": "Organization", "name": "SarkariJobSeva"},
+    "publisher": {"@type": "Organization", "name": "SarkariJobSeva", "url": "https://sarkarijobseva.com"},
     "datePublished": job.postDate || new Date().toISOString().split('T')[0],
     "url": "https://sarkarijobseva.com/job/" + (job.slug || job.id)
   };
@@ -160,60 +148,6 @@ function generateJobHTML(job: any, canonical: string): string {
   <header><a href="https://sarkarijobseva.com">SarkariJobSeva</a></header>
   <main>${bodyContent}</main>
   <footer><p>Visit <a href="https://sarkarijobseva.com">SarkariJobSeva.com</a> for latest government jobs.</p></footer>
-</body>
-</html>`;
-}
-
-function generateBlogHTML(blog: any, canonical: string): string {
-  const title = esc(`${blog.title} | SarkariJobSeva`);
-  const desc = esc((blog.excerpt || blog.title || '').slice(0, 155));
-  const content = blog.content || '';
-  const schema = JSON.stringify({
-    "@context": "https://schema.org",
-    "@type": "Article",
-    "headline": blog.title,
-    "description": blog.excerpt || blog.title,
-    "author": { "@type": "Organization", "name": "SarkariJobSeva" },
-    "publisher": { "@type": "Organization", "name": "SarkariJobSeva", "url": "https://sarkarijobseva.com" },
-    "datePublished": new Date().toISOString().split('T')[0],
-    "url": canonical,
-    "mainEntityOfPage": canonical
-  });
-  return `<!DOCTYPE html>
-<html lang="hi-IN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title}</title>
-  <meta name="description" content="${desc}">
-  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
-  <link rel="canonical" href="${canonical}">
-  <meta property="og:title" content="${title}">
-  <meta property="og:description" content="${desc}">
-  <meta property="og:url" content="${canonical}">
-  <meta property="og:type" content="article">
-  <meta property="og:site_name" content="SarkariJobSeva">
-  <script type="application/ld+json">${schema}</script>
-  <style>
-    body{font-family:Arial,sans-serif;max-width:860px;margin:0 auto;padding:16px;color:#222;}
-    h1{font-size:1.6rem;color:#1a1a2e;}
-    h2{font-size:1.2rem;color:#16213e;margin-top:1.5rem;}
-    p{line-height:1.7;}
-    ul,ol{line-height:1.9;}
-    a{color:#0066cc;}
-    header{padding:10px 0;border-bottom:2px solid #e63946;margin-bottom:20px;}
-    footer{margin-top:30px;padding-top:10px;border-top:1px solid #ddd;font-size:0.85rem;color:#666;}
-  </style>
-</head>
-<body>
-  <header><a href="https://sarkarijobseva.com"><strong>SarkariJobSeva</strong></a> – Sarkari Naukri, Admit Card, Result 2026</header>
-  <main>
-    <h1>${esc(blog.title)}</h1>
-    <div class="blog-content">${content}</div>
-  </main>
-  <footer>
-    <p>Latest Sarkari Jobs ke liye visit karein <a href="https://sarkarijobseva.com">SarkariJobSeva.com</a> | <a href="https://sarkarijobseva.com/latest-jobs">Latest Jobs</a> | <a href="https://sarkarijobseva.com/admit-card">Admit Card</a> | <a href="https://sarkarijobseva.com/results">Results</a></p>
-  </footer>
 </body>
 </html>`;
 }
@@ -320,10 +254,42 @@ export function serveStatic(app: Express) {
           if (r.ok) {
             const blog = await r.json();
             if (blog && blog.title) {
-              const html = generateBlogHTML(blog, canonical);
+              const blogContent = blog.content || '';
+              const blogTitle = esc(`${blog.title} | SarkariJobSeva`);
+              const blogDesc = esc((blog.excerpt || blog.title || '').slice(0, 155));
+              const blogSchema = JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "Article",
+                "headline": blog.title,
+                "description": blog.excerpt || blog.title,
+                "author": {"@type": "Organization", "name": "SarkariJobSeva"},
+                "publisher": {"@type": "Organization", "name": "SarkariJobSeva", "url": "https://sarkarijobseva.com"},
+                "url": canonical
+              });
+              const blogHtml = `<!DOCTYPE html>
+<html lang="hi-IN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${blogTitle}</title>
+<meta name="description" content="${blogDesc}">
+<meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
+<link rel="canonical" href="${canonical}">
+<meta property="og:title" content="${blogTitle}">
+<meta property="og:description" content="${blogDesc}">
+<meta property="og:url" content="${canonical}">
+<meta property="og:type" content="article">
+<script type="application/ld+json">${blogSchema}</script>
+<style>body{font-family:Arial,sans-serif;max-width:860px;margin:0 auto;padding:16px;color:#222}h1{font-size:1.6rem;color:#1a1a2e}h2{font-size:1.2rem;color:#16213e;margin-top:1.5rem}p{line-height:1.7}a{color:#0066cc}header{padding:10px 0;border-bottom:2px solid #e63946;margin-bottom:20px}footer{margin-top:30px;padding-top:10px;border-top:1px solid #ddd;font-size:.85rem;color:#666}</style>
+</head>
+<body>
+<header><a href="https://sarkarijobseva.com"><strong>SarkariJobSeva</strong></a> – Sarkari Naukri, Admit Card, Result 2026</header>
+<main><h1>${esc(blog.title)}</h1><div>${blogContent}</div></main>
+<footer><p>Latest Sarkari Jobs ke liye visit karein <a href="https://sarkarijobseva.com">SarkariJobSeva.com</a> | <a href="https://sarkarijobseva.com/latest-jobs">Latest Jobs</a> | <a href="https://sarkarijobseva.com/admit-card">Admit Card</a> | <a href="https://sarkarijobseva.com/results">Results</a></p></footer>
+</body></html>`;
               res.setHeader('Content-Type', 'text/html; charset=utf-8');
               res.setHeader('X-Prerendered', '1');
-              return res.send(html);
+              return res.send(blogHtml);
             }
           }
         } catch {}
