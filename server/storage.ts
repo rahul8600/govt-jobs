@@ -128,7 +128,29 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createPost(post: InsertPost): Promise<Post> {
+    // Auto-generate slug if missing or empty
+    if (!post.slug || post.slug.trim() === '') {
+      const baseSlug = (post.title || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .slice(0, 80);
+      post.slug = baseSlug + '-' + Date.now();
+    }
     const [newPost] = await db.insert(posts).values(post).returning();
+    // Update slug with actual ID for cleaner URLs
+    if (newPost.id) {
+      const baseSlug = (post.title || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .slice(0, 80);
+      const finalSlug = baseSlug + '-' + newPost.id;
+      const [updated] = await db.update(posts).set({ slug: finalSlug }).where(eq(posts.id, newPost.id)).returning();
+      return updated;
+    }
     return newPost;
   }
 
