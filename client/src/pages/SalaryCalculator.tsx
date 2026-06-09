@@ -1,4 +1,3 @@
-aimport { useEffect } from 'react';
 import { useState } from 'react';
 import { useSEO } from '@/components/SEO';
 import { Calculator, TrendingUp, Info, ExternalLink } from 'lucide-react';
@@ -51,11 +50,6 @@ const getCGHS = (level: number) => {
 };
 
 export default function SalaryCalculator() {
-  useEffect(() => {
-    document.title = "Salary Calculator 7th Pay Commission | SarkariJobSeva";
-    const metaDesc = document.querySelector('meta[name="description"]');
-    if (metaDesc) metaDesc.setAttribute('content', '7th Pay Commission salary calculator - apni sarkari naukri ki salary calculate karein. Basic pay, DA, HRA aur total salary.');
-  }, []);
   const [level, setLevel] = useState('6');
   const [city, setCity] = useState('Y');
   const [showBreakdown, setShowBreakdown] = useState(false);
