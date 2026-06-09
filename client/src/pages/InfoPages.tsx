@@ -1,6 +1,21 @@
 import { Link } from "wouter";
+import { useEffect } from "react";
 
 export default function InfoPage({ title, children }: { title: string, children: React.ReactNode }) {
+  useEffect(() => {
+    document.title = `${title} | SarkariJobSeva`;
+    // Set meta description
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.setAttribute('content', `${title} - SarkariJobSeva.com pe latest sarkari naukri, admit card, result aur answer key dekhein.`);
+    }
+    // Set canonical
+    const canonical = document.querySelector('link[rel="canonical"]');
+    if (canonical) {
+      canonical.setAttribute('href', window.location.href);
+    }
+  }, [title]);
+
   return (
     <div className="portal-card bg-white p-8 md:p-12 shadow-sm border-slate-200 rounded-2xl">
       <h1 className="text-3xl font-black text-slate-900 mb-8 border-b border-slate-100 pb-4 uppercase tracking-tighter">
