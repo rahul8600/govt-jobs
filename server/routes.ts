@@ -971,30 +971,18 @@ Sitemap: ${baseUrl}/sitemap.xml
       const posts = await storage.getAllPosts();
 
       const staticPages = [
-        { loc: "/",                    priority: "1.0", changefreq: "daily",   lastmod: today },
-        { loc: "/latest-jobs",         priority: "0.9", changefreq: "daily",   lastmod: today },
-        { loc: "/admit-card",          priority: "0.9", changefreq: "daily",   lastmod: today },
-        { loc: "/results",             priority: "0.9", changefreq: "daily",   lastmod: today },
-        { loc: "/answer-key",          priority: "0.8", changefreq: "weekly",  lastmod: today },
-        { loc: "/admission",           priority: "0.8", changefreq: "daily",   lastmod: today },
-        { loc: "/jobs/10th-pass",      priority: "0.8", changefreq: "daily",   lastmod: today },
-        { loc: "/jobs/12th-pass",      priority: "0.8", changefreq: "daily",   lastmod: today },
-        { loc: "/jobs/graduation",     priority: "0.8", changefreq: "daily",   lastmod: today },
-        { loc: "/jobs/post-graduate",  priority: "0.7", changefreq: "daily",   lastmod: today },
-        { loc: "/salary-calculator",   priority: "0.7", changefreq: "monthly", lastmod: today },
-        { loc: "/blog",                priority: "0.7", changefreq: "daily",   lastmod: today },
-        { loc: "/about",               priority: "0.5", changefreq: "monthly", lastmod: today },
-        { loc: "/contact",             priority: "0.4", changefreq: "monthly", lastmod: today },
-        { loc: "/disclaimer",          priority: "0.3", changefreq: "monthly", lastmod: today },
-        { loc: "/privacy-policy",      priority: "0.3", changefreq: "monthly", lastmod: today },
-        { loc: "/terms-of-service",    priority: "0.3", changefreq: "monthly", lastmod: today },
+        { loc: '/',                priority: '1.0', changefreq: 'daily',   lastmod: today },
+        { loc: '/latest-jobs',     priority: '0.9', changefreq: 'daily',   lastmod: today },
+        { loc: '/admit-card',      priority: '0.9', changefreq: 'daily',   lastmod: today },
+        { loc: '/results',         priority: '0.9', changefreq: 'daily',   lastmod: today },
+        { loc: '/answer-key',      priority: '0.8', changefreq: 'weekly',  lastmod: today },
+        { loc: '/admission',       priority: '0.8', changefreq: 'daily',   lastmod: today },
+        { loc: '/blog',            priority: '0.7', changefreq: 'daily',   lastmod: today },
+        { loc: '/about',           priority: '0.5', changefreq: 'monthly', lastmod: today },
+        { loc: '/contact',         priority: '0.4', changefreq: 'monthly', lastmod: today },
+        { loc: '/disclaimer',      priority: '0.3', changefreq: 'monthly', lastmod: today },
+        { loc: '/privacy-policy',  priority: '0.3', changefreq: 'monthly', lastmod: today },
       ];
-
-
-
-
-
-
 
       // Helper to escape XML special chars
       const xmlEsc = (s: string) => String(s || '')
@@ -1066,6 +1054,47 @@ Sitemap: ${baseUrl}/sitemap.xml
     } catch (error) {
       console.error("Error generating sitemap:", error);
       res.status(500).type('text/plain').send('Error generating sitemap');
+    }
+  });
+
+  // IndexNow — Submit all URLs to Google/Bing for fast indexing
+  app.get("/api/indexnow", async (req, res) => {
+    try {
+      const baseUrl = "https://sarkarijobseva.com";
+      const apiKey = "sarkarijobseva2026indexnow";
+      
+      // Get all posts
+      const allPosts = await storage.getAllPosts(1, 10000);
+      const urls = allPosts.map((p: any) => `${baseUrl}/job/${p.slug || p.id}`);
+      
+      // Add static pages
+      urls.push(baseUrl + "/");
+      urls.push(baseUrl + "/latest-jobs");
+      urls.push(baseUrl + "/admit-card");
+      urls.push(baseUrl + "/results");
+      urls.push(baseUrl + "/answer-key");
+      urls.push(baseUrl + "/blog");
+
+      // Submit to IndexNow
+      const response = await fetch("https://api.indexnow.org/indexnow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json; charset=utf-8" },
+        body: JSON.stringify({
+          host: "sarkarijobseva.com",
+          key: apiKey,
+          keyLocation: `${baseUrl}/${apiKey}.txt`,
+          urlList: urls.slice(0, 10000)
+        })
+      });
+
+      res.json({ 
+        success: true, 
+        submitted: urls.length,
+        status: response.status 
+      });
+    } catch (error) {
+      console.error("IndexNow error:", error);
+      res.status(500).json({ error: "Failed to submit URLs" });
     }
   });
 
