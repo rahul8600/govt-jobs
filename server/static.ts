@@ -34,8 +34,14 @@ function esc(str: string): string {
 }
 
 function generateJobHTML(job: any, canonical: string): string {
-  const title = `${job.title} – Apply Online, Eligibility, Last Date | SarkariJobSeva`;
-  const desc = esc((job.shortInfo || `${job.title} – ${job.department}. Apply online for government job at SarkariJobSeva.com`).slice(0, 155));
+  // SEO optimized title — max 60 chars
+  const baseTitle = (job.title || '').length > 45
+    ? (job.title || '').slice(0, 45).trim() + ' | SarkariJobSeva'
+    : `${job.title} | SarkariJobSeva`;
+  const title = baseTitle;
+  // Meta description 150-155 chars
+  const rawDesc = job.shortInfo || `${job.title} – ${job.department}. Apply online for government job at SarkariJobSeva.com`;
+  const desc = esc(rawDesc.slice(0, 155));
   const isJobPosting = job.type === 'job';
   const schemaObj: any = isJobPosting ? {
     "@context": "https://schema.org",
