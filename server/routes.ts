@@ -1057,41 +1057,30 @@ Sitemap: ${baseUrl}/sitemap.xml
     }
   });
 
-  // IndexNow — Submit all URLs to Google/Bing for fast indexing
+  // IndexNow route
   app.get("/api/indexnow", async (req, res) => {
     try {
       const baseUrl = "https://sarkarijobseva.com";
       const apiKey = "sarkarijobseva2026indexnow";
-      
-      // Get all posts
       const allPosts = await storage.getAllPosts(1, 10000);
-      const urls = allPosts.map((p: any) => `${baseUrl}/job/${p.slug || p.id}`);
-      
-      // Add static pages
+      const urls: string[] = allPosts.map((p: any) => `${baseUrl}/job/${p.slug || p.id}`);
       urls.push(baseUrl + "/");
       urls.push(baseUrl + "/latest-jobs");
       urls.push(baseUrl + "/admit-card");
       urls.push(baseUrl + "/results");
       urls.push(baseUrl + "/answer-key");
       urls.push(baseUrl + "/blog");
-
-      // Submit to IndexNow
       const response = await fetch("https://api.indexnow.org/indexnow", {
         method: "POST",
         headers: { "Content-Type": "application/json; charset=utf-8" },
         body: JSON.stringify({
           host: "sarkarijobseva.com",
           key: apiKey,
-          keyLocation: `${baseUrl}/${apiKey}.txt`,
+          keyLocation: "https://sarkarijobseva.com/sarkarijobseva2026indexnow.txt",
           urlList: urls.slice(0, 10000)
         })
       });
-
-      res.json({ 
-        success: true, 
-        submitted: urls.length,
-        status: response.status 
-      });
+      res.json({ success: true, submitted: urls.length, status: response.status });
     } catch (error) {
       console.error("IndexNow error:", error);
       res.status(500).json({ error: "Failed to submit URLs" });
