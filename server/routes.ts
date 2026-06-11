@@ -942,6 +942,13 @@ ${blog.excerpt ? blog.excerpt.substring(0, 200) + '...' : ''}
     }
   });
 
+  // ads.txt - force text/plain so Google AdSense bot can read it
+  app.get("/ads.txt", (req, res) => {
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    res.setHeader("Cache-Control", "public, max-age=86400");
+    res.send("google.com, pub-2034546761813262, DIRECT, f08c47fec0942fa0");
+  });
+
   // robots.txt
   app.get("/robots.txt", (req, res) => {
     const baseUrl = `${req.protocol}://${req.get('host')}`;
