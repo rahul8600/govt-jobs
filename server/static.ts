@@ -226,6 +226,11 @@ export function serveStatic(app: Express) {
     if (!isBot(ua)) return next();
 
     const urlPath = req.path;
+
+    // Bypass bot middleware for static txt files
+    if (urlPath.endsWith(".txt") || urlPath.endsWith(".xml") || urlPath.endsWith(".json")) {
+      return next();
+    }
     const baseUrl = process.env.SITE_URL || 'https://sarkarijobseva.com';
     const canonical = `${baseUrl}${urlPath}`;
 
