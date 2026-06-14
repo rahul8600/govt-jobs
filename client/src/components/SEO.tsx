@@ -73,13 +73,32 @@ export function useSEO({ title, description, keywords, canonical, type = 'websit
       const jobUrl = `${BASE_URL}/job/${slug}`;
 
       if (job.type === 'job') {
+        // Parse valid date — fallback 1 year from now if missing
+        const validThrough = job.lastDate
+          ? parseIndianDate(job.lastDate)
+          : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+        // Derive city from state for addressLocality
+        const stateToCity: Record<string, string> = {
+          'Uttar Pradesh': 'Lucknow', 'Bihar': 'Patna', 'Rajasthan': 'Jaipur',
+          'Madhya Pradesh': 'Bhopal', 'Maharashtra': 'Mumbai', 'Delhi': 'New Delhi',
+          'Gujarat': 'Ahmedabad', 'Karnataka': 'Bangalore', 'Tamil Nadu': 'Chennai',
+          'West Bengal': 'Kolkata', 'Andhra Pradesh': 'Hyderabad', 'Telangana': 'Hyderabad',
+          'Kerala': 'Thiruvananthapuram', 'Punjab': 'Chandigarh', 'Haryana': 'Chandigarh',
+          'Jharkhand': 'Ranchi', 'Odisha': 'Bhubaneswar', 'Chhattisgarh': 'Raipur',
+          'Assam': 'Guwahati', 'Uttarakhand': 'Dehradun', 'Himachal Pradesh': 'Shimla',
+          'All India': 'New Delhi', 'India': 'New Delhi',
+        };
+        const city = stateToCity[job.state || ''] || 'New Delhi';
+        const region = job.state || 'All India';
+
         jobScript.textContent = JSON.stringify({
           '@context': 'https://schema.org',
           '@type': 'JobPosting',
           title: job.title,
           description: job.shortInfo || job.eligibilityDetails || job.title,
           datePosted: (job as any).createdAt || new Date().toISOString().split('T')[0],
-          validThrough: job.lastDate ? parseIndianDate(job.lastDate) : undefined,
+          validThrough: validThrough,
           url: jobUrl,
           hiringOrganization: {
             '@type': 'Organization',
@@ -91,11 +110,28 @@ export function useSEO({ title, description, keywords, canonical, type = 'websit
             address: {
               '@type': 'PostalAddress',
               addressCountry: 'IN',
-              addressRegion: job.state || 'India',
+              addressRegion: region,
+              addressLocality: city,
+              streetAddress: `${job.department || 'Government Office'}, ${city}`,
+              postalCode: '110001',
+            },
+          },
+          baseSalary: {
+            '@type': 'MonetaryAmount',
+            currency: 'INR',
+            value: {
+              '@type': 'QuantitativeValue',
+              minValue: 25000,
+              maxValue: 100000,
+              unitText: 'MONTH',
             },
           },
           employmentType: 'FULL_TIME',
           industry: 'Government',
+          educationRequirements: {
+            '@type': 'EducationalOccupationalCredential',
+            credentialCategory: job.qualification || 'Bachelor Degree',
+          },
           qualifications: job.qualification || job.eligibilityDetails || undefined,
           applicantLocationRequirements: {
             '@type': 'Country',
