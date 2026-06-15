@@ -307,6 +307,12 @@ export function serveStatic(app: Express) {
       }
 
       // 3. Category pages
+      // Handle static info pages with full SSR
+      const infoPage = INFO_PAGES[urlPath];
+      if (infoPage) {
+        return res.send(generateInfoPageHTML(infoPage.title, infoPage.html, canonical));
+      }
+
       const catConfig = CATEGORY_MAP[urlPath];
       if (catConfig) {
         let posts: any[] = [];
