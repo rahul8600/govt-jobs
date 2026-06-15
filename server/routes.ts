@@ -962,8 +962,23 @@ Allow: /results
 Allow: /answer-key
 Allow: /admission
 Allow: /search
+Allow: /blog/
+Allow: /blogs
+Allow: /blog
+Allow: /about-us
+Allow: /privacy-policy
+Allow: /disclaimer
+Allow: /terms-of-service
+Allow: /contact-us
 Disallow: /admin
 Disallow: /api/
+
+User-agent: Googlebot
+Allow: /
+Disallow: /admin
+
+User-agent: AdsBot-Google
+Allow: /
 
 Sitemap: ${baseUrl}/sitemap.xml
 `);
