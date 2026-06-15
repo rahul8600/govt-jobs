@@ -773,3 +773,15 @@ export function serveStatic(app: Express) {
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }
+// ===== 301 REDIRECTS FOR SLUG CHANGES =====
+const slugRedirects: Record<string, string> = {
+  "/job/348": "/job/upsc-geo-scientist-mains-admit-card-admit-card-2026-download-link-exam-date-348",
+  "/job/340": "/job/mppsc-ses-state-engineering-services-answer-key-answer-key-2026-download-pdf-340",
+  "/job/341": "/job/rpsc-si-platoon-commander-answer-key-answer-key-2026-download-pdf-objection-cut-341",
+  "/job/342": "/job/bpsc-special-school-teacher-final-answer-key-answer-key-2026-download-pdf-342",
+  "/job/343": "/job/bpsc-aso-assistant-section-officer-final-answer-key-answer-key-2026-download-343",
+  "/job/344": "/job/rrb-ntpc-graduate-level-cbt-ii-exam-date-admit-card-2026-download-link-exam-344",
+  "/job/345": "/job/nta-neet-ug-re-exam-city-details-admit-card-2026-download-link-exam-date-hall-345",
+  "/job/346": "/job/nta-ugc-net-june-exam-city-details-admit-card-2026-download-link-exam-date-hall-346",
+  "/job/347": "/job/upsc-engineering-services-ese-mains-admit-card-admit-card-2026-download-link-347",
+};
