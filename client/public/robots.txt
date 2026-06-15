@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+
+# Block admin panel from indexing
+Disallow: /admin
+Disallow: /api/
+
+# Allow Google AdSense bot
+User-agent: Mediapartners-Google
+Allow: /
+
+# Allow Google AdsBot
+User-agent: AdsBot-Google
+Allow: /
+
+# Allow Google Image Bot
+User-agent: Googlebot-Image
+Allow: /
+
+Sitemap: https://sarkarijobseva.com/sitemap.xml
