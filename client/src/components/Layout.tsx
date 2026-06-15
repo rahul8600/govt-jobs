@@ -258,7 +258,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <h4 className="font-bold text-slate-800 mb-4 text-xs uppercase tracking-widest">Legal</h4>
             <ul className="space-y-2.5 text-sm text-slate-500">
               {[
-                { href: "/about",          label: "About Us" },
+                { href: "/about-us",       label: "About Us" },
               { href: "/disclaimer",     label: "Disclaimer" },
                 { href: "/privacy-policy", label: "Privacy Policy" },
                 { href: "/terms-of-service",label: "Terms of Service" },
@@ -292,10 +292,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
             Telegram
           </a>
         </div>
-        © 2026 SarkariJobSeva |{" "}
-        <Link href="/disclaimer"><span className="text-blue-500 cursor-pointer">Disclaimer</span></Link>
-        {" | "}
-        <Link href="/contact"><span className="text-blue-500 cursor-pointer">Contact</span></Link>
+        © 2026 SarkariJobSeva
+        <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 mt-1">
+          <Link href="/privacy-policy"><span className="text-blue-500 cursor-pointer">Privacy Policy</span></Link>
+          <span>|</span>
+          <Link href="/about-us"><span className="text-blue-500 cursor-pointer">About Us</span></Link>
+          <span>|</span>
+          <Link href="/disclaimer"><span className="text-blue-500 cursor-pointer">Disclaimer</span></Link>
+          <span>|</span>
+          <Link href="/contact"><span className="text-blue-500 cursor-pointer">Contact</span></Link>
+          <span>|</span>
+          <Link href="/terms-of-service"><span className="text-blue-500 cursor-pointer">Terms</span></Link>
+        </div>
       </div>
 
     </div>
