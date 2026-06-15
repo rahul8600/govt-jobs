@@ -307,6 +307,11 @@ export function serveStatic(app: Express) {
       }
 
       // 3. Category pages
+      // /about -> /about-us redirect
+      if (urlPath === '/about') {
+        return res.redirect(301, '/about-us');
+      }
+
       // Handle static info pages with full SSR
       const infoPage = INFO_PAGES[urlPath];
       if (infoPage) {
