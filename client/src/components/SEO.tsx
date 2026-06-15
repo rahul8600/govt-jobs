@@ -130,7 +130,7 @@ export function useSEO({ title, description, keywords, canonical, type = 'websit
           industry: 'Government',
           educationRequirements: {
             '@type': 'EducationalOccupationalCredential',
-            credentialCategory: job.qualification || 'Bachelor Degree',
+            credentialCategory: getEduCategory(job.qualification || job.eligibilityDetails || ''),
           },
           qualifications: job.qualification || job.eligibilityDetails || undefined,
           applicantLocationRequirements: {
@@ -189,6 +189,19 @@ export function useSEO({ title, description, keywords, canonical, type = 'websit
       document.querySelector('script[data-schema="breadcrumb"]')?.remove();
     };
   }, [title, description, keywords, canonical, type, job]);
+}
+
+
+function getEduCategory(q: string): string {
+  const ql = (q || '').toLowerCase();
+  if (ql.includes('10th') || ql.includes('matriculation') || ql.includes('sslc')) return 'secondary school credential';
+  if (ql.includes('12th') || ql.includes('intermediate') || ql.includes('higher secondary')) return 'high school diploma';
+  if (ql.includes('iti') || ql.includes('diploma')) return 'vocational training';
+  if (ql.includes('b.tech') || ql.includes('be ') || ql.includes('engineering')) return 'bachelor degree';
+  if (ql.includes('mbbs') || ql.includes('bds')) return 'bachelor degree';
+  if (ql.includes('m.tech') || ql.includes('mba') || ql.includes('post grad') || ql.includes('master')) return 'postgraduate degree';
+  if (ql.includes('graduation') || ql.includes('graduate') || ql.includes('bachelor') || ql.includes('b.sc') || ql.includes('b.com') || ql.includes('b.a')) return 'bachelor degree';
+  return 'bachelor degree';
 }
 
 function parseIndianDate(dateStr: string): string | undefined {
