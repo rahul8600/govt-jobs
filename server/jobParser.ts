@@ -372,7 +372,29 @@ export function parseJobNotification(rawText: string): ParsedJob {
   const links = extractLinks(rawText);
 
   const totalPosts = vacancyDetails.reduce((sum, v) => sum + (parseInt(v.totalPost) || 0), 0);
-  const shortInfo = `${department} has released notification for ${title}. ${totalPosts > 0 ? `Total ${totalPosts} posts available.` : ''} ${importantDates.find(d => d.label.includes('Last'))?.date ? `Last date to apply: ${importantDates.find(d => d.label.includes('Last'))?.date}.` : ''}`.trim();
+  
+  // Generate rich shortInfo for SEO and AdSense content quality
+  const lastDateInfo = importantDates.find(d => d.label.toLowerCase().includes('last'));
+  const examDateInfo = importantDates.find(d => d.label.toLowerCase().includes('exam'));
+  const stateInfo = state ? `${state} ` : '';
+  
+  let shortInfo = `${department} ne ${title} ke liye official notification jari kar di hai. `;
+  if (totalPosts > 0) {
+    shortInfo += `Is bharti mein total ${totalPosts} posts hain. `;
+  }
+  if (qualification) {
+    shortInfo += `Eligibility: ${qualification.slice(0, 100)}. `;
+  }
+  if (lastDateInfo) {
+    shortInfo += `Apply karne ki last date ${lastDateInfo.date} hai. `;
+  }
+  if (examDateInfo) {
+    shortInfo += `Exam date: ${examDateInfo.date}. `;
+  }
+  const selText = selectionProcess.length > 0 ? `Selection process mein ${selectionProcess.slice(0, 3).join(', ')} shamil hai. ` : '';
+  shortInfo += selText;
+  shortInfo += `Apply karne ke liye official website par jayein. Age limit, application fee aur complete details ke liye official notification zaroor padhen. SarkariJobSeva.com par is bharti ki latest updates milti rahegi.`;
+  shortInfo = shortInfo.trim();
 
   return {
     title,
