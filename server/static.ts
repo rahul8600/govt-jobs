@@ -1,3 +1,15 @@
+const slugRedirects: Record<string, string> = {
+  "/job/348": "/job/upsc-geo-scientist-mains-admit-card-admit-card-2026-download-link-exam-date-348",
+  "/job/340": "/job/mppsc-ses-state-engineering-services-answer-key-answer-key-2026-download-pdf-340",
+  "/job/341": "/job/rpsc-si-platoon-commander-answer-key-answer-key-2026-download-pdf-objection-cut-341",
+  "/job/342": "/job/bpsc-special-school-teacher-final-answer-key-answer-key-2026-download-pdf-342",
+  "/job/343": "/job/bpsc-aso-assistant-section-officer-final-answer-key-answer-key-2026-download-343",
+  "/job/344": "/job/rrb-ntpc-graduate-level-cbt-ii-exam-date-admit-card-2026-download-link-exam-344",
+  "/job/345": "/job/nta-neet-ug-re-exam-city-details-admit-card-2026-download-link-exam-date-hall-345",
+  "/job/346": "/job/nta-ugc-net-june-exam-city-details-admit-card-2026-download-link-exam-date-hall-346",
+  "/job/347": "/job/upsc-engineering-services-ese-mains-admit-card-admit-card-2026-download-link-347",
+};
+
 import express, { type Express, type Request, type Response } from "express";
 import fs from "fs";
 import path from "path";
@@ -197,6 +209,273 @@ function getHowToGuide(type: string): string {
 }
 
 // ===== FULL RICH HTML GENERATOR FOR BOTS =====
+
+// ===== UNIQUE CONTENT GENERATOR =====
+function getUniquePageContent(job: any): string {
+  const dept = (job.department || '').toLowerCase();
+  const type = (job.type || '').toLowerCase();
+  const state = (job.state || '').toLowerCase();
+  const qual = (job.qualification || '').toLowerCase();
+  const title = (job.title || '');
+
+  // Department specific taiyari tips
+  let taiyariContent = '';
+
+  if (dept.includes('ssc') || dept.includes('staff selection')) {
+    taiyariContent = `
+    <h2>${esc(title)} – Taiyari Tips 2026</h2>
+    <p>SSC exams ki taiyari ke liye yeh subjects sabse important hain. Agar aap abhi se sahi strategy banao toh selection pakka ho sakta hai:</p>
+    <ul>
+      <li><strong>Quantitative Aptitude:</strong> Number System, Percentage, Ratio, Time-Work, Algebra, Geometry — Rakesh Yadav ki book best hai</li>
+      <li><strong>General Intelligence & Reasoning:</strong> Analogy, Series, Coding-Decoding, Blood Relations, Direction Sense — roz 30-40 questions practice karo</li>
+      <li><strong>English Language:</strong> Reading Comprehension, Error Detection, Fill in the Blanks, Cloze Test — SP Bakshi ya Wren & Martin follow karo</li>
+      <li><strong>General Awareness:</strong> Current Affairs (last 6 months), Static GK, Science, History, Geography — monthly magazine zaroor padho</li>
+    </ul>
+    <p><strong>Strategy:</strong> Pehle previous year papers solve karo — SSC ke papers mein bahut repetition hoti hai. Tier-1 mein speed important hai — 100 questions 60 minutes mein. Mock tests roz do.</p>`;
+  } else if (dept.includes('railway') || dept.includes('rrb') || title.toLowerCase().includes('railway') || title.toLowerCase().includes('rrb')) {
+    taiyariContent = `
+    <h2>${esc(title)} – Taiyari Tips 2026</h2>
+    <p>Railway exams ki preparation ke liye yeh points dhyan mein rakho. RRB exams mein competition bahut zyada hota hai lekin pattern samajhne ke baad selection mushkil nahi:</p>
+    <ul>
+      <li><strong>Mathematics:</strong> BODMAS, Fractions, LCM-HCF, Percentage, Profit-Loss, Simple & Compound Interest, Time-Distance — Class 10 level ke questions aate hain</li>
+      <li><strong>General Intelligence:</strong> Analogy, Classification, Coding-Decoding, Mathematical Operations, Venn Diagrams, Syllogism</li>
+      <li><strong>General Science:</strong> Physics, Chemistry, Biology — NCERT Class 9 aur 10 se padho — sabse important source hai</li>
+      <li><strong>General Awareness:</strong> Railway related GK, Current Affairs, Indian History, Geography — Railway Minister ka naam, Railway zones sabhi yaad karo</li>
+    </ul>
+    <p><strong>Physical Test (PET) tip:</strong> Railway ALP, Technician aur Group D mein physical test hota hai. Male ke liye 1000 meter 4 minutes 15 seconds mein — abhi se running shuru karo!</p>`;
+  } else if (dept.includes('police') || title.toLowerCase().includes('police') || title.toLowerCase().includes('constable') || dept.includes('cisf') || dept.includes('bsf') || dept.includes('crpf')) {
+    taiyariContent = `
+    <h2>${esc(title)} – Taiyari Tips Aur Physical Preparation 2026</h2>
+    <p>Police bharti mein written exam ke saath physical test bhi hota hai — dono ki taiyari saath mein zaroor karo:</p>
+    <ul>
+      <li><strong>Written Exam:</strong> Hindi Grammar, General Knowledge, Reasoning, Basic Mathematics — Class 10 level ke questions aate hain</li>
+      <li><strong>GK ke liye:</strong> State ka itihas, bhugol, rajniti — khaas tor par apne state ki jankari bahut zaroori hai</li>
+      <li><strong>Physical Fitness:</strong> Running roz karo — Male ke liye generally 1.6km 6 minutes mein, Female 1km 4 minutes mein</li>
+      <li><strong>Height & Chest:</strong> Male ke liye minimum 167-168 cm height, chest 79-84 cm — inhale-exhale practice karo</li>
+      <li><strong>Mental Preparation:</strong> Police duty demanding hoti hai — physical aur mental dono fitness zaroori hai</li>
+    </ul>
+    <p><strong>Important:</strong> Police mein Character Verification bhi hoti hai — kisi bhi criminal case mein nahi hona chahiye. Police bharti ke baad training period mein bhi mehnat zaroori hai.</p>`;
+  } else if (dept.includes('upsc') || dept.includes('civil service') || title.toLowerCase().includes('ias') || title.toLowerCase().includes('ips') || title.toLowerCase().includes('nda') || title.toLowerCase().includes('cds')) {
+    taiyariContent = `
+    <h2>${esc(title)} – Taiyari Strategy 2026</h2>
+    <p>UPSC exams India ki sabse prestigious aur mushkil parikshayein hain. Sahi planning aur dedicated study se success milti hai:</p>
+    <ul>
+      <li><strong>NCERT Foundation:</strong> Class 6 se 12 tak ki NCERT books pehle complete karo — History, Geography, Polity, Economics, Science</li>
+      <li><strong>Standard Books:</strong> Laxmikanth (Polity), Bipin Chandra (History), Shankar IAS (Environment), Spectrum (Modern History)</li>
+      <li><strong>Current Affairs:</strong> The Hindu ya Indian Express daily padho — minimum 1-2 ghante news reading zaroori hai</li>
+      <li><strong>Answer Writing:</strong> UPSC Mains ke liye roz answer writing practice karo — 250 words ke answers structured tarike se likhne ki practice karo</li>
+      <li><strong>Optional Subject:</strong> Soch samajhkar choose karo — scoring subject chunna important hai</li>
+    </ul>
+    <p><strong>NDA ke liye:</strong> Mathematics aur English pe zyada focus karo. Physical fitness bhi maintain karo — SSB interview mein personality assessment hota hai.</p>`;
+  } else if (dept.includes('bank') || dept.includes('ibps') || dept.includes('sbi') || dept.includes('rbi') || title.toLowerCase().includes('bank')) {
+    taiyariContent = `
+    <h2>${esc(title)} – Bank Exam Taiyari Tips 2026</h2>
+    <p>Bank exams mein competition bahut hai lekin preparation sahi ho toh selection zaroor hoga. Bank jobs mein security ke saath achhi salary bhi milti hai:</p>
+    <ul>
+      <li><strong>Quantitative Aptitude:</strong> Data Interpretation sabse important — pie charts, bar graphs, tables roz practice karo. Simplification, Number Series, Quadratic Equations bhi important hain</li>
+      <li><strong>Reasoning Ability:</strong> Puzzle, Seating Arrangement, Syllogism, Coding-Decoding — bank exams mein yeh section scoring hai</li>
+      <li><strong>English Language:</strong> Reading Comprehension, Error Correction, Sentence Rearrangement — English strong karo</li>
+      <li><strong>General Awareness (Banking):</strong> Banking terms, RBI policies, current rates, Financial Awareness — Monthly Banking Awareness capsule zaroor padho</li>
+      <li><strong>Computer Knowledge:</strong> MS Office basics, Internet, Banking software — basic computer knowledge zaroori hai</li>
+    </ul>
+    <p><strong>Interview tip:</strong> Bank PO mein interview hota hai — dress formal raho, banking current affairs aur your state economy ke baare mein ready raho.</p>`;
+  } else if (dept.includes('teacher') || dept.includes('tet') || dept.includes('ctet') || dept.includes('rpsc') || dept.includes('kpsc') || title.toLowerCase().includes('teacher') || title.toLowerCase().includes('lecturer')) {
+    taiyariContent = `
+    <h2>${esc(title)} – Teacher Bharti Taiyari Guide 2026</h2>
+    <p>Teacher banna ek noble profession hai. Is bharti mein select hone ke liye in points pe focus karo:</p>
+    <ul>
+      <li><strong>Child Development & Pedagogy:</strong> TET exams mein yeh section compulsory hota hai — Jean Piaget, Vygotsky, Bloom's Taxonomy yaad karo</li>
+      <li><strong>Language (Hindi/English):</strong> Grammar, Comprehension, Writing Skills — apni teaching language strong karo</li>
+      <li><strong>Subject Knowledge:</strong> Jis subject mein teaching karni hai use NCERT se padho — question paper mein school level ke questions aate hain</li>
+      <li><strong>Environmental Studies:</strong> Primary level ke liye EVS important hai — Nature, Environment, Social Sciences sab cover karo</li>
+      <li><strong>Teaching Methodology:</strong> How to teach concepts — practical examples, activities, teaching aids ke baare mein padho</li>
+    </ul>
+    <p><strong>Remember:</strong> Teacher hone ke saath patience aur communication skills bhi develop karo — interview ya demo lesson mein yeh check kiya jaata hai.</p>`;
+  } else if (type === 'admit-card') {
+    taiyariContent = `
+    <h2>${esc(title)} – Admit Card Download Kaise Karein</h2>
+    <p>Admit card download karne se pehle aur exam ke din yeh zaroori baatein dhyan mein rakho:</p>
+    <ul>
+      <li><strong>Step 1:</strong> Official website par jayein (upar diye link se)</li>
+      <li><strong>Step 2:</strong> Admit Card / Hall Ticket section mein jayein</li>
+      <li><strong>Step 3:</strong> Registration Number / Roll Number aur Date of Birth enter karein</li>
+      <li><strong>Step 4:</strong> Admit Card PDF download karein aur A4 size mein print karein</li>
+      <li><strong>Step 5:</strong> Colored photo ek print pe paste karein (agar required ho)</li>
+    </ul>
+    <h3>Exam Center Par Kya Leke Jayein?</h3>
+    <ul>
+      <li>✅ Original Admit Card print (2 copies leke jayein)</li>
+      <li>✅ Original Photo ID Proof — Aadhar Card, Voter ID, Passport, Driving License</li>
+      <li>✅ Passport size photographs (2-4 extra)</li>
+      <li>✅ Black/Blue ballpoint pen</li>
+      <li>❌ Mobile phone, electronic devices, calculator, wallet — exam hall mein allowed nahi</li>
+    </ul>
+    <p><strong>Important:</strong> Exam center par 30 minutes pehle pahunchein. Admit card mein likhe reporting time ko strictly follow karein.</p>`;
+  } else if (type === 'result') {
+    taiyariContent = `
+    <h2>${esc(title)} – Result Check Kaise Karein</h2>
+    <p>Result dekhne ke baad yeh steps follow karein:</p>
+    <ul>
+      <li><strong>Result Check:</strong> Upar diye direct link se ya official website par jayein</li>
+      <li><strong>Login:</strong> Roll Number / Registration Number aur Date of Birth enter karein</li>
+      <li><strong>Download:</strong> Result PDF ya merit list download karein aur save karein</li>
+      <li><strong>Cut Off:</strong> Official cut off marks zaroor check karein — category wise alag hoti hai</li>
+    </ul>
+    <h3>Result ke Baad Kya Karein?</h3>
+    <ul>
+      <li>✅ <strong>Selected hain toh:</strong> Document Verification / Medical ki taiyari shuru karein</li>
+      <li>✅ <strong>Waiting list mein hain toh:</strong> Official notification follow karte rahein</li>
+      <li>✅ <strong>Qualify nahi kiya toh:</strong> Galtiyan analyze karo aur agli preparation mein sudhar karo</li>
+      <li>📋 <strong>Documents ready rakho:</strong> Marksheets, Caste Certificate, Domicile, Photo ID, Passport Photos</li>
+    </ul>
+    <p><strong>SarkariJobSeva tip:</strong> Result ka printout aur screenshot zaroor save karo — future reference ke liye kaam aata hai. Official website par bhi cross-verify zaroor karo.</p>`;
+  } else if (type === 'answer-key') {
+    taiyariContent = `
+    <h2>${esc(title)} – Answer Key Se Apna Score Kaise Calculate Karein</h2>
+    <p>Official answer key aane ke baad in steps se apna estimated score calculate karo:</p>
+    <ul>
+      <li><strong>Step 1:</strong> Answer key PDF download karo (upar diya link)</li>
+      <li><strong>Step 2:</strong> Apne question paper se match karo — Set A/B/C/D dhyan se dekho</li>
+      <li><strong>Step 3:</strong> Sahi jawaabon ko count karo</li>
+      <li><strong>Step 4:</strong> Negative marking hai toh minus karo (aamtaur par ¼ ya ⅓ mark)</li>
+      <li><strong>Step 5:</strong> Previous year cut off se compare karo</li>
+    </ul>
+    <h3>Objection Kaise Karen Agar Answer Galat Lage?</h3>
+    <ul>
+      <li>Official website par "Answer Key Challenge" section mein jayein</li>
+      <li>Galat lagne wale question ka number aur reason likho</li>
+      <li>Evidence ke tor par reference books ya official source ka link do</li>
+      <li>Objection fee (agar applicable) pay karo</li>
+      <li>Deadline se pehle submit karo — late objection accepted nahi hota</li>
+    </ul>
+    <p><strong>Note:</strong> Final answer key aur result official website par hi valid maana jaata hai. Kisi bhi coaching ya unofficial source ki answer key blindly mat mano.</p>`;
+  } else if (type === 'admission') {
+    taiyariContent = `
+    <h2>${esc(title)} – Admission Form Kaise Bharein</h2>
+    <p>Admission form fill karte waqt in baaton ka dhyan rakho taaki form reject na ho:</p>
+    <ul>
+      <li><strong>Documents Ready Rakho:</strong> 10th, 12th marksheet, graduation certificate (agar applicable), photo, signature, ID proof, caste certificate</li>
+      <li><strong>Photo Specifications:</strong> Recent passport size photo — white background, clear face, 20KB-200KB JPG format</li>
+      <li><strong>Signature:</strong> White paper pe black pen se karo, scan karo ya smartphone se photo khicho</li>
+      <li><strong>Details Accuracy:</strong> Name exactly board certificate ke anusaar likho — spelling mistake se rejection ho sakti hai</li>
+      <li><strong>Fee Payment:</strong> UPI ya Net Banking se karo — payment confirmation screenshot save karo</li>
+    </ul>
+    <h3>Entrance Exam Taiyari Tips:</h3>
+    <ul>
+      <li>Syllabus download karo aur topic-wise study plan banao</li>
+      <li>Previous year papers solve karo — pattern samajhna zaroori hai</li>
+      <li>Mock tests weekly do — time management practice karo</li>
+      <li>Weak subjects pe extra time do</li>
+    </ul>
+    <p><strong>Important:</strong> Admission ke liye sirf official portal use karo. Kisi bhi agent ya third-party site ko fee mat do.</p>`;
+  } else {
+    taiyariContent = `
+    <h2>${esc(title)} – Kaise Karein Taiyari?</h2>
+    <p>Is sarkari bharti ki taiyari ke liye yeh general tips follow karo:</p>
+    <ul>
+      <li><strong>Syllabus:</strong> Pehle official syllabus download karo aur topic-wise study plan banao</li>
+      <li><strong>Previous Papers:</strong> Pichle 5-10 saal ke question papers solve karo — pattern samajhna zaroori hai</li>
+      <li><strong>Mock Tests:</strong> Weekly mock tests do — time management aur accuracy dono improve hogi</li>
+      <li><strong>Current Affairs:</strong> Roz newspaper padho ya monthly current affairs magazine follow karo</li>
+      <li><strong>Revision:</strong> Jo padha hai use regularly revise karo — sirf nayi cheez padhna kafi nahi</li>
+    </ul>
+    <p>SarkariJobSeva.com par is bharti se judi saari latest updates milti rahegi — notifications, admit card, result sab ek jagah!</p>`;
+  }
+
+  // State specific content
+  let stateContent = '';
+  if (state.includes('uttar pradesh') || state.includes('up')) {
+    stateContent = `
+    <h2>Uttar Pradesh Ke Candidates Ke Liye Khaas Jankari</h2>
+    <p>UP mein sarkari naukri ka sapna dekhne wale lakhon yuvaon ke liye yeh bharti ek suhana mauka hai. UP mein sabse zyada government jobs hain — railway, police, teaching, state PSC sab mein UP ke candidates bahut sangharsh karte hain aur select bhi hote hain.</p>
+    <ul>
+      <li><strong>Domicile:</strong> UP ke permanent residents ko priority milti hai — UP domicile certificate zaroori hai</li>
+      <li><strong>OBC/SC/ST:</strong> UP mein reserved category candidates ko fee aur age dono mein relaxation milti hai</li>
+      <li><strong>EWS:</strong> Economically Weaker Section certificate Tehsildar se banwao — bahut helpful hai</li>
+      <li><strong>Language:</strong> UP ke exams mein Hindi medium students ko advantage hota hai</li>
+    </ul>`;
+  } else if (state.includes('bihar')) {
+    stateContent = `
+    <h2>Bihar Ke Candidates Ke Liye Khaas Jankari</h2>
+    <p>Bihar ke lakho yuva sarkari naukri ke liye mehnat karte hain. BPSC, BSSC, Bihar Police, Bihar Teacher — yeh sab Bihar ke students ke liye bade mauke hain. Bihar se IAS, IPS aur bade officers bhi nikle hain — hausla rakho!</p>
+    <ul>
+      <li><strong>Domicile:</strong> Bihar permanent resident certificate zaroori hai — Block/Tehsil se banwao</li>
+      <li><strong>BPSC:</strong> Bihar mein BPSC sabse prestigious exam hai — SDO, DSP, BDO jaisi posts milti hain</li>
+      <li><strong>Bihar Police:</strong> CSBC ke through bharti hoti hai — physical test compulsory hai</li>
+      <li><strong>Language:</strong> Bihar ke exams Hindi mein hote hain — Hindi grammar strong karo</li>
+    </ul>`;
+  } else if (state.includes('rajasthan')) {
+    stateContent = `
+    <h2>Rajasthan Ke Candidates Ke Liye Khaas Jankari</h2>
+    <p>Rajasthan mein RPSC, RSMSSB aur Rajasthan Police ke through hazaron sarkari jobs nikalti hain. Rajasthan ke students ki mehnat aur dedication kabile tarif hai:</p>
+    <ul>
+      <li><strong>RPSC:</strong> Rajasthan Public Service Commission se RAS, RPS, SI, School Lecturer ki bhartiyan nikalti hain</li>
+      <li><strong>RSMSSB:</strong> Group C posts ke liye — Livestock Assistant, Constable, Junior Engineer</li>
+      <li><strong>Language:</strong> Rajasthan ke exams mein Rajasthan ka itihas, bhugol aur sanskriti important hai</li>
+      <li><strong>Domicile:</strong> Rajasthan permanent resident certificate required hota hai</li>
+    </ul>`;
+  } else if (state.includes('madhya pradesh') || state.includes('mp')) {
+    stateContent = `
+    <h2>Madhya Pradesh Ke Candidates Ke Liye Khaas Jankari</h2>
+    <p>MP mein MPPSC, MPESB, MP Police ke through bahut saari sarkari jobs aati hain. MP ke students ke liye yeh khaas tips:</p>
+    <ul>
+      <li><strong>MPPSC:</strong> MP State Civil Services ke liye — DSP, Deputy Collector jaisi posts</li>
+      <li><strong>MPESB:</strong> Group 2 aur 3 posts ke liye — Teacher, Nurse, Patwari</li>
+      <li><strong>CPCT:</strong> MP government jobs ke liye Computer Proficiency Certificate zaroori hota hai — pehle se de lo</li>
+      <li><strong>Language:</strong> MP ke exams mein MP ka itihas, geography important hai</li>
+    </ul>`;
+  } else if (state === 'all india' || state.includes('all india') || state === '') {
+    stateContent = `
+    <h2>All India Candidates Ke Liye Khaas Tips</h2>
+    <p>Yeh bharti puri India ke candidates ke liye open hai — kisi bhi state se apply kar sakte hain. Kuch important baatein:</p>
+    <ul>
+      <li><strong>Age proof:</strong> 10th certificate sahi age proof hai — board certificate use karo</li>
+      <li><strong>Category certificate:</strong> SC/ST/OBC/EWS certificate state government se issue hona chahiye</li>
+      <li><strong>Domicile:</strong> Kuch posts mein state domicile nahi chahiye — notification check karo</li>
+      <li><strong>Language:</strong> All India exams mein English aur Hindi dono options hote hain zyaatar</li>
+      <li><strong>Multiple states:</strong> Aap apni preferred posting location choose kar sakte hain (agar option ho)</li>
+    </ul>`;
+  }
+
+  // Qualification specific tips
+  let qualContent = '';
+  if (qual.includes('10th') || qual.includes('matric')) {
+    qualContent = `
+    <h2>10th Pass Ke Liye Sarkari Job Tips</h2>
+    <p>10th pass hone ke baad bhi bahut saari sarkari jobs available hain — Army Agniveer, Railway Group D, SSC MTS, Police Constable aur kai aur. Agar abhi 12th kar rahe hain toh bhi in forms ke liye eligible ho sakte hain:</p>
+    <ul>
+      <li>ITI ya vocational course karo — Railway aur technical jobs mein advantage milta hai</li>
+      <li>Physical fitness maintain karo — zyaatar 10th level jobs mein physical test hota hai</li>
+      <li>Math aur Reasoning strong karo — basic level hai lekin speed aur accuracy zaroori hai</li>
+      <li>Hindi/English basic grammar — written test mein kaam aayegi</li>
+    </ul>`;
+  } else if (qual.includes('12th') || qual.includes('intermediate')) {
+    qualContent = `
+    <h2>12th Pass Ke Liye Best Sarkari Job Strategy</h2>
+    <p>12th pass candidates ke liye bahut saare options hain — SSC CHSL, Railway ALP/Technician, NDA, Police, Airforce Agniveer. Ek saath multiple forms bhar sakte ho:</p>
+    <ul>
+      <li>SSC CHSL ka form zaroor bharo — LDC/DEO posts milti hain</li>
+      <li>NDA ke liye — 12th ke saath apply karo, interview aur SSB clear karo</li>
+      <li>Agniveer — Army, Navy, Airforce teeno ke forms bharo</li>
+      <li>State level jobs — apne state ki PSC aur SSC ka form bhi do</li>
+    </ul>`;
+  } else if (qual.includes('graduation') || qual.includes('graduate') || qual.includes('bachelor')) {
+    qualContent = `
+    <h2>Graduate Candidates Ke Liye Premium Sarkari Job Options</h2>
+    <p>Graduation ke baad sarkari job ke best options — SSC CGL, UPSC, Bank PO, State PSC. Yeh posts zyada salary aur respect deti hain:</p>
+    <ul>
+      <li><strong>SSC CGL:</strong> Income Tax Inspector, CBI Sub Inspector — ₹75,000+ salary</li>
+      <li><strong>UPSC CSE:</strong> IAS, IPS — highest prestige aur power</li>
+      <li><strong>Bank PO:</strong> IBPS PO, SBI PO — good salary aur career growth</li>
+      <li><strong>State PSC:</strong> SDO, DSP, BDO — apne state mein posting</li>
+    </ul>
+    <p>Multiple exams ek saath prepare karo — SSC CGL aur Bank PO ka syllabus overlap hota hai.</p>`;
+  }
+
+  return taiyariContent + stateContent + qualContent;
+}
+// ===== END UNIQUE CONTENT GENERATOR =====
+
 function generateJobHTML(job: any, canonical: string): string {
   const jobTitle = esc(job.title || '');
   const baseTitle = job.title && job.title.length > 50
@@ -489,10 +768,24 @@ function generateJobHTML(job: any, canonical: string): string {
       </div>
     </div>`;
 
+  // Unique content - taiyari tips, state specific, qualification specific
+  bodyContent += getUniquePageContent(job);
+
+  // SarkariJobSeva About Section
+  bodyContent += `
+    <h2>SarkariJobSeva.com Ke Baare Mein</h2>
+    <p>SarkariJobSeva.com India ka ek vishwasaniya sarkari naukri information portal hai. Hamare portal par roz nayi sarkari bhartiyon ki jankari update hoti hai — Railway, SSC, Police, Bank, Teacher, Army, UPSC, State PSC sab kuch ek jagah milta hai. Hamare readers ki madad ke liye hum sirf verified aur official sources se information share karte hain. Koi bhi application ya fee ke liye hamesha official website use karein.</p>
+    <ul>
+      <li>📅 Daily updated — roz nayi bhartiyan</li>
+      <li>✅ Verified information — official sources se</li>
+      <li>📱 Mobile friendly — phone se aasaani se dekho</li>
+      <li>🔔 Free job alerts — koi charge nahi</li>
+    </ul>`;
+
   // Disclaimer
   bodyContent += `
     <h2>Disclaimer</h2>
-    <p>Is page par di gayi jankari kewal informational purposes ke liye hai. Apply karne se pehle official notification zaroor padhen aur official website se verify karein. SarkariJobSeva.com kisi bhi galti ke liye zimmedar nahi hai.</p>`;
+    <p>Is page par di gayi jankari kewal informational purposes ke liye hai. Apply karne se pehle official notification zaroor padhen aur official website se verify karein. SarkariJobSeva.com kisi bhi galti ke liye zimmedar nahi hai. Yeh website kisi bhi government department, ministry ya organization se affiliated nahi hai.</p>`;
 
   return `<!DOCTYPE html>
 <html lang="hi-IN">
