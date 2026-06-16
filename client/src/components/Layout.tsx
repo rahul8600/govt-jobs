@@ -2,6 +2,7 @@ import { Link, useLocation, useRoute } from "wouter";
 import { useLang } from "@/lib/LanguageContext";
 import { Home, Briefcase, FileText, CheckSquare, GraduationCap, Search, Calculator, X } from "lucide-react";
 import { useState } from "react";
+import { CookieConsent } from "./CookieConsent";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location, navigate] = useLocation();
@@ -305,6 +306,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <Link href="/terms-of-service"><span className="text-blue-500 cursor-pointer">Terms</span></Link>
         </div>
       </div>
+
+      <CookieConsent />
 
     </div>
   );
