@@ -368,6 +368,147 @@ export default function Home() {
       {/* FAQ Section — SEO + AdSense content */}
       <FAQSection />
 
+
+      {/* State Wise Jobs Section */}
+      <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 md:p-8">
+        <div className="flex items-center gap-2 mb-5">
+          <span className="w-1 h-5 bg-blue-600 rounded-full" />
+          <h2 className="font-black text-slate-800 text-base uppercase tracking-wide">🗺️ State Wise Sarkari Jobs 2026</h2>
+        </div>
+        <p className="text-slate-600 text-sm leading-relaxed mb-4">
+          भारत के हर राज्य में सरकारी नौकरियां निकलती हैं। SarkariJobSeva पर आपको Uttar Pradesh, Bihar, Rajasthan, Madhya Pradesh, Delhi, Jharkhand, Haryana, Punjab समेत सभी राज्यों की latest vacancy की जानकारी मिलती है। चाहे UP Police हो, BPSC हो, RPSC हो या MPESB — सभी राज्यों की भर्तियां एक ही जगह।
+        </p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { state: "Uttar Pradesh", exams: "UPSSSC, UPPSC, UP Police, UP TET", color: "bg-blue-50 border-blue-200 text-blue-800" },
+            { state: "Bihar", exams: "BPSC, BSSC, CSBC, Bihar Police", color: "bg-green-50 border-green-200 text-green-800" },
+            { state: "Rajasthan", exams: "RPSC, RSSB, Rajasthan Police", color: "bg-orange-50 border-orange-200 text-orange-800" },
+            { state: "Madhya Pradesh", exams: "MPPSC, MPESB, MP Police", color: "bg-purple-50 border-purple-200 text-purple-800" },
+            { state: "Delhi", exams: "DSSSB, Delhi Police, DDA", color: "bg-red-50 border-red-200 text-red-800" },
+            { state: "Jharkhand", exams: "JPSC, JSSC, Jharkhand Police", color: "bg-yellow-50 border-yellow-200 text-yellow-800" },
+            { state: "Haryana", exams: "HSSC, Haryana Police, HPSC", color: "bg-teal-50 border-teal-200 text-teal-800" },
+            { state: "Uttarakhand", exams: "UKPSC, UKSSSC, UK Police", color: "bg-indigo-50 border-indigo-200 text-indigo-800" },
+          ].map(({ state, exams, color }) => (
+            <div key={state} className={`border rounded-xl p-3 ${color}`}>
+              <p className="font-bold text-sm">{state}</p>
+              <p className="text-xs mt-1 opacity-80">{exams}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Category Wise Jobs */}
+      <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 md:p-8">
+        <div className="flex items-center gap-2 mb-5">
+          <span className="w-1 h-5 bg-blue-600 rounded-full" />
+          <h2 className="font-black text-slate-800 text-base uppercase tracking-wide">📋 Category Wise Sarkari Naukri 2026</h2>
+        </div>
+        <p className="text-slate-600 text-sm leading-relaxed mb-4">
+          अपनी योग्यता के अनुसार सरकारी नौकरी ढूंढें। 10वीं पास से लेकर Post Graduate तक — हर category के लिए government jobs available हैं।
+        </p>
+        <div className="space-y-3">
+          {[
+            { cat: "10वीं Pass Jobs", desc: "Railway Group D, SSC GD, SSC MTS, Army Soldier GD, UP Police Constable, Bihar Police Constable, Anganwadi Worker, Home Guard, Peon, Chowkidar, Fire Fighter — इन सभी posts के लिए 10th pass काफी है।", icon: "🎓" },
+            { cat: "12वीं Pass Jobs", desc: "SSC CHSL, Railway ALP, Railway Technician, Bank Clerk, Army Clerk, NDA, Police Sub Inspector SI, SSC Stenographer, Postal Assistant — 12वीं पास candidates के लिए बेहतरीन अवसर।", icon: "📚" },
+            { cat: "Graduation Jobs", desc: "SSC CGL, UPSC Civil Services IAS IPS IFS, IBPS PO, SBI PO, UPSSSC Lower PCS, State PSC, Defence Officer NDA CDS AFCAT, SSC CPO SI, Bank PO — Graduate candidates के लिए premium government jobs।", icon: "🏛️" },
+            { cat: "Engineering Jobs", desc: "GATE के through PSU jobs — ONGC, BHEL, NTPC, GAIL, IOCL। Railway JE, SSC JE, UPSC ESE, State PSC Engineering Services, CPWD JE — Engineering graduates के लिए शानदार career।", icon: "⚙️" },
+            { cat: "Teaching Jobs", desc: "CTET, State TET, BPSC TRE, KVS TGT PGT PRT, NVS Teacher, UP TGT PGT, REET, HTET, JHTET — Teaching career में stability और respect दोनों मिलते हैं।", icon: "👨‍🏫" },
+          ].map(({ cat, desc, icon }) => (
+            <div key={cat} className="flex gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
+              <span className="text-2xl flex-shrink-0">{icon}</span>
+              <div>
+                <p className="font-bold text-slate-800 text-sm">{cat}</p>
+                <p className="text-xs text-slate-600 mt-1 leading-relaxed">{desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Why Government Jobs */}
+      <section className="bg-gradient-to-br from-blue-700 to-blue-900 rounded-2xl p-6 md:p-8 text-white">
+        <div className="flex items-center gap-2 mb-5">
+          <span className="w-1 h-5 bg-white rounded-full" />
+          <h2 className="font-black text-white text-base uppercase tracking-wide">🏆 Sarkari Naukri क्यों करें?</h2>
+        </div>
+        <p className="text-blue-100 text-sm leading-relaxed mb-5">
+          भारत में सरकारी नौकरी सिर्फ एक job नहीं — यह एक सुरक्षित और सम्मानजनक जीवन की guarantee है। जानिए क्यों लाखों युवा सरकारी नौकरी को पहली priority देते हैं।
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[
+            { title: "Job Security", desc: "एक बार permanent government employee बनने के बाद retirement तक job guaranteed। Recession में भी कोई layoff नहीं।", icon: "🔒" },
+            { title: "Attractive Salary", desc: "7th Pay Commission के बाद सरकारी salary काफी बढ़ गई है। DA, HRA, TA के साथ in-hand salary private से कम नहीं।", icon: "💰" },
+            { title: "Pension & Benefits", desc: "Medical, LTC, Children Education Allowance, Government Quarter, Canteen, Pension — Private sector में यह सब कहां मिलता है?", icon: "🏥" },
+            { title: "Work-Life Balance", desc: "Fixed working hours — 9 to 5। Saturday-Sunday off। त्योहारों पर छुट्टी। Overtime pressure नहीं।", icon: "⚖️" },
+            { title: "Social Respect", desc: "Government officer या employee को समाज में अलग सम्मान मिलता है। IAS, IPS, Teacher, Doctor — सभी respected careers।", icon: "🎖️" },
+            { title: "Career Growth", desc: "Promotions के through Constable से Inspector, Teacher से Principal, JE से AE — career में आगे बढ़ने के अवसर हैं।", icon: "📈" },
+          ].map(({ title, desc, icon }) => (
+            <div key={title} className="bg-white/10 backdrop-blur rounded-xl p-4">
+              <p className="text-xl mb-2">{icon}</p>
+              <p className="font-bold text-white text-sm">{title}</p>
+              <p className="text-blue-100 text-xs mt-1 leading-relaxed">{desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Important Exams Guide */}
+      <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 md:p-8">
+        <div className="flex items-center gap-2 mb-5">
+          <span className="w-1 h-5 bg-blue-600 rounded-full" />
+          <h2 className="font-black text-slate-800 text-base uppercase tracking-wide">📝 Important Sarkari Exams 2026</h2>
+        </div>
+        <p className="text-slate-600 text-sm leading-relaxed mb-4">
+          भारत में हर साल सैकड़ों सरकारी परीक्षाएं होती हैं। इनमें से कुछ सबसे महत्वपूर्ण exams की जानकारी नीचे दी गई है। इन exams की preparation करके आप अपना government job का सपना पूरा कर सकते हैं।
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {[
+            { exam: "UPSC Civil Services IAS IPS IFS", detail: "भारत की सबसे prestigious exam। Pre, Mains और Interview — तीन stages। 1000+ posts annually। Graduation required। Age 21-32 years।" },
+            { exam: "SSC CGL", detail: "Central Government Group-B और Group-C posts। Income Tax Inspector, ASO, Auditor, Accountant। Graduation required। Annual exam।" },
+            { exam: "IBPS PO & Clerk", detail: "Public Sector Banks में PO और Clerk की भर्ती। Pre, Mains और Interview। Graduation required। Salary ₹40,000 से ₹75,000।" },
+            { exam: "Railway RRB Group D & NTPC", detail: "Indian Railways में technical और non-technical posts। 10th से Graduation — सभी के लिए। लाखों vacancies annually।" },
+            { exam: "SSC GD Constable", detail: "BSF, CRPF, CISF, SSB, ITBP में Constable। 10th pass eligible। Physical test compulsory। Salary ₹22,000 से ₹30,000।" },
+            { exam: "NDA & CDS", detail: "Indian Army, Navy, Air Force में Officer। NDA के लिए 12th, CDS के लिए Graduation। SSB Interview compulsory।" },
+          ].map(({ exam, detail }) => (
+            <div key={exam} className="p-4 border border-slate-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition-colors">
+              <p className="font-bold text-slate-800 text-sm">{exam}</p>
+              <p className="text-xs text-slate-600 mt-1 leading-relaxed">{detail}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* How to Apply Guide */}
+      <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 md:p-8">
+        <div className="flex items-center gap-2 mb-5">
+          <span className="w-1 h-5 bg-blue-600 rounded-full" />
+          <h2 className="font-black text-slate-800 text-base uppercase tracking-wide">✅ Sarkari Job Apply कैसे करें?</h2>
+        </div>
+        <p className="text-slate-600 text-sm leading-relaxed mb-4">
+          सरकारी नौकरी के लिए Apply करना अब बहुत आसान है। Online application process को step by step समझें और कोई भी गलती न करें।
+        </p>
+        <div className="space-y-3">
+          {[
+            { step: "1", title: "Official Notification पढ़ें", desc: "पहले Official Notification download करें और ध्यान से पढ़ें। Eligibility, Age Limit, Application Fee, Important Dates — सब check करें।" },
+            { step: "2", title: "Documents तैयार रखें", desc: "10th, 12th, Graduation certificate, Photo, Signature, Aadhaar Card, Caste Certificate — सब scan करके ready रखें।" },
+            { step: "3", title: "Online Registration करें", desc: "Official Website पर New Registration करें। Valid Email और Mobile Number डालें। Password याद रखें।" },
+            { step: "4", title: "Application Form भरें", desc: "सभी details सही-सही भरें। Photo और Signature upload करें। Preview check करें।" },
+            { step: "5", title: "Application Fee Pay करें", desc: "Net Banking, UPI, Debit Card से fee pay करें। Fee receipt save करें।" },
+            { step: "6", title: "Confirmation Print करें", desc: "Final Submit के बाद Confirmation Page का Print निकाल लें। Application Number note करें।" },
+          ].map(({ step, title, desc }) => (
+            <div key={step} className="flex gap-4 items-start">
+              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-white font-black text-sm">{step}</span>
+              </div>
+              <div>
+                <p className="font-bold text-slate-800 text-sm">{title}</p>
+                <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">{desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* Bottom notice */}
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
         <p className="text-xs text-amber-800 font-medium">
