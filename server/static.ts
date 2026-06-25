@@ -982,7 +982,212 @@ const CATEGORY_MAP: Record<string, {title: string; desc: string; type?: string}>
 };
 
 // Info pages for static rendering
-const INFO_PAGES: Record<string, {title: string; html: string}> = {};
+const INFO_PAGES: Record<string, {title: string; html: string}> = {
+  '/privacy-policy': {
+    title: 'Privacy Policy',
+    html: `
+    <p><em>Last updated: June 2026</em></p>
+    <p>Welcome to <strong>SarkariJobSeva.com</strong>. We are committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you visit our website.</p>
+
+    <h2>1. Information We Collect</h2>
+    <p>We collect minimal data to improve your experience:</p>
+    <ul>
+      <li><strong>Usage Data:</strong> Pages visited, time spent, browser type, device type, and IP address — collected automatically via Google Analytics.</li>
+      <li><strong>Cookies:</strong> Small files stored on your device to remember preferences and serve relevant ads via Google AdSense.</li>
+      <li><strong>Contact Info:</strong> Only if you email us directly — we do NOT collect your name, phone, or email otherwise.</li>
+    </ul>
+
+    <h2>2. How We Use Your Information</h2>
+    <ul>
+      <li>To analyze website traffic and improve content quality</li>
+      <li>To serve relevant advertisements via Google AdSense</li>
+      <li>To respond to queries you send us via email</li>
+      <li>To ensure website security and prevent abuse</li>
+    </ul>
+
+    <h2>3. Google AdSense & Advertising</h2>
+    <p>We use <strong>Google AdSense</strong> to display advertisements on this website. Google may use cookies, including the DoubleClick cookie, to serve ads based on your prior visits to this or other websites.</p>
+    <p>You may opt out of personalized advertising by visiting <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener">Google Ads Settings</a>. For more details, see <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener">Google's advertising policies</a>.</p>
+
+    <h2>4. Google Analytics</h2>
+    <p>We use Google Analytics to understand how visitors use our site. Google Analytics collects data anonymously. You can opt out via the <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener">Google Analytics Opt-out Browser Add-on</a>.</p>
+
+    <h2>5. Cookies Policy</h2>
+    <p>We use cookies to enhance your browsing experience. You can disable cookies via your browser settings, though this may affect some website functionality. By continuing to use our site, you consent to our use of cookies.</p>
+
+    <h2>6. Third-Party Links</h2>
+    <p>Our website contains links to official government websites and external sources. We are not responsible for the privacy practices of these sites. We encourage you to review their privacy policies.</p>
+
+    <h2>7. Data Security</h2>
+    <p>We do NOT sell, trade, rent, or share your personal information with third parties. We implement reasonable security measures to protect your data.</p>
+
+    <h2>8. Children's Privacy</h2>
+    <p>SarkariJobSeva.com does not knowingly collect personal information from children under 13 years of age. If you believe your child has provided us with personal information, please contact us immediately.</p>
+
+    <h2>9. Changes to This Policy</h2>
+    <p>We may update this Privacy Policy from time to time. Changes will be posted on this page with an updated date. Continued use of our website after changes constitutes acceptance of the updated policy.</p>
+
+    <h2>10. Contact Us</h2>
+    <p>For questions about this Privacy Policy, please contact:<br>
+    📧 <a href="mailto:supportsarkarijobseva@gmail.com">supportsarkarijobseva@gmail.com</a><br>
+    🌐 <a href="https://sarkarijobseva.com">www.sarkarijobseva.com</a></p>
+    `
+  },
+  '/disclaimer': {
+    title: 'Disclaimer',
+    html: `
+    <p><em>Last updated: June 2026</em></p>
+
+    <h2>General Disclaimer</h2>
+    <p>The information provided on <strong>SarkariJobSeva.com</strong> is for general informational purposes only. While we strive to keep all information accurate and up-to-date, we make no representations or warranties of any kind, express or implied, about the completeness, accuracy, reliability, or suitability of the information.</p>
+
+    <h2>Not a Government Website</h2>
+    <p><strong>SarkariJobSeva.com is NOT a government website.</strong> It is a privately owned informational platform and is NOT affiliated, associated, authorized, endorsed by, or in any way officially connected with any Government authority, department, ministry, or organization of India including but not limited to SSC, UPSC, Railway Board, IBPS, SBI, or any State Government.</p>
+
+    <h2>Information Sources</h2>
+    <p>All job notifications, admit cards, results, answer keys, and admission information published on this website are collected from:</p>
+    <ul>
+      <li>Official government websites and portals</li>
+      <li>Employment News (Rozgar Samachar)</li>
+      <li>Publicly available official press releases</li>
+    </ul>
+    <p><strong>Users are strongly advised to verify all details from the official notification or official website before applying for any job or examination.</strong></p>
+
+    <h2>No Job Application Processing</h2>
+    <p>This website does NOT process any job applications. All application links redirect users to the respective official government websites only. We have no role in the selection process.</p>
+
+    <h2>No Fees Charged</h2>
+    <p>SarkariJobSeva.com does NOT charge any fee for providing job-related information. All information on this website is completely free. <strong>If anyone asks for money in our name, please report it immediately to us and to the authorities. Such persons are committing fraud.</strong></p>
+
+    <h2>Advertising Disclosure</h2>
+    <p>SarkariJobSeva.com participates in Google AdSense and displays advertisements. These ads are served by Google and governed by Google's advertising policies. The presence of an advertisement does not constitute our endorsement of the advertiser's products or services.</p>
+
+    <h2>Limitation of Liability</h2>
+    <p>SarkariJobSeva.com shall not be held responsible for any loss, damage, or inconvenience caused due to use of, or reliance on, the information provided on this website. Users rely on the information at their own risk.</p>
+
+    <h2>Contact</h2>
+    <p>📧 <a href="mailto:supportsarkarijobseva@gmail.com">supportsarkarijobseva@gmail.com</a></p>
+    `
+  },
+  '/about-us': {
+    title: 'About Us – SarkariJobSeva',
+    html: `
+    <h2>SarkariJobSeva.com के बारे में</h2>
+    <p><strong>SarkariJobSeva.com</strong> भारत का एक विश्वसनीय और निःशुल्क सरकारी नौकरी सूचना पोर्टल है। हमारा उद्देश्य देश के हर कोने में बैठे युवाओं तक सरकारी भर्तियों की सटीक, समय पर और सम्पूर्ण जानकारी पहुंचाना है — बिल्कुल मुफ्त।</p>
+
+    <p>भारत में हर साल करोड़ों युवा सरकारी नौकरी की तैयारी करते हैं। लेकिन सही जानकारी सही समय पर न मिलने के कारण कई बार अवसर चूक जाते हैं। SarkariJobSeva.com इसी समस्या का समाधान है।</p>
+
+    <h2>हम क्या प्रदान करते हैं</h2>
+    <ul>
+      <li><strong>Latest Sarkari Jobs:</strong> SSC, Railway RRB, UPSC, Bank PO/Clerk, Police, Army, Teacher, Anganwadi, State PSC — सभी सरकारी भर्तियां रोज़ अपडेट</li>
+      <li><strong>Admit Card:</strong> सभी परीक्षाओं के Admit Card का Direct Download Link</li>
+      <li><strong>Result:</strong> परीक्षाओं के परिणाम, Merit List और Cut-off Marks</li>
+      <li><strong>Answer Key:</strong> Official Answer Keys और Objection Form की जानकारी</li>
+      <li><strong>Admission:</strong> Government College Admission, B.Ed, ITI, Polytechnic की जानकारी</li>
+      <li><strong>Blog:</strong> Exam Tips, Syllabus, Preparation Strategy — Hindi में</li>
+    </ul>
+
+    <h2>हमारी विशेषताएं</h2>
+    <ul>
+      <li>✅ Daily Updated — हर दिन नई भर्तियां और Updates</li>
+      <li>✅ Verified Information — सिर्फ Official Sources से जानकारी</li>
+      <li>✅ 100% Free — कोई Registration नहीं, कोई Fee नहीं</li>
+      <li>✅ Mobile Friendly — Phone पर आसानी से देखें</li>
+      <li>✅ Hindi में जानकारी — आसान भाषा में पूरी जानकारी</li>
+      <li>✅ Fast & Reliable — तेज और भरोसेमंद वेबसाइट</li>
+    </ul>
+
+    <h2>हमारा मिशन</h2>
+    <p>हमारा मिशन है कि भारत का हर नौजवान — चाहे वो किसी भी राज्य में हो, चाहे गांव में हो या शहर में — सरकारी नौकरी की हर जानकारी समय पर पाए और अपने सपनों को पूरा कर सके।</p>
+
+    <h2>Important Notice</h2>
+    <p><strong>SarkariJobSeva.com एक निजी सूचना पोर्टल है।</strong> यह किसी भी सरकारी विभाग, मंत्रालय या संगठन से संबद्ध नहीं है। हम केवल जानकारी प्रदान करते हैं। आवेदन करने से पहले हमेशा Official Notification ध्यान से पढ़ें और Official Website से ही Apply करें।</p>
+    <p>हम किसी भी भर्ती प्रक्रिया में कोई शुल्क नहीं लेते। यदि कोई हमारे नाम पर पैसे मांगे तो वह Fraud है — तुरंत Report करें।</p>
+
+    <h2>संपर्क करें</h2>
+    <p>किसी भी जानकारी, सुझाव या शिकायत के लिए:<br>
+    📧 Email: <a href="mailto:supportsarkarijobseva@gmail.com">supportsarkarijobseva@gmail.com</a><br>
+    🌐 Website: <a href="https://sarkarijobseva.com">www.sarkarijobseva.com</a></p>
+    <p><em>Last updated: June 2026</em></p>
+    `
+  },
+  '/contact': {
+    title: 'Contact Us',
+    html: `
+    <h2>Get In Touch With SarkariJobSeva</h2>
+    <p>We'd love to hear from you! Whether you have questions, found incorrect information, or want to suggest improvements — please reach out to us.</p>
+
+    <h2>📧 Email Support</h2>
+    <p>For all queries, corrections, and feedback:</p>
+    <p><strong><a href="mailto:supportsarkarijobseva@gmail.com">supportsarkarijobseva@gmail.com</a></strong></p>
+    <p>We typically respond within 24–48 working hours.</p>
+
+    <h2>📋 Report Incorrect Information</h2>
+    <p>If you find any incorrect, outdated, or misleading information on our website, please email us immediately with:</p>
+    <ul>
+      <li>The URL of the page with incorrect information</li>
+      <li>What information is incorrect</li>
+      <li>The correct information with official source link</li>
+    </ul>
+    <p>We will verify and correct it as soon as possible. Accuracy is our top priority.</p>
+
+    <h2>💡 Suggest a Job / Vacancy</h2>
+    <p>Know of a government job vacancy that is not listed on our website? Please email us the official notification link and we will add it.</p>
+
+    <h2>⚠️ Report Fraud</h2>
+    <p>SarkariJobSeva.com never charges any fee. If anyone contacts you claiming to be from SarkariJobSeva and asks for money — it is a fraud. Please report it to us and to your local police immediately.</p>
+
+    <h2>🌐 Website</h2>
+    <p><a href="https://sarkarijobseva.com">www.sarkarijobseva.com</a></p>
+
+    <h2>Important Note</h2>
+    <p>We are an <strong>informational website only</strong>. We do not process job applications and have no access to any recruitment database. For application-related issues, please contact the respective government recruitment body directly.</p>
+    `
+  },
+  '/terms-of-service': {
+    title: 'Terms of Service',
+    html: `
+    <p><em>Last updated: June 2026</em></p>
+    <p>By accessing and using SarkariJobSeva.com, you agree to be bound by these Terms of Service. Please read them carefully.</p>
+
+    <h2>1. Acceptance of Terms</h2>
+    <p>By using this website, you confirm that you are at least 13 years old and agree to these terms. If you disagree with any part of these terms, please discontinue use of our website.</p>
+
+    <h2>2. Informational Purpose Only</h2>
+    <p>SarkariJobSeva.com provides job-related information for informational purposes only. We do not process applications, guarantee employment, or represent any government body. Always verify information from official sources before acting on it.</p>
+
+    <h2>3. User Responsibility</h2>
+    <p>You are solely responsible for verifying the accuracy of information before applying to any job or examination. We strongly recommend reading the official notification carefully before applying.</p>
+
+    <h2>4. No Guarantee of Selection</h2>
+    <p>We provide information about job openings but do not guarantee selection or employment. The hiring decision rests solely with the respective government body.</p>
+
+    <h2>5. Intellectual Property</h2>
+    <p>The layout, design, and compiled information on this portal are for personal, non-commercial use only. Unauthorized reproduction, redistribution, or commercial use of our content is strictly prohibited.</p>
+
+    <h2>6. Advertising</h2>
+    <p>This website displays advertisements through Google AdSense. By using this website, you consent to viewing such advertisements. We are not responsible for the content of third-party advertisements.</p>
+
+    <h2>7. Prohibited Activities</h2>
+    <p>Users must not:</p>
+    <ul>
+      <li>Attempt to hack, exploit, or disrupt the website</li>
+      <li>Use automated scrapers or bots excessively</li>
+      <li>Spread misinformation or misuse our brand name</li>
+      <li>Use our website for any unlawful purpose</li>
+    </ul>
+
+    <h2>8. External Links</h2>
+    <p>Our website links to official government websites. We have no control over their content or availability and are not responsible for issues arising from their use.</p>
+
+    <h2>9. Changes to Terms</h2>
+    <p>We may update these Terms at any time. Continued use of our website after changes constitutes acceptance of the new terms.</p>
+
+    <h2>10. Contact</h2>
+    <p>For queries about these Terms: <a href="mailto:supportsarkarijobseva@gmail.com">supportsarkarijobseva@gmail.com</a></p>
+    `
+  },
+};
 
 function generateInfoPageHTML(title: string, content: string, canonical: string): string {
   return `<!DOCTYPE html>
@@ -993,11 +1198,46 @@ function generateInfoPageHTML(title: string, content: string, canonical: string)
   <title>${esc(title)} | SarkariJobSeva</title>
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="${canonical}">
-  <style>body{font-family:Arial,sans-serif;max-width:900px;margin:0 auto;padding:16px;color:#222;line-height:1.7}h1,h2{color:#1a1a2e}a{color:#1565c0}header{padding:12px 0;border-bottom:3px solid #d32f2f;margin-bottom:20px}header a{font-size:1.2rem;font-weight:bold;color:#d32f2f;text-decoration:none}</style>
+  <style>
+    body{font-family:Arial,sans-serif;max-width:900px;margin:0 auto;padding:16px;color:#222;line-height:1.7}
+    h1{font-size:1.6rem;color:#1a1a2e;margin-bottom:1rem}
+    h2{font-size:1.15rem;color:#16213e;margin-top:1.8rem;border-left:4px solid #d32f2f;padding-left:10px}
+    p,li{font-size:.95rem;line-height:1.8}
+    a{color:#1565c0}
+    ul,ol{padding-left:1.4rem}
+    li{margin-bottom:.5rem}
+    header{padding:12px 0;border-bottom:3px solid #d32f2f;margin-bottom:20px}
+    header a{font-size:1.2rem;font-weight:bold;color:#d32f2f;text-decoration:none}
+    nav.topnav{margin:0 0 20px}
+    nav.topnav a{display:inline-block;margin:4px 6px 4px 0;padding:5px 12px;background:#fff3e0;color:#e65100;border-radius:4px;text-decoration:none;font-size:13px}
+    footer{margin-top:30px;padding-top:12px;border-top:1px solid #ddd;font-size:.85rem;color:#555;text-align:center}
+    footer a{color:#1565c0}
+  </style>
 </head>
 <body>
-  <header><a href="https://sarkarijobseva.com">SarkariJobSeva.com</a></header>
+  <header><a href="https://sarkarijobseva.com">SarkariJobSeva.com</a> – Sarkari Naukri, Admit Card, Result 2026</header>
+  <nav class="topnav">
+    <a href="https://sarkarijobseva.com/latest-jobs">Latest Jobs</a>
+    <a href="https://sarkarijobseva.com/admit-card">Admit Card</a>
+    <a href="https://sarkarijobseva.com/results">Results</a>
+    <a href="https://sarkarijobseva.com/answer-key">Answer Key</a>
+    <a href="https://sarkarijobseva.com/blog">Blog</a>
+    <a href="https://sarkarijobseva.com/about-us">About Us</a>
+    <a href="https://sarkarijobseva.com/contact">Contact</a>
+  </nav>
   <main><h1>${esc(title)}</h1>${content}</main>
+  <footer>
+    <p><strong>SarkariJobSeva.com</strong> – India's trusted government job portal | Daily updated | 100% Free</p>
+    <p>
+      <a href="https://sarkarijobseva.com">Home</a> |
+      <a href="https://sarkarijobseva.com/latest-jobs">Latest Jobs</a> |
+      <a href="https://sarkarijobseva.com/about-us">About Us</a> |
+      <a href="https://sarkarijobseva.com/privacy-policy">Privacy Policy</a> |
+      <a href="https://sarkarijobseva.com/disclaimer">Disclaimer</a> |
+      <a href="https://sarkarijobseva.com/terms-of-service">Terms of Service</a> |
+      <a href="https://sarkarijobseva.com/contact">Contact</a>
+    </p>
+  </footer>
 </body>
 </html>`;
 }
@@ -1093,6 +1333,14 @@ export function serveStatic(app: Express) {
       // 3. /about redirect
       if (urlPath === '/about') {
         return res.redirect(301, '/about-us');
+      }
+
+      // 3b. Policy / Info pages (Privacy Policy, About Us, Contact, Disclaimer, Terms)
+      const infoPage = INFO_PAGES[urlPath];
+      if (infoPage) {
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('X-Prerendered', '1');
+        return res.send(generateInfoPageHTML(infoPage.title, infoPage.html, canonical));
       }
 
       // 4. Category pages
