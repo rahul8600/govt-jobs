@@ -82,9 +82,10 @@ function getSalaryFromTitle(title: string, qualification: string): { min: number
 
 function getEducationCategory(qualification: string): string {
   const q = (qualification || '').toLowerCase();
-  if (q.includes('10th') || q.includes('matriculation') || q.includes('sslc')) return 'secondary school credential';
-  if (q.includes('12th') || q.includes('intermediate') || q.includes('higher secondary')) return 'high school diploma';
-  if (q.includes('iti') || q.includes('diploma')) return 'vocational training';
+  // Valid schema.org credentialCategory enum values accepted by Google
+  if (q.includes('10th') || q.includes('matriculation') || q.includes('sslc')) return 'high school';
+  if (q.includes('12th') || q.includes('intermediate') || q.includes('higher secondary')) return 'high school';
+  if (q.includes('iti') || q.includes('diploma')) return 'associate degree';
   if (q.includes('b.tech') || q.includes('be ') || q.includes('engineering')) return 'bachelor degree';
   if (q.includes('mbbs') || q.includes('bds') || q.includes('b.sc nursing')) return 'bachelor degree';
   if (q.includes('m.tech') || q.includes('mba') || q.includes('m.sc') || q.includes('post grad') || q.includes('master')) return 'postgraduate degree';
@@ -516,10 +517,10 @@ function generateJobHTML(job: any, canonical: string): string {
         "@type": "Place",
         "address": {
           "@type": "PostalAddress",
-          "streetAddress": `${job.department || 'Government Office'}, ${stateData.city}`,
-          "addressLocality": stateData.city,
+          "streetAddress": `${job.department || 'Government of India'}, ${stateData.city || 'New Delhi'}`,
+          "addressLocality": stateData.city || 'New Delhi',
           "addressRegion": job.state || "Delhi",
-          "postalCode": stateData.postal,
+          "postalCode": stateData.postal || '110001',
           "addressCountry": "IN"
         }
       },
