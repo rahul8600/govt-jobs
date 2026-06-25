@@ -868,7 +868,7 @@ function generateCategoryHTML(config: {title: string; desc: string; posts?: any[
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${esc(config.title)} | SarkariJobSeva</title>
   <meta name="description" content="${esc(config.desc)}">
-  <meta name="robots" content="index, follow, max-snippet:-1">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
   <link rel="canonical" href="${canonical}">
   <meta property="og:title" content="${esc(config.title)} | SarkariJobSeva">
   <meta property="og:description" content="${esc(config.desc)}">
@@ -878,22 +878,94 @@ function generateCategoryHTML(config: {title: string; desc: string; posts?: any[
   <meta property="og:image" content="https://sarkarijobseva.com/og-image.png">
   <style>
     body{font-family:Arial,sans-serif;max-width:900px;margin:0 auto;padding:16px 12px;color:#222;line-height:1.7}
-    h1{font-size:1.5rem;color:#1a1a2e} h2{font-size:1.1rem;color:#16213e;margin-top:1.5rem;border-left:4px solid #d32f2f;padding-left:10px}
+    h1{font-size:1.5rem;color:#1a1a2e}
+    h2{font-size:1.1rem;color:#16213e;margin-top:1.5rem;border-left:4px solid #d32f2f;padding-left:10px}
     a{color:#1565c0} li{margin-bottom:.5rem;font-size:.95rem}
+    nav.topnav{margin:10px 0 20px}
+    nav.topnav a{display:inline-block;margin:4px 6px 4px 0;padding:5px 12px;background:#fff3e0;color:#e65100;border-radius:4px;text-decoration:none;font-size:13px;font-weight:500}
+    .info-box{background:#fff8e1;border-left:4px solid #ffa000;padding:14px;margin:20px 0;border-radius:4px}
+    table{width:100%;border-collapse:collapse;margin:.5rem 0}
+    th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:.9rem}
+    th{background:#f5f5f5}
     header{padding:12px 0;border-bottom:3px solid #d32f2f;margin-bottom:20px}
     header a{font-size:1.2rem;font-weight:bold;color:#d32f2f;text-decoration:none}
     footer{margin-top:30px;padding-top:12px;border-top:1px solid #ddd;font-size:.85rem;color:#555}
   </style>
 </head>
 <body>
-  <header><a href="https://sarkarijobseva.com">SarkariJobSeva.com</a></header>
+  <header><a href="https://sarkarijobseva.com">SarkariJobSeva.com</a> – Sarkari Naukri, Admit Card, Result 2026</header>
+  <nav class="topnav">
+    <a href="https://sarkarijobseva.com/latest-jobs">Latest Jobs</a>
+    <a href="https://sarkarijobseva.com/admit-card">Admit Card</a>
+    <a href="https://sarkarijobseva.com/results">Results</a>
+    <a href="https://sarkarijobseva.com/answer-key">Answer Key</a>
+    <a href="https://sarkarijobseva.com/admission">Admission</a>
+    <a href="https://sarkarijobseva.com/blog">Blog</a>
+  </nav>
   <main>
     <h1>${esc(config.title)}</h1>
     <p>${esc(config.desc)}</p>
     ${postsHtml}
-    <p>Visit <a href="https://sarkarijobseva.com">SarkariJobSeva.com</a> for more updates.</p>
+
+    <div class="info-box">
+      <strong>SarkariJobSeva.com</strong> par aapko milega:
+      <ul>
+        <li>Railway, SSC, UPSC, Bank, Police, Army, Teacher, Anganwadi – sabhi bhartiyon ki jankari</li>
+        <li>Admit Card, Result, Answer Key – direct download links</li>
+        <li>10th, 12th, Graduation – sabhi qualification ke liye jobs</li>
+        <li>Free Job Alert – koi registration nahi, koi charge nahi</li>
+      </ul>
+    </div>
+
+    <h2>SarkariJobSeva.com Ke Baare Mein</h2>
+    <p>SarkariJobSeva.com India ka ek vishwasaniya sarkari naukri portal hai jahan roz nayi government jobs, admit card, result aur answer key ki verified jankari di jaati hai. Hamare portal par SSC, Railway, UPSC, Bank PO/Clerk, Police Constable, Army Agniveer, Teacher Bharti, Anganwadi Bharti — sabhi types ki sarkari naukri milti hai.</p>
+    <p>Hamare readers ki madad ke liye hum sirf official sources se information share karte hain. Koi bhi application ya fee ke liye hamesha official website use karein. SarkariJobSeva.com kisi bhi government department se affiliated nahi hai.</p>
+
+    <h2>Humare Categories</h2>
+    <ul>
+      <li><a href="https://sarkarijobseva.com/category/railway">Railway Jobs 2026 – RRB ALP, Group D, NTPC, JE Bharti</a></li>
+      <li><a href="https://sarkarijobseva.com/category/ssc">SSC Jobs 2026 – CGL, CHSL, GD Constable, MTS Bharti</a></li>
+      <li><a href="https://sarkarijobseva.com/category/upsc">UPSC 2026 – Civil Services, NDA, CDS, Engineering Services</a></li>
+      <li><a href="https://sarkarijobseva.com/category/bank">Bank Jobs 2026 – SBI PO/Clerk, IBPS PO/Clerk, RBI Bharti</a></li>
+      <li><a href="https://sarkarijobseva.com/category/police">Police Bharti 2026 – UP Police, Rajasthan Police, MP Police, Delhi Police</a></li>
+      <li><a href="https://sarkarijobseva.com/category/army-recruitment">Army Recruitment 2026 – Indian Army, Navy, Air Force Agniveer</a></li>
+      <li><a href="https://sarkarijobseva.com/category/teacher">Teacher Bharti 2026 – CTET, TET, KVS, NVS, Shikshak Bharti</a></li>
+      <li><a href="https://sarkarijobseva.com/category/anganwadi">Anganwadi Bharti 2026 – State Wise Anganwadi Recruitment</a></li>
+      <li><a href="https://sarkarijobseva.com/category/state-jobs">State Govt Jobs 2026 – UP, Bihar, Rajasthan, MP, Haryana, Punjab</a></li>
+    </ul>
+
+    <h2>Sarkari Naukri Ke Liye Qualification Wise Jobs</h2>
+    <table>
+      <thead><tr><th>Qualification</th><th>Popular Job Options</th></tr></thead>
+      <tbody>
+        <tr><td>10th Pass</td><td>Army Agniveer, Railway Group D, SSC MTS, Police Constable, Peon, Driver</td></tr>
+        <tr><td>12th Pass</td><td>SSC CHSL, Railway ALP, NDA, Airforce Agniveer, Clerk, Data Entry Operator</td></tr>
+        <tr><td>Graduation</td><td>SSC CGL, Bank PO, UPSC, State PSC, Sub Inspector, Income Tax Inspector</td></tr>
+        <tr><td>ITI / Diploma</td><td>Railway Technician, JE, Electrician, Fitter, Apprentice Bharti</td></tr>
+        <tr><td>B.Ed / D.El.Ed</td><td>Teacher Bharti, TET, CTET, KVS, NVS, Navodaya Vidyalaya</td></tr>
+        <tr><td>Engineering</td><td>PSU Jobs, PWD, DRDO, ISRO, Defence Civilian, SSC JE</td></tr>
+        <tr><td>Medical / Nursing</td><td>AIIMS, ESIC, Army Medical, State Health Dept, ANM/GNM Bharti</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Sarkari Naukri Mein Apply Karne Se Pehle Ye Zaroor Jaanein</h2>
+    <ul>
+      <li><strong>Age Limit:</strong> Apni category ke hisab se age eligibility check karein – OBC ko 3 saal, SC/ST ko 5 saal ki relaxation milti hai</li>
+      <li><strong>Application Fee:</strong> Category wise fee alag hoti hai – SC/ST/Female ko zyaatar exemption milti hai</li>
+      <li><strong>Documents:</strong> 10th Certificate, Photo, Signature, Category Certificate, Domicile Certificate pehle se tayar rakhein</li>
+      <li><strong>Last Date:</strong> Last date se 2-3 din pehle apply karein – last moment server slow ho jaata hai</li>
+      <li><strong>Official Website:</strong> Hamesha official website se hi apply karein – kisi bhi agent ko paise mat dein</li>
+    </ul>
+
+    <h2>Disclaimer</h2>
+    <p>Is website par di gayi jankari sirf informational purposes ke liye hai. Apply karne se pehle official notification zaroor padhen. SarkariJobSeva.com kisi bhi government department se affiliated nahi hai.</p>
+
+    <p>Aur adhik sarkari naukri ki jankari ke liye <a href="https://sarkarijobseva.com">SarkariJobSeva.com</a> par visit karte rahein.</p>
   </main>
-  <footer><p><a href="https://sarkarijobseva.com">Home</a> | <a href="https://sarkarijobseva.com/latest-jobs">Latest Jobs</a> | <a href="https://sarkarijobseva.com/admit-card">Admit Card</a> | <a href="https://sarkarijobseva.com/results">Results</a></p></footer>
+  <footer>
+    <p><strong>SarkariJobSeva.com</strong> – India ka trusted sarkari naukri portal | Daily updated</p>
+    <p><a href="https://sarkarijobseva.com">Home</a> | <a href="https://sarkarijobseva.com/latest-jobs">Latest Jobs</a> | <a href="https://sarkarijobseva.com/admit-card">Admit Card</a> | <a href="https://sarkarijobseva.com/results">Results</a> | <a href="https://sarkarijobseva.com/answer-key">Answer Key</a> | <a href="https://sarkarijobseva.com/about-us">About Us</a> | <a href="https://sarkarijobseva.com/privacy-policy">Privacy Policy</a> | <a href="https://sarkarijobseva.com/contact">Contact</a></p>
+  </footer>
 </body>
 </html>`;
 }
