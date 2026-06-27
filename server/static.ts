@@ -1249,12 +1249,103 @@ export function serveStatic(app: Express) {
     throw new Error(`Could not find the build directory: ${distPath}, make sure to build the client first`);
   }
 
-  // ===== UNIFIED PRERENDER MIDDLEWARE (ALL USERS + BOTS) =====
+  // ===== PRERENDER MIDDLEWARE =====
+  // Bots get full prerendered HTML (for SEO/AdSense crawlers)
+  // Normal users get index.html with injected meta tags (React UI loads normally)
   app.use(async (req: Request, res: Response, next: Function) => {
-    // Skip API routes, static assets
-    if (req.path.startsWith('/api/') || req.path.startsWith('/uploads/') || req.path.match(/\.(js|css|png|jpg|ico|svg|json|txt|xml|woff|woff2)$/)) {
+    const ua = req.headers['user-agent'] || '';
+    const urlPath = req.path;
+    const baseUrl = process.env.SITE_URL || 'https://sarkarijobseva.com';
+    const canonical = `${baseUrl}${urlPath}`;
+
+    // Skip static assets always
+    if (urlPath.startsWith('/api/') || urlPath.startsWith('/uploads/') || urlPath.match(/\.(js|css|png|jpg|ico|svg|json|txt|xml|woff|woff2|map)$/)) {
       return next();
     }
+
+    // === STEP 1: For ALL users — inject unique meta tags into index.html ===
+    if (!isBot(ua)) {
+      try {
+        const indexPath = path.resolve(__dirname, 'public', 'index.html');
+        if (!fs.existsSync(indexPath)) return next();
+        let html = fs.readFileSync(indexPath, 'utf-8');
+
+        let title = 'SarkariJobSeva – Latest Sarkari Naukri, Admit Card, Result 2026';
+        let description = 'SarkariJobSeva.com par latest government jobs, admit card, result aur answer key ki verified jankari milti hai. SSC, Railway, UPSC, Bank, Police jobs — daily updated, bilkul free.';
+
+        // Job page
+        const jobMatch = urlPath.match(/^\/job\/([^/?]+)/);
+        if (jobMatch) {
+          try {
+            let job: any = null;
+            const r1 = await fetch(`${baseUrl}/api/posts/slug/${jobMatch[1]}`);
+            if (r1.ok) job = await r1.json();
+            if (!job) {
+              const r2 = await fetch(`${baseUrl}/api/posts/${jobMatch[1]}`);
+              if (r2.ok) job = await r2.json();
+            }
+            if (job && job.title) {
+              title = `${job.title.slice(0, 60)} | SarkariJobSeva`;
+              description = (job.shortInfo || `${job.title} – ${job.department || 'Govt'}. Eligibility, important dates, apply link.`).slice(0, 155);
+            }
+          } catch {}
+        }
+
+        // Blog page
+        const blogMatch = urlPath.match(/^\/blog\/([^/?]+)/);
+        if (blogMatch) {
+          try {
+            const r = await fetch(`${baseUrl}/api/blogs/${blogMatch[1]}`);
+            if (r.ok) {
+              const blog = await r.json();
+              if (blog && blog.title) {
+                title = `${blog.title} | SarkariJobSeva`;
+                description = (blog.excerpt || blog.title).slice(0, 155);
+              }
+            }
+          } catch {}
+        }
+
+        // Category pages
+        const catTitles: Record<string, {t: string; d: string}> = {
+          '/latest-jobs': { t: 'Latest Government Jobs 2026 | SarkariJobSeva', d: 'Latest sarkari naukri 2026 – SSC, Railway, UPSC, Bank, Police jobs. Daily updated at SarkariJobSeva.' },
+          '/admit-card': { t: 'Admit Card Download 2026 | SarkariJobSeva', d: 'Download admit card 2026 for all government exams. Hall ticket direct download link at SarkariJobSeva.' },
+          '/results': { t: 'Sarkari Result 2026 | SarkariJobSeva', d: 'Check government exam results, merit list, cut off marks 2026 at SarkariJobSeva.' },
+          '/answer-key': { t: 'Answer Key 2026 | SarkariJobSeva', d: 'Download answer key 2026 for government exams. Objection details at SarkariJobSeva.' },
+          '/admission': { t: 'Admission Form 2026 | SarkariJobSeva', d: 'Government college admission 2026. B.Ed, University, ITI admission at SarkariJobSeva.' },
+          '/blog': { t: 'Sarkari Job Blog – Tips & Updates | SarkariJobSeva', d: 'Government job preparation tips, syllabus, exam strategy at SarkariJobSeva blog.' },
+          '/about-us': { t: 'About Us | SarkariJobSeva', d: 'SarkariJobSeva.com ke baare mein – India ka trusted free sarkari naukri information portal.' },
+          '/contact': { t: 'Contact Us | SarkariJobSeva', d: 'Contact SarkariJobSeva team for queries, corrections or feedback. Email: supportsarkarijobseva@gmail.com' },
+          '/privacy-policy': { t: 'Privacy Policy | SarkariJobSeva', d: 'SarkariJobSeva privacy policy – how we collect, use and protect your data including Google AdSense cookies.' },
+          '/disclaimer': { t: 'Disclaimer | SarkariJobSeva', d: 'SarkariJobSeva.com is not a government website. Read our full disclaimer before using our services.' },
+          '/salary-calculator': { t: 'Government Salary Calculator 2026 | SarkariJobSeva', d: '7th Pay Commission salary calculator for government jobs. Calculate in-hand salary, HRA, DA at SarkariJobSeva.' },
+        };
+        if (catTitles[urlPath]) {
+          title = catTitles[urlPath].t;
+          description = catTitles[urlPath].d;
+        }
+
+        // Inject unique title and meta into index.html
+        const escapedTitle = title.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const escapedDesc = description.replace(/"/g, '&quot;').replace(/</g, '&lt;');
+        html = html.replace(/<title>[^<]*<\/title>/, `<title>${escapedTitle}</title>`);
+        html = html.replace(/<meta name="description" content="[^"]*"/, `<meta name="description" content="${escapedDesc}"`);
+        html = html.replace(/<meta property="og:title" content="[^"]*"/, `<meta property="og:title" content="${escapedTitle}"`);
+        html = html.replace(/<meta property="og:description" content="[^"]*"/, `<meta property="og:description" content="${escapedDesc}"`);
+        html = html.replace(/<meta property="og:url" content="[^"]*"/, `<meta property="og:url" content="${canonical}"`);
+        html = html.replace(/<meta name="twitter:title" content="[^"]*"/, `<meta name="twitter:title" content="${escapedTitle}"`);
+        html = html.replace(/<meta name="twitter:description" content="[^"]*"/, `<meta name="twitter:description" content="${escapedDesc}"`);
+
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        return res.send(html);
+      } catch (e) {
+        console.error('[Meta Inject Error]', e);
+        return next();
+      }
+    }
+
+    // === STEP 2: Bots get full prerendered HTML ===
 
     const urlPath = req.path;
     const baseUrl = process.env.SITE_URL || 'https://sarkarijobseva.com';
