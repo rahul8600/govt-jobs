@@ -11,6 +11,10 @@ import JobDetails from "@/pages/JobDetails";
 import Admin from "@/pages/Admin";
 import JobList from "@/pages/JobList";
 import { Disclaimer, PrivacyPolicy, TermsOfService, Syllabus, Contact, AboutUs } from "@/pages/InfoPages";
+import AboutPage from "@/pages/AboutPage";
+import ContactPage from "@/pages/ContactPage";
+import PrivacyPage from "@/pages/PrivacyPage";
+import SitemapPage from "@/pages/SitemapPage";
 import BlogList from "@/pages/Blog";
 import BlogDetail from "@/pages/BlogDetail";
 import SalaryCalculator from "@/pages/SalaryCalculator";
@@ -36,12 +40,14 @@ function Router() {
         <Route path="/blog" component={BlogList} />
         <Route path="/blog/:slug" component={BlogDetail} />
         <Route path="/disclaimer" component={Disclaimer} />
-        <Route path="/privacy-policy" component={PrivacyPolicy} />
+        <Route path="/privacy-policy" component={PrivacyPage} />
         <Route path="/terms-of-service" component={TermsOfService} />
+        <Route path="/terms" component={TermsOfService} />
         <Route path="/syllabus" component={Syllabus} />
-        <Route path="/contact" component={Contact} />
-        <Route path="/about" component={AboutUs} />
-        <Route path="/about-us" component={AboutUs} />
+        <Route path="/contact" component={ContactPage} />
+        <Route path="/about" component={AboutPage} />
+        <Route path="/about-us" component={AboutPage} />
+        <Route path="/sitemap" component={SitemapPage} />
         <Route path="/salary-calculator" component={SalaryCalculator} />
         <Route component={NotFound} />
       </Switch>
