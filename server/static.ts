@@ -1249,10 +1249,12 @@ export function serveStatic(app: Express) {
     throw new Error(`Could not find the build directory: ${distPath}, make sure to build the client first`);
   }
 
-  // ===== UNIFIED BOT PRERENDER MIDDLEWARE =====
+  // ===== UNIFIED PRERENDER MIDDLEWARE (ALL USERS + BOTS) =====
   app.use(async (req: Request, res: Response, next: Function) => {
-    const ua = req.headers['user-agent'] || '';
-    if (!isBot(ua)) return next();
+    // Skip API routes, static assets
+    if (req.path.startsWith('/api/') || req.path.startsWith('/uploads/') || req.path.match(/\.(js|css|png|jpg|ico|svg|json|txt|xml|woff|woff2)$/)) {
+      return next();
+    }
 
     const urlPath = req.path;
     const baseUrl = process.env.SITE_URL || 'https://sarkarijobseva.com';
