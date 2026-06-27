@@ -14,6 +14,12 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
+// NEW: SEO Components for AdSense E-E-A-T
+import AuthorBio from "@/components/AuthorBio";
+import JobSchema from "@/components/JobSchema";
+import Breadcrumb from "@/components/Breadcrumb";
+import { BreadcrumbSchema } from "@/components/JobSchema";
+
 // NEW: Import SEO components
 import AuthorBio from "@/components/AuthorBio";
 import JobSchema from "@/components/JobSchema";
@@ -76,6 +82,20 @@ export default function JobDetails() {
   useEffect(() => {
     if (job) {
       document.title = `${job.title} ${job.department ? '- ' + job.department : ''} | SarkariJobSeva`;
+
+      // NEW: Enhanced meta description for SEO
+      const metaDesc = document.querySelector('meta[name="description"]');
+      if (metaDesc) {
+        metaDesc.setAttribute('content', 
+          `${job.title} - ${job.shortInfo} Apply Online before ${job.lastDate || 'last date'}. Eligibility, Salary, Selection Process, Exam Pattern and Complete Details on SarkariJobSeva.com.`
+        );
+      }
+
+      // NEW: Canonical URL
+      const canonical = document.querySelector('link[rel="canonical"]');
+      if (canonical) {
+        canonical.setAttribute('href', `https://www.sarkarijobseva.com/job/${job.slug}`);
+      }
 
       // NEW: Enhanced meta description
       const metaDesc = document.querySelector('meta[name="description"]');
@@ -170,6 +190,13 @@ export default function JobDetails() {
     );
   }
 
+  // NEW: Breadcrumb items
+  const breadcrumbItems = [
+    { label: "Home", href: "/" },
+    { label: job.department || "Latest Jobs", href: "/latest-jobs" },
+    { label: job.title },
+  ];
+
   const showDates = job.importantDatesHtml || (job.importantDates && job.importantDates.length > 0);
   const showFee = job.applicationFeeHtml || (job.applicationFee && job.applicationFee.length > 0);
   const showAgeLimit = job.ageLimitHtml || (job.ageLimit && job.ageLimit.length > 0);
@@ -185,6 +212,36 @@ export default function JobDetails() {
   ];
 
   return (
+    <>
+      {/* NEW: JSON-LD Schema Markup for SEO */}
+      <JobSchema
+        title={job.title}
+        description={job.shortInfo}
+        department={job.department}
+        lastDate={job.lastDate || undefined}
+        postDate={job.postDate}
+        qualification={job.qualification || undefined}
+        state={job.state || undefined}
+        category={job.category || undefined}
+        url={`https://www.sarkarijobseva.com/job/${job.slug}`}
+      />
+
+      {/* NEW: Breadcrumb Schema */}
+      <BreadcrumbSchema
+        items={[
+          { name: "Home", url: "https://www.sarkarijobseva.com/" },
+          { name: job.department || "Latest Jobs", url: "https://www.sarkarijobseva.com/latest-jobs" },
+          { name: job.title, url: `https://www.sarkarijobseva.com/job/${job.slug}` },
+        ]}
+      />
+
+      {/* NEW: Breadcrumb Navigation */}
+      <div className="bg-white border-b border-slate-200">
+        <div className="max-w-4xl mx-auto px-4 py-2">
+          <Breadcrumb items={breadcrumbItems} />
+        </div>
+      </div>
+
     <div className="min-h-screen bg-slate-50">
       {/* NEW: JSON-LD Schema Markup */}
       <JobSchema
@@ -623,6 +680,16 @@ export default function JobDetails() {
               readTime="8 min read"
             />
 
+            {/* NEW: Author Bio - AdSense E-E-A-T Signal */}
+            <AuthorBio
+              authorName="Rahul Sharma"
+              authorRole="Government Job Expert & Editor"
+              authorBio="Rahul Sharma is a former banking professional with 5+ years of experience in government exam preparation guidance. He specializes in SSC, Railway, Banking, and State PSC recruitment analysis. He has helped thousands of aspirants find their dream government job through accurate and timely information."
+              publishedDate={job.postDate}
+              updatedDate={job.lastDate || undefined}
+              readTime="8 min read"
+            />
+
             {/* Disclaimer */}
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-6">
               <div className="flex items-start gap-3">
@@ -704,5 +771,6 @@ export default function JobDetails() {
         </div>
       </div>
     </div>
+    </>
   );
 }
