@@ -15,34 +15,49 @@ import BlogList from "@/pages/Blog";
 import BlogDetail from "@/pages/BlogDetail";
 import SalaryCalculator from "@/pages/SalaryCalculator";
 
+// NEW: AdSense optimized pages
+import AboutPage from "@/pages/AboutPage";
+import ContactPage from "@/pages/ContactPage";
+import PrivacyPage from "@/pages/PrivacyPage";
+import SitemapPage from "@/pages/SitemapPage";
+
+// NEW: SEO Schema Components
+import { OrganizationSchema, WebsiteSchema } from "@/components/JobSchema";
+
 function Router() {
   return (
     <Layout>
       <Switch>
         <Route path="/" component={Home} />
-        <Route path="/job/:id" component={JobDetails} />
-        <Route path="/admin" component={Admin} />
-        <Route path="/search" component={JobList} />
+        <Route path="/job/:slug" component={JobDetails} />
         <Route path="/latest-jobs" component={JobList} />
-        <Route path="/admit-card" component={JobList} />
-        <Route path="/results" component={JobList} />
-        <Route path="/answer-key" component={JobList} />
-        <Route path="/admission" component={JobList} />
-        <Route path="/jobs/10th-pass" component={JobList} />
-        <Route path="/jobs/12th-pass" component={JobList} />
-        <Route path="/jobs/graduation" component={JobList} />
-        <Route path="/jobs/post-graduate" component={JobList} />
-        <Route path="/jobs/state/:state" component={JobList} />
+        <Route path="/admit-card" component={() => <JobList type="admit-card" />} />
+        <Route path="/results" component={() => <JobList type="result" />} />
+        <Route path="/answer-key" component={() => <JobList type="answer-key" />} />
+        <Route path="/admission" component={() => <JobList type="admission" />} />
+        <Route path="/category/:category" component={JobList} />
+        <Route path="/state/:state" component={JobList} />
+        <Route path="/search" component={JobList} />
+        <Route path="/admin" component={Admin} />
         <Route path="/blog" component={BlogList} />
         <Route path="/blog/:slug" component={BlogDetail} />
-        <Route path="/disclaimer" component={Disclaimer} />
-        <Route path="/privacy-policy" component={PrivacyPolicy} />
-        <Route path="/terms-of-service" component={TermsOfService} />
-        <Route path="/syllabus" component={Syllabus} />
-        <Route path="/contact" component={Contact} />
-        <Route path="/about" component={AboutUs} />
-        <Route path="/about-us" component={AboutUs} />
         <Route path="/salary-calculator" component={SalaryCalculator} />
+
+        {/* OLD Info Pages - Keep for backward compatibility */}
+        <Route path="/disclaimer" component={Disclaimer} />
+        <Route path="/terms" component={TermsOfService} />
+        <Route path="/syllabus" component={Syllabus} />
+
+        {/* NEW: Enhanced AdSense-optimized pages */}
+        <Route path="/about-us" component={AboutPage} />
+        <Route path="/contact" component={ContactPage} />
+        <Route path="/privacy-policy" component={PrivacyPage} />
+        <Route path="/sitemap" component={SitemapPage} />
+
+        {/* Keep old routes redirecting to new ones */}
+        <Route path="/about" component={AboutPage} />
+        <Route path="/privacy" component={PrivacyPage} />
+
         <Route component={NotFound} />
       </Switch>
     </Layout>
@@ -51,14 +66,17 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
+    <AuthProvider>
       <LanguageProvider>
-        <AuthProvider>
-          <Toaster />
+        <QueryClientProvider client={queryClient}>
+          {/* Global SEO Schema */}
+          <OrganizationSchema />
+          <WebsiteSchema />
           <Router />
-        </AuthProvider>
+          <Toaster />
+        </QueryClientProvider>
       </LanguageProvider>
-    </QueryClientProvider>
+    </AuthProvider>
   );
 }
 
