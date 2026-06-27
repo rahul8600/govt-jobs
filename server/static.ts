@@ -1347,10 +1347,6 @@ export function serveStatic(app: Express) {
 
     // === STEP 2: Bots get full prerendered HTML ===
 
-    const urlPath = req.path;
-    const baseUrl = process.env.SITE_URL || 'https://sarkarijobseva.com';
-    const canonical = `${baseUrl}${urlPath}`;
-
     try {
       // 1. Job/Post pages
       const jobMatch = urlPath.match(/^\/job\/([^/?]+)/);
