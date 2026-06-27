@@ -32,30 +32,30 @@ export default function SitemapPage() {
       title: "Job Categories",
       icon: <Briefcase className="w-5 h-5" />,
       links: [
-        { label: "10th Pass Jobs", href: "/category/10th-pass", desc: "Government jobs for 10th pass candidates" },
-        { label: "12th Pass Jobs", href: "/category/12th-pass", desc: "Government jobs for 12th pass candidates" },
-        { label: "Graduation Jobs", href: "/category/graduation", desc: "Jobs for graduate candidates" },
-        { label: "Engineering Jobs", href: "/category/engineering", desc: "Engineering and technical jobs" },
-        { label: "Teaching Jobs", href: "/category/teaching", desc: "Teacher and professor vacancies" },
-        { label: "Police Jobs", href: "/category/police", desc: "Police constable and SI jobs" },
-        { label: "SSC Jobs", href: "/category/ssc", desc: "SSC CGL, CHSL, MTS, GD vacancies" },
-        { label: "Railway Jobs", href: "/category/railway", desc: "Railway RRB, NTPC, Group D jobs" },
-        { label: "Bank Jobs", href: "/category/bank", desc: "IBPS, SBI, RBI bank jobs" },
-        { label: "Defence Jobs", href: "/category/defence", desc: "Army, Navy, Air Force, NDA, CDS" },
+        { label: "10th Pass Jobs", href: "/jobs/10th-pass", desc: "Government jobs for 10th pass candidates" },
+        { label: "12th Pass Jobs", href: "/jobs/12th-pass", desc: "Government jobs for 12th pass candidates" },
+        { label: "Graduation Jobs", href: "/jobs/graduation", desc: "Jobs for graduate candidates" },
+        { label: "Engineering Jobs", href: "/jobs/engineering", desc: "Engineering and technical jobs" },
+        { label: "Teaching Jobs", href: "/jobs/teaching", desc: "Teacher and professor vacancies" },
+        { label: "Police Jobs", href: "/search?q=police", desc: "Police constable and SI jobs" },
+        { label: "SSC Jobs", href: "/search?q=ssc", desc: "SSC CGL, CHSL, MTS, GD vacancies" },
+        { label: "Railway Jobs", href: "/search?q=railway", desc: "Railway RRB, NTPC, Group D jobs" },
+        { label: "Bank Jobs", href: "/search?q=bank", desc: "IBPS, SBI, RBI bank jobs" },
+        { label: "Defence Jobs", href: "/search?q=defence", desc: "Army, Navy, Air Force, NDA, CDS" },
       ]
     },
     {
       title: "State Wise Jobs",
       icon: <Map className="w-5 h-5" />,
       links: [
-        { label: "Uttar Pradesh Jobs", href: "/state/uttar-pradesh", desc: "UPSSSC, UPPSC, UP Police jobs" },
-        { label: "Bihar Jobs", href: "/state/bihar", desc: "BPSC, BSSC, Bihar Police jobs" },
-        { label: "Rajasthan Jobs", href: "/state/rajasthan", desc: "RPSC, RSSB, Rajasthan Police jobs" },
-        { label: "Madhya Pradesh Jobs", href: "/state/madhya-pradesh", desc: "MPPSC, MPESB, MP Police jobs" },
-        { label: "Delhi Jobs", href: "/state/delhi", desc: "DSSSB, Delhi Police, DDA jobs" },
-        { label: "Haryana Jobs", href: "/state/haryana", desc: "HSSC, Haryana Police, HPSC jobs" },
-        { label: "Jharkhand Jobs", href: "/state/jharkhand", desc: "JPSC, JSSC, Jharkhand Police jobs" },
-        { label: "Uttarakhand Jobs", href: "/state/uttarakhand", desc: "UKPSC, UKSSSC, UK Police jobs" },
+        { label: "Uttar Pradesh Jobs", href: "/jobs/state/uttar-pradesh", desc: "UPSSSC, UPPSC, UP Police jobs" },
+        { label: "Bihar Jobs", href: "/jobs/state/bihar", desc: "BPSC, BSSC, Bihar Police jobs" },
+        { label: "Rajasthan Jobs", href: "/jobs/state/rajasthan", desc: "RPSC, RSSB, Rajasthan Police jobs" },
+        { label: "Madhya Pradesh Jobs", href: "/jobs/state/madhya-pradesh", desc: "MPPSC, MPESB, MP Police jobs" },
+        { label: "Delhi Jobs", href: "/jobs/state/delhi", desc: "DSSSB, Delhi Police, DDA jobs" },
+        { label: "Haryana Jobs", href: "/jobs/state/haryana", desc: "HSSC, Haryana Police, HPSC jobs" },
+        { label: "Jharkhand Jobs", href: "/jobs/state/jharkhand", desc: "JPSC, JSSC, Jharkhand Police jobs" },
+        { label: "Uttarakhand Jobs", href: "/jobs/state/uttarakhand", desc: "UKPSC, UKSSSC, UK Police jobs" },
       ]
     },
     {
@@ -74,9 +74,9 @@ export default function SitemapPage() {
         { label: "About Us", href: "/about-us", desc: "Learn about SarkariJobSeva mission and team" },
         { label: "Contact Us", href: "/contact", desc: "Get in touch with our team" },
         { label: "Privacy Policy", href: "/privacy-policy", desc: "How we protect your data" },
-        { label: "Terms of Service", href: "/terms", desc: "Terms and conditions of use" },
+        { label: "Terms of Service", href: "/terms-of-service", desc: "Terms and conditions of use" },
         { label: "Disclaimer", href: "/disclaimer", desc: "Important legal disclaimers" },
-        { label: "Sitemap", href: "/sitemap", desc: "Complete website navigation" },
+        { label: "Sitemap", href: "/sitemap-page", desc: "Complete website navigation" },
       ]
     },
   ];
@@ -120,27 +120,11 @@ export default function SitemapPage() {
           ))}
         </div>
 
-        {/* Quick Stats */}
-        <div className="mt-10 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
-          <h2 className="font-bold text-slate-800 mb-4">Website Statistics</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-            <div>
-              <div className="text-2xl font-bold text-blue-600">10,000+</div>
-              <div className="text-xs text-slate-600">Job Posts</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-blue-600">50+</div>
-              <div className="text-xs text-slate-600">Categories</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-blue-600">28</div>
-              <div className="text-xs text-slate-600">States Covered</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-blue-600">Daily</div>
-              <div className="text-xs text-slate-600">Updates</div>
-            </div>
-          </div>
+        {/* Info box */}
+        <div className="mt-10 bg-blue-50 rounded-xl p-6 border border-blue-100">
+          <p className="text-slate-700 text-sm leading-relaxed">
+            <strong>Note:</strong> SarkariJobSeva.com ek independent informational portal hai. Yahan SSC, Railway, UPSC, Bank, Police aur State Government jobs ki latest updates daily publish ki jaati hain — bilkul free. Apply karne se pehle hamesha official notification zaroor padhen.
+          </p>
         </div>
 
         <div className="text-center mt-10">
