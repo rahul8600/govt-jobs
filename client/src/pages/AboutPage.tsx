@@ -7,7 +7,7 @@ export default function AboutPage() {
     document.title = "About Us | SarkariJobSeva - India's Trusted Government Job Portal";
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) {
-      metaDesc.setAttribute('content', "SarkariJobSeva.com is India's most trusted government job information portal. Founded in 2024, we provide accurate and timely updates on SSC, Railway, UPSC, Bank, Police, and State Government jobs.");
+      metaDesc.setAttribute('content', "SarkariJobSeva.com ek independent government job information portal hai. Yahan SSC, Railway, UPSC, Bank, Police aur State Government jobs ki latest updates milti hain.");
     }
     const canonical = document.querySelector('link[rel="canonical"]');
     if (canonical) {
@@ -22,7 +22,7 @@ export default function AboutPage() {
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-3xl md:text-5xl font-bold mb-4">About SarkariJobSeva</h1>
           <p className="text-blue-100 text-lg md:text-xl max-w-2xl mx-auto">
-            India's Most Trusted Government Job Information Portal — Empowering Millions of Aspirants Since 2024
+            India's Trusted Independent Government Job Information Portal — Accurate, Timely, and Free
           </p>
         </div>
       </div>
@@ -112,42 +112,48 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* Team Section */}
+        {/* How We Work */}
         <div className="mb-10">
-          <h2 className="text-2xl font-bold text-slate-800 mb-6">Our Editorial Team</h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            {[
-              { name: "Rahul Sharma", role: "Founder & Editor-in-Chief", bio: "Ex-banking professional with 5+ years of experience in government exam preparation guidance. Expert in SSC, Railway, and Banking recruitment analysis." },
-              { name: "Priya Patel", role: "Senior Content Editor", bio: "Former UPSC aspirant with deep knowledge of Civil Services, State PSC, and Defence exams. Specializes in eligibility analysis and career guidance." },
-              { name: "Amit Kumar", role: "Technical Lead", bio: "Full-stack developer ensuring fast, reliable, and mobile-friendly experience. Handles website performance and data accuracy systems." },
-            ].map((member, i) => (
-              <div key={i} className="bg-white rounded-xl border border-slate-200 p-6 text-center hover:shadow-lg transition-shadow">
-                <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full mx-auto mb-4 flex items-center justify-center text-white text-2xl font-bold">
-                  {member.name.charAt(0)}
-                </div>
-                <h3 className="font-bold text-slate-800">{member.name}</h3>
-                <p className="text-blue-600 text-sm font-medium mb-2">{member.role}</p>
-                <p className="text-slate-600 text-sm leading-relaxed">{member.bio}</p>
-              </div>
-            ))}
+          <h2 className="text-2xl font-bold text-slate-800 mb-6">Hum Kaise Kaam Karte Hain?</h2>
+          <div className="bg-white rounded-xl border border-slate-200 p-6">
+            <div className="space-y-4 text-slate-700 text-sm leading-relaxed">
+              <p>
+                Hamari team government recruitment ki official websites — jaise SSC, Railway Board, UPSC, IBPS, state PSC portals — ko regularly monitor karti hai. Jab bhi koi nayi notification release hoti hai, hum use carefully read karke user-friendly format mein present karte hain.
+              </p>
+              <p>
+                Har job post mein important dates, application fee, age limit, vacancy details aur eligibility — sab official notification se directly liya jaata hai. Hum koi bhi information bina verify kiye publish nahi karte.
+              </p>
+              <p>
+                Hamara goal simple hai: aapko sahi waqt par sahi information milni chahiye — bilkul free mein, bina kisi registration ke.
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Trust Signals */}
         <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-8 mb-10 border border-green-200">
-          <h2 className="text-2xl font-bold text-slate-800 mb-4">Why Trust Us?</h2>
-          <div className="grid md:grid-cols-3 gap-6 text-center">
-            <div>
-              <div className="text-3xl font-bold text-green-600 mb-1">10,000+</div>
-              <div className="text-sm text-slate-600">Job Notifications Published</div>
+          <h2 className="text-2xl font-bold text-slate-800 mb-4">Hum Par Bharosa Kyun Karein?</h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">✅</span>
+              <div>
+                <p className="font-bold text-slate-800 text-sm">Official Sources Only</p>
+                <p className="text-slate-600 text-xs mt-1">Sab information official government websites se verify ki jaati hai</p>
+              </div>
             </div>
-            <div>
-              <div className="text-3xl font-bold text-green-600 mb-1">5 Million+</div>
-              <div className="text-sm text-slate-600">Monthly Page Views</div>
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">🆓</span>
+              <div>
+                <p className="font-bold text-slate-800 text-sm">Bilkul Free</p>
+                <p className="text-slate-600 text-xs mt-1">Koi registration nahi, koi fee nahi — sab jankari free mein</p>
+              </div>
             </div>
-            <div>
-              <div className="text-3xl font-bold text-green-600 mb-1">500,000+</div>
-              <div className="text-sm text-slate-600">Active Users</div>
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">⚡</span>
+              <div>
+                <p className="font-bold text-slate-800 text-sm">Daily Updates</p>
+                <p className="text-slate-600 text-xs mt-1">Nayi vacancies, results aur admit cards daily update kiye jaate hain</p>
+              </div>
             </div>
           </div>
         </div>
