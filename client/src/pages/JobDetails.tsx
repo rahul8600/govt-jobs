@@ -1,710 +1,707 @@
-import { useEffect, useState } from "react";
-import { useParams, Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
-import { Helmet } from "react-helmet-async";
-import { 
-  Calendar, Clock, Building2, MapPin, GraduationCap, 
-  FileText, CheckCircle, ExternalLink, AlertTriangle, 
-  ChevronRight, Share2, Bookmark, Printer, ArrowLeft,
-  User, Award, BookOpen
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { useState } from "react";
+import { useRoute, Link } from "wouter";
+import { useJobs } from "@/lib/useJobs";
+import { Calendar, ExternalLink, ShieldCheck, MapPin, ChevronDown, ChevronUp, Share2 } from "lucide-react";
+import { useSEO, generateJobMeta } from "@/components/SEO";
+import { usePageTracker } from "@/lib/usePageTracker";
 
-// NEW: SEO Components for AdSense E-E-A-T
-import AuthorBio from "@/components/AuthorBio";
-import JobSchema from "@/components/JobSchema";
-import Breadcrumb from "@/components/Breadcrumb";
-import { BreadcrumbSchema } from "@/components/JobSchema";
-
-type Job = {
-  id: number;
-  slug: string;
-  title: string;
-  department: string;
-  type: string;
-  lastDate: string | null;
-  postDate: string;
-  shortInfo: string;
-  qualification: string | null;
-  state: string | null;
-  category: string | null;
-  vacancyDetails: any[];
-  applicationFee: any[];
-  importantDates: any[];
-  ageLimit: any[];
-  eligibilityDetails: string | null;
-  selectionProcess: any[];
-  physicalEligibility: any[];
-  links: any[];
-  featured: boolean;
-  trending: boolean;
-  rawJobContent: string | null;
-  applyOnlineUrl: string | null;
-  admitCardUrl: string | null;
-  resultUrl: string | null;
-  answerKeyUrl: string | null;
-  notificationUrl: string | null;
-  officialWebsiteUrl: string | null;
-  importantDatesHtml: string | null;
-  applicationFeeHtml: string | null;
-  ageLimitHtml: string | null;
-  vacancyDetailsHtml: string | null;
-  physicalStandardHtml: string | null;
-  physicalEfficiencyHtml: string | null;
-  selectionProcessHtml: string | null;
-  importantLinksHtml: string | null;
+const hasText = (val: string | null | undefined): boolean => {
+  return typeof val === 'string' && val.trim().length > 0;
 };
 
+const hasArrayContent = <T,>(arr: T[] | null | undefined, validator?: (item: T) => boolean): boolean => {
+  if (!arr || !Array.isArray(arr) || arr.length === 0) return false;
+  if (validator) return arr.some(validator);
+  return true;
+};
+
+const hasImportantDates = (dates: { label: string; date: string }[] | null | undefined): boolean => {
+  return hasArrayContent(dates, d => hasText(d.label) || hasText(d.date));
+};
+
+const hasApplicationFee = (fees: { category: string; fee: string }[] | null | undefined): boolean => {
+  return hasArrayContent(fees, f => hasText(f.category) || hasText(f.fee));
+};
+
+const hasAgeLimit = (ages: { category: string; minAge: string; maxAge: string }[] | null | undefined): boolean => {
+  return hasArrayContent(ages, a => hasText(a.category) || hasText(a.minAge) || hasText(a.maxAge));
+};
+
+const hasVacancyDetails = (vacancies: { postName: string; totalPost: string; eligibility: string }[] | null | undefined): boolean => {
+  return hasArrayContent(vacancies, v => hasText(v.postName) || hasText(v.totalPost) || hasText(v.eligibility));
+};
+
+const hasSelectionProcess = (steps: string[] | null | undefined): boolean => {
+  return hasArrayContent(steps, s => hasText(s));
+};
+
+const hasPhysicalEligibility = (physical: { criteria: string; male: string; female: string }[] | null | undefined): boolean => {
+  return hasArrayContent(physical, p => hasText(p.criteria) || hasText(p.male) || hasText(p.female));
+};
+
+const hasLinks = (links: { label: string; url: string }[] | null | undefined): boolean => {
+  return hasArrayContent(links, l => hasText(l.label) && hasText(l.url));
+};
+
+// Check if job last date has passed
+function isJobExpired(lastDate: string | null | undefined): boolean {
+  if (!lastDate) return false;
+  try {
+    const months: Record<string, number> = {
+      january:0,february:1,march:2,april:3,may:4,june:5,
+      july:6,august:7,september:8,october:9,november:10,december:11
+    };
+    const wordMatch = lastDate.toLowerCase().match(/(\d{1,2})\s+(\w+)\s+(\d{4})/);
+    if (wordMatch && months[wordMatch[2]] !== undefined) {
+      const d = new Date(parseInt(wordMatch[3]), months[wordMatch[2]], parseInt(wordMatch[1]));
+      d.setDate(d.getDate() + 1);
+      return d < new Date();
+    }
+    const slashMatch = lastDate.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (slashMatch) {
+      const d = new Date(parseInt(slashMatch[3]), parseInt(slashMatch[2])-1, parseInt(slashMatch[1]));
+      d.setDate(d.getDate() + 1);
+      return d < new Date();
+    }
+  } catch {}
+  return false;
+}
+
 export default function JobDetails() {
-  const { slug } = useParams();
-  const { toast } = useToast();
-  const [relatedJobs, setRelatedJobs] = useState<Job[]>([]);
+  const [match, params] = useRoute("/job/:id");
+  const { jobs, loading } = useJobs();
+  const [showFullNotification, setShowFullNotification] = useState(false);
 
-  const { data: job, isLoading, error } = useQuery<Job>({
-    queryKey: ["/api/posts", slug],
-    queryFn: async () => {
-      const res = await apiRequest("GET", `/api/posts/${slug}`);
-      if (!res.ok) throw new Error("Job not found");
-      return res.json();
-    },
-  });
+  const job = jobs.find(j => j.id === params?.id || j.slug === params?.id);
+  
+  const seoProps = job ? generateJobMeta(job) : { title: 'Loading...', description: '' };
+  useSEO(seoProps);
+  usePageTracker('job-detail', job ? parseInt(job.id) : undefined);
 
-  useEffect(() => {
-    if (job) {
-      document.title = `${job.title} ${job.department ? '- ' + job.department : ''} | SarkariJobSeva`;
+  if (loading) return <div className="p-10 text-center font-bold">Loading...</div>;
+  if (!match) return null;
+  if (!job) return <div className="p-10 text-center font-bold">Job Not Found</div>;
 
-      // Enhanced meta description for SEO
-      const metaDesc = document.querySelector('meta[name="description"]');
-      if (metaDesc) {
-        metaDesc.setAttribute('content', 
-          `${job.title} - ${job.shortInfo} Apply Online before ${job.lastDate || 'last date'}. Eligibility, Salary, Selection Process, Exam Pattern and Complete Details on SarkariJobSeva.com.`
-        );
-      }
-
-      // Canonical URL
-      const canonical = document.querySelector('link[rel="canonical"]');
-      if (canonical) {
-        canonical.setAttribute('href', `https://www.sarkarijobseva.com/job/${job.slug}`);
-      }
-
-      // OG tags
-      const ogTitle = document.querySelector('meta[property="og:title"]');
-      if (ogTitle) ogTitle.setAttribute('content', job.title);
-
-      const ogDesc = document.querySelector('meta[property="og:description"]');
-      if (ogDesc) ogDesc.setAttribute('content', job.shortInfo);
-
-      // Fetch related jobs
-      fetchRelatedJobs(job);
-
-      // Track page view
-      apiRequest("POST", "/api/pageviews", { page: `/job/${slug}`, postId: job.id });
-    }
-  }, [job, slug]);
-
-  const fetchRelatedJobs = async (currentJob: Job) => {
-    try {
-      const res = await apiRequest("GET", `/api/posts?limit=6&category=${currentJob.category || ''}&state=${currentJob.state || ''}`);
-      if (res.ok) {
-        const data = await res.json();
-        const filtered = data.filter((j: Job) => j.id !== currentJob.id).slice(0, 5);
-        setRelatedJobs(filtered);
-      }
-    } catch (e) {
-      console.error("Failed to fetch related jobs", e);
+  const notifyLink = job.notificationUrl || job.links.find(l => l.label.toLowerCase().includes('notification'))?.url || "#";
+  
+  const getPrimaryActionButton = () => {
+    switch (job.type) {
+      case 'job':
+        const applyUrl = job.applyOnlineUrl || job.links.find(l => l.label.toLowerCase().includes('apply'))?.url || "#";
+        return { label: 'Apply Online', url: applyUrl };
+      case 'admit-card':
+        const admitUrl = job.admitCardUrl || job.links.find(l => l.label.toLowerCase().includes('admit'))?.url || "#";
+        return { label: 'Download Admit Card', url: admitUrl };
+      case 'result':
+        const resultUrl = job.resultUrl || job.links.find(l => l.label.toLowerCase().includes('result'))?.url || "#";
+        return { label: 'Download Result', url: resultUrl };
+      case 'answer-key':
+        const answerUrl = job.answerKeyUrl || job.links.find(l => l.label.toLowerCase().includes('answer'))?.url || "#";
+        return { label: 'Download Answer Key', url: answerUrl };
+      default:
+        return { label: 'Apply Online', url: '#' };
     }
   };
+  
+  const primaryAction = getPrimaryActionButton();
+  const expired = isJobExpired(job.lastDate);
 
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: job?.title || "Sarkari Job",
-          text: job?.shortInfo || "",
-          url: window.location.href,
-        });
-      } catch (e) {
-        // User cancelled
-      }
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-      toast({ title: "Link copied to clipboard!" });
-    }
-  };
+  // Related jobs — same type, excluding current
+  const relatedJobs = jobs
+    .filter(j => j.type === job.type && j.id !== job.id)
+    .slice(0, 5);
 
-  const handlePrint = () => {
-    window.print();
-  };
+  const showDatesHtml = hasText(job.importantDatesHtml);
+  const showDatesStructured = !showDatesHtml && hasImportantDates(job.importantDates);
+  const showDates = showDatesHtml || showDatesStructured;
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-slate-50 py-6 px-4">
-        <div className="max-w-4xl mx-auto space-y-4">
-          <Skeleton className="h-8 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
-          <Skeleton className="h-64 w-full" />
-        </div>
-      </div>
-    );
-  }
+  const showFeeHtml = hasText(job.applicationFeeHtml);
+  const showFeeStructured = !showFeeHtml && hasApplicationFee(job.applicationFee);
+  const showFee = showFeeHtml || showFeeStructured;
 
-  if (error || !job) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
-        <div className="text-center">
-          <AlertTriangle className="w-16 h-16 text-amber-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-slate-800 mb-2">Job Not Found</h1>
-          <p className="text-slate-600 mb-6">The job you are looking for does not exist or has been removed.</p>
-          <Link href="/">
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Home
-            </Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  const showAgeLimitHtml = hasText(job.ageLimitHtml);
+  const showAgeLimitStructured = !showAgeLimitHtml && hasAgeLimit(job.ageLimit);
+  const showAgeLimit = showAgeLimitHtml || showAgeLimitStructured;
 
-  const showDates = job.importantDatesHtml || (job.importantDates && job.importantDates.length > 0);
-  const showFee = job.applicationFeeHtml || (job.applicationFee && job.applicationFee.length > 0);
-  const showAgeLimit = job.ageLimitHtml || (job.ageLimit && job.ageLimit.length > 0);
-  const showVacancy = job.vacancyDetailsHtml || (job.vacancyDetails && job.vacancyDetails.length > 0);
-  const showSelection = job.selectionProcessHtml || (job.selectionProcess && job.selectionProcess.length > 0);
-  const showPhysical = job.physicalStandardHtml || job.physicalEfficiencyHtml || (job.physicalEligibility && job.physicalEligibility.length > 0);
+  const showVacancyHtml = hasText(job.vacancyDetailsHtml);
+  const showVacancyStructured = !showVacancyHtml && hasVacancyDetails(job.vacancyDetails);
+  const showVacancy = showVacancyHtml || showVacancyStructured;
 
-  // Breadcrumb items
-  const breadcrumbItems = [
-    { label: "Home", href: "/" },
-    { label: job.department || "Latest Jobs", href: "/latest-jobs" },
-    { label: job.title },
-  ];
+  const showSelectionHtml = hasText(job.selectionProcessHtml);
+  const showSelectionStructured = !showSelectionHtml && hasSelectionProcess(job.selectionProcess);
+  const showSelection = showSelectionHtml || showSelectionStructured;
+
+  const showPstHtml = hasText(job.physicalStandardHtml);
+  const showPetHtml = hasText(job.physicalEfficiencyHtml);
+  const showPhysicalStructured = !showPstHtml && !showPetHtml && hasPhysicalEligibility(job.physicalEligibility);
+
+  const showLinksHtml = hasText(job.importantLinksHtml);
+  const showLinksStructured = !showLinksHtml && hasLinks(job.links);
+  const showLinks = showLinksHtml || showLinksStructured;
+
+  const showEligibility = hasText(job.eligibilityDetails);
 
   return (
-    <>
-      {/* JSON-LD Schema Markup for SEO */}
-      <JobSchema
-        title={job.title}
-        description={job.shortInfo}
-        department={job.department}
-        lastDate={job.lastDate || undefined}
-        postDate={job.postDate}
-        qualification={job.qualification || undefined}
-        state={job.state || undefined}
-        category={job.category || undefined}
-        url={`https://www.sarkarijobseva.com/job/${job.slug}`}
-      />
+    <div className="max-w-5xl mx-auto space-y-10 pb-20">
 
-      {/* Breadcrumb Schema */}
-      <BreadcrumbSchema
-        items={[
-          { name: "Home", url: "https://www.sarkarijobseva.com/" },
-          { name: job.department || "Latest Jobs", url: "https://www.sarkarijobseva.com/latest-jobs" },
-          { name: job.title, url: `https://www.sarkarijobseva.com/job/${job.slug}` },
-        ]}
-      />
-
-      {/* Breadcrumb Navigation */}
-      <div className="bg-white border-b border-slate-200">
-        <div className="max-w-4xl mx-auto px-4 py-2">
-          <Breadcrumb items={breadcrumbItems} />
-        </div>
-      </div>
-
-      <div className="min-h-screen bg-slate-50">
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          {/* Back Button */}
-          <Link href="/" className="inline-flex items-center gap-2 text-blue-600 font-semibold mb-4 hover:underline">
-            <ArrowLeft className="w-4 h-4" />
-            Back to All Jobs
+      {/* Expired Banner */}
+      {expired && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3">
+          <span className="text-2xl">⚠️</span>
+          <div className="flex-1">
+            <p className="text-red-700 font-black text-sm uppercase tracking-wide">Application Closed!</p>
+            <p className="text-red-600 text-xs mt-0.5">Last date ({job.lastDate}) has passed. Check latest jobs for new notifications.</p>
+          </div>
+          <Link href="/latest-jobs">
+            <span className="bg-red-600 text-white text-xs font-bold px-3 py-2 rounded-lg cursor-pointer hover:bg-red-700 flex-shrink-0">New Jobs</span>
           </Link>
+        </div>
+      )}
 
-          {/* Job Header Card */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-6">
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-6">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <h1 className="text-2xl md:text-3xl font-bold leading-tight">{job.title}</h1>
-                  {job.department && (
-                    <p className="text-blue-100 mt-2 flex items-center gap-2">
-                      <Building2 className="w-4 h-4" />
-                      {job.department}
-                      {job.lastDate && (
-                        <span className="text-blue-200">– Last Date: {job.lastDate}</span>
-                      )}
-                    </p>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={handleShare} className="bg-white/10 border-white/20 text-white hover:bg-white/20">
-                    <Share2 className="w-4 h-4" />
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={handlePrint} className="bg-white/10 border-white/20 text-white hover:bg-white/20">
-                    <Printer className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Short Info */}
-            <div className="p-6">
-              <p className="text-slate-700 text-lg leading-relaxed">{job.shortInfo}</p>
-
-              {/* Meta Tags */}
-              <div className="flex flex-wrap gap-3 mt-4">
-                {job.postDate && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
-                    Posted: {job.postDate}
-                  </Badge>
-                )}
-                {job.lastDate && (
-                  <Badge variant="destructive" className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    Last Date: {job.lastDate}
-                  </Badge>
-                )}
-                {job.qualification && (
-                  <Badge variant="outline" className="flex items-center gap-1">
-                    <GraduationCap className="w-3 h-3" />
-                    {job.qualification}
-                  </Badge>
-                )}
-                {job.state && (
-                  <Badge variant="outline" className="flex items-center gap-1">
-                    <MapPin className="w-3 h-3" />
-                    {job.state}
-                  </Badge>
-                )}
-                {job.category && (
-                  <Badge variant="outline" className="flex items-center gap-1">
-                    <FileText className="w-3 h-3" />
-                    {job.category}
-                  </Badge>
-                )}
-              </div>
-            </div>
+      {/* 1. Header Card */}
+      <div className="bg-white p-10 rounded-2xl border border-slate-200/80 shadow-lg shadow-slate-200/50 space-y-6">
+        <h1 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight leading-snug text-center job-details-title" data-testid="text-job-title">
+          {job.title}
+          {job.department && (
+            <span className="block text-sm font-semibold text-slate-500 mt-1">
+              {job.department}
+              {job.lastDate ? ` – Last Date: ${job.lastDate}` : ''}
+            </span>
+          )}
+        </h1>
+        <div className="flex flex-wrap justify-center gap-3 text-xs font-bold text-slate-500">
+          <span className="flex items-center gap-2 bg-slate-100 px-4 py-2 rounded-lg"><MapPin className="w-4 h-4" /> {job.department}</span>
+          <span className="flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-lg border border-blue-100"><Calendar className="w-4 h-4" /> Posted: {job.postDate}</span>
+          {job.lastDate && <span className="flex items-center gap-2 bg-rose-50 text-rose-600 px-4 py-2 rounded-lg border border-rose-100"><Calendar className="w-4 h-4" /> Last Date: {job.lastDate}</span>}
+        </div>
+        
+        {hasText(job.shortInfo) && (
+          <div className="bg-gradient-to-br from-slate-50 to-blue-50/30 p-7 rounded-xl border border-slate-100">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3 job-details-short-heading">
+              {job.type === 'admit-card' ? 'Admit Card Overview' :
+               job.type === 'result' ? 'Result Overview' :
+               job.type === 'answer-key' ? 'Answer Key Overview' :
+               job.type === 'admission' ? 'Admission Overview' :
+               'Job Overview / Short Information'}
+            </h2>
+            <p className="text-sm font-medium text-slate-600 leading-relaxed whitespace-pre-line job-details-short-text" data-testid="text-short-info">{job.shortInfo}</p>
           </div>
+        )}
 
-          {/* Quick Action Buttons */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-            {job.applyOnlineUrl && (
-              <a href={job.applyOnlineUrl} target="_blank" rel="noopener noreferrer" className="no-underline">
-                <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-6">
-                  <ExternalLink className="w-5 h-5 mr-2" />
-                  Apply Online
-                </Button>
-              </a>
-            )}
-            {job.notificationUrl && (
-              <a href={job.notificationUrl} target="_blank" rel="noopener noreferrer" className="no-underline">
-                <Button variant="outline" className="w-full border-blue-300 text-blue-700 hover:bg-blue-50 font-bold py-6">
-                  <FileText className="w-5 h-5 mr-2" />
-                  Notification
-                </Button>
-              </a>
-            )}
-            {job.admitCardUrl && (
-              <a href={job.admitCardUrl} target="_blank" rel="noopener noreferrer" className="no-underline">
-                <Button variant="outline" className="w-full border-purple-300 text-purple-700 hover:bg-purple-50 font-bold py-6">
-                  <CheckCircle className="w-5 h-5 mr-2" />
-                  Admit Card
-                </Button>
-              </a>
-            )}
-            {job.resultUrl && (
-              <a href={job.resultUrl} target="_blank" rel="noopener noreferrer" className="no-underline">
-                <Button variant="outline" className="w-full border-orange-300 text-orange-700 hover:bg-orange-50 font-bold py-6">
-                  <CheckCircle className="w-5 h-5 mr-2" />
-                  Result
-                </Button>
-              </a>
-            )}
+        <div className="flex flex-col md:flex-row flex-wrap justify-center gap-4 pt-4">
+          <a href={primaryAction.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 bg-blue-600 text-white w-full md:w-auto px-9 py-5 md:py-4 rounded-xl font-bold text-sm md:text-xs uppercase tracking-widest hover:bg-blue-700 transition-all duration-200 shadow-lg shadow-blue-600/25 hover:shadow-xl active:scale-[0.98]" data-testid="button-primary-action">
+            <ExternalLink className="w-5 h-5 md:w-4 md:h-4" /> {primaryAction.label}
+          </a>
+          <a href={notifyLink} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 bg-slate-700 text-white w-full md:w-auto px-9 py-5 md:py-4 rounded-xl font-bold text-sm md:text-xs uppercase tracking-widest hover:bg-slate-800 transition-all duration-200 shadow-lg shadow-slate-700/25 hover:shadow-xl active:scale-[0.98]" data-testid="button-notification">
+            Notification
+          </a>
+          {/* WhatsApp Share */}
+          <a
+            href={`https://wa.me/?text=${encodeURIComponent(`🔔 ${job.title}\n📅 Last Date: ${job.lastDate || 'N/A'}\n🔗 ${window.location.href}`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 bg-green-500 text-white w-full md:w-auto px-9 py-5 md:py-4 rounded-xl font-bold text-sm md:text-xs uppercase tracking-widest hover:bg-green-600 transition-all duration-200 shadow-lg active:scale-[0.98]"
+          >
+            <Share2 className="w-5 h-5 md:w-4 md:h-4" /> WhatsApp Share
+          </a>
+          {hasText(job.rawJobContent) && (
+            <button 
+              onClick={() => setShowFullNotification(!showFullNotification)}
+              className="flex items-center gap-2 bg-emerald-600 text-white px-9 py-4 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-emerald-700 transition-all duration-200 shadow-lg shadow-emerald-600/25 active:scale-[0.98]"
+              data-testid="button-view-full-notification"
+            >
+              {showFullNotification ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              {showFullNotification ? 'Hide Full Notification' : 'View Full Notification'}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Full Notification Content */}
+      {hasText(job.rawJobContent) && showFullNotification && (
+        <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-lg">
+          <h2 className="bg-emerald-600 text-white p-5 text-sm font-bold uppercase tracking-widest">Full Notification Details</h2>
+          <div className="p-8 max-h-[600px] overflow-y-auto">
+            <div className="prose prose-sm max-w-none text-slate-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: job.rawJobContent! }} />
           </div>
+        </div>
+      )}
 
-          {/* Main Content Grid */}
-          <div className="grid lg:grid-cols-3 gap-6">
-            {/* Left Content */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Important Dates */}
-              {showDates && (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                  <div className="bg-blue-50 px-6 py-4 border-b border-blue-100">
-                    <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                      <Calendar className="w-5 h-5 text-blue-600" />
-                      Important Dates
-                    </h2>
-                  </div>
-                  <div className="p-6">
-                    {job.importantDatesHtml ? (
-                      <div dangerouslySetInnerHTML={{ __html: job.importantDatesHtml }} />
-                    ) : (
-                      <div className="space-y-2">
-                        {job.importantDates?.map((item: any, i: number) => (
-                          <div key={i} className="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
-                            <span className="text-slate-700 font-medium">{item.label}</span>
-                            <span className="text-slate-900 font-semibold">{item.value}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Application Fee */}
-              {showFee && (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                  <div className="bg-green-50 px-6 py-4 border-b border-green-100">
-                    <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                      <FileText className="w-5 h-5 text-green-600" />
-                      Application Fee
-                    </h2>
-                  </div>
-                  <div className="p-6">
-                    {job.applicationFeeHtml ? (
-                      <div dangerouslySetInnerHTML={{ __html: job.applicationFeeHtml }} />
-                    ) : (
-                      <div className="space-y-2">
-                        {job.applicationFee?.map((item: any, i: number) => (
-                          <div key={i} className="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
-                            <span className="text-slate-700 font-medium">{item.category}</span>
-                            <span className="text-slate-900 font-semibold">{item.fee}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Age Limit */}
-              {showAgeLimit && (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                  <div className="bg-purple-50 px-6 py-4 border-b border-purple-100">
-                    <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                      <User className="w-5 h-5 text-purple-600" />
-                      Age Limit
-                    </h2>
-                  </div>
-                  <div className="p-6">
-                    {job.ageLimitHtml ? (
-                      <div dangerouslySetInnerHTML={{ __html: job.ageLimitHtml }} />
-                    ) : (
-                      <div className="space-y-2">
-                        {job.ageLimit?.map((item: any, i: number) => (
-                          <div key={i} className="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
-                            <span className="text-slate-700 font-medium">{item.category}</span>
-                            <span className="text-slate-900 font-semibold">{item.age}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Vacancy Details */}
-              {showVacancy && (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                  <div className="bg-orange-50 px-6 py-4 border-b border-orange-100">
-                    <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                      <Building2 className="w-5 h-5 text-orange-600" />
-                      Vacancy Details
-                    </h2>
-                  </div>
-                  <div className="p-6">
-                    {job.vacancyDetailsHtml ? (
-                      <div dangerouslySetInnerHTML={{ __html: job.vacancyDetailsHtml }} />
-                    ) : (
-                      <div className="space-y-2">
-                        {job.vacancyDetails?.map((item: any, i: number) => (
-                          <div key={i} className="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
-                            <span className="text-slate-700 font-medium">{item.post}</span>
-                            <span className="text-slate-900 font-semibold">{item.vacancy}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Selection Process */}
-              {showSelection && (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                  <div className="bg-indigo-50 px-6 py-4 border-b border-indigo-100">
-                    <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                      <CheckCircle className="w-5 h-5 text-indigo-600" />
-                      Selection Process
-                    </h2>
-                  </div>
-                  <div className="p-6">
-                    {job.selectionProcessHtml ? (
-                      <div dangerouslySetInnerHTML={{ __html: job.selectionProcessHtml }} />
-                    ) : (
-                      <ol className="space-y-3">
-                        {job.selectionProcess?.map((item: any, i: number) => (
-                          <li key={i} className="flex items-start gap-3">
-                            <span className="w-8 h-8 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center font-bold text-sm shrink-0">
-                              {i + 1}
-                            </span>
-                            <span className="text-slate-700 pt-1">{item.step}</span>
-                          </li>
-                        ))}
-                      </ol>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Physical Standards */}
-              {showPhysical && (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                  <div className="bg-teal-50 px-6 py-4 border-b border-teal-100">
-                    <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                      <Award className="w-5 h-5 text-teal-600" />
-                      Physical Standards
-                    </h2>
-                  </div>
-                  <div className="p-6">
-                    {job.physicalStandardHtml && (
-                      <div dangerouslySetInnerHTML={{ __html: job.physicalStandardHtml }} />
-                    )}
-                    {job.physicalEfficiencyHtml && (
-                      <div dangerouslySetInnerHTML={{ __html: job.physicalEfficiencyHtml }} />
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Eligibility Details */}
-              {job.eligibilityDetails && (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                  <div className="bg-amber-50 px-6 py-4 border-b border-amber-100">
-                    <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                      <GraduationCap className="w-5 h-5 text-amber-600" />
-                      Eligibility Details
-                    </h2>
-                  </div>
-                  <div className="p-6">
-                    <p className="text-slate-700 leading-relaxed">{job.eligibilityDetails}</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Important Links */}
-              {(job.links?.length > 0 || job.importantLinksHtml) && (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                  <div className="bg-slate-100 px-6 py-4 border-b border-slate-200">
-                    <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                      <ExternalLink className="w-5 h-5 text-slate-600" />
-                      Important Links
-                    </h2>
-                  </div>
-                  <div className="p-6">
-                    {job.importantLinksHtml ? (
-                      <div dangerouslySetInnerHTML={{ __html: job.importantLinksHtml }} />
-                    ) : (
-                      <div className="grid gap-3">
-                        {job.links?.map((link: any, i: number) => (
-                          <a 
-                            key={i} 
-                            href={link.url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-between p-4 bg-slate-50 rounded-lg hover:bg-blue-50 transition-colors group"
-                          >
-                            <span className="font-medium text-slate-700 group-hover:text-blue-700">{link.label}</span>
-                            <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-blue-500" />
-                          </a>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* How to Apply */}
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
-                  <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                    <BookOpen className="w-5 h-5" />
-                    {job.type === 'admit-card' ? 'Admit Card Download कैसे करें?' : 
-                     job.type === 'result' ? 'Result कैसे देखें?' : 
-                     job.type === 'answer-key' ? 'Answer Key Download कैसे करें?' : 
-                     'Apply Online कैसे करें?'}
-                  </h2>
-                </div>
-                <div className="p-6">
-                  {job.type === 'admit-card' ? (
-                    <ol className="space-y-3">
-                      {[
-                        "ऊपर दिए 'Download Admit Card' button पर click करें",
-                        "Official Website पर जाएं",
-                        "Admit Card / Hall Ticket link पर click करें",
-                        "Registration Number / Roll Number और Date of Birth डालें",
-                        "Submit करें — Admit Card screen पर आ जाएगा",
-                        "Download करें और Print निकालें — Color या Black & White दोनों चलते हैं",
-                        "Exam वाले दिन Admit Card + Photo ID (Aadhar/Voter Card) साथ ले जाएं",
-                      ].map((step, i) => (
-                        <li key={i} className="flex items-start gap-3">
-                          <span className="w-8 h-8 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold text-sm shrink-0">{i + 1}</span>
-                          <span className="text-slate-700 pt-1">{step}</span>
-                        </li>
-                      ))}
-                    </ol>
-                  ) : job.type === 'result' ? (
-                    <ol className="space-y-3">
-                      {[
-                        "ऊपर दिए 'Download Result' button पर click करें",
-                        "Official Website पर जाएं",
-                        "Result / Score Card link पर click करें",
-                        "Roll Number / Registration Number डालें",
-                        "Submit करें — Result screen पर दिखेगा",
-                        "Score Card Download करें और Print कर लें",
-                        "Cut-off check करें — अगर ऊपर हैं तो Next Round के लिए तैयार रहें",
-                      ].map((step, i) => (
-                        <li key={i} className="flex items-start gap-3">
-                          <span className="w-8 h-8 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold text-sm shrink-0">{i + 1}</span>
-                          <span className="text-slate-700 pt-1">{step}</span>
-                        </li>
-                      ))}
-                    </ol>
-                  ) : job.type === 'answer-key' ? (
-                    <ol className="space-y-3">
-                      {[
-                        "ऊपर दिए 'Download Answer Key' button पर click करें",
-                        "Official Website पर जाएं",
-                        "Answer Key PDF Download करें",
-                        "अपने Answers से मिलाएं और Marks Calculate करें",
-                        "यदि कोई Answer गलत लगे — Objection Portal पर जाएं",
-                        "Objection Form भरें, Reference दें और Fee Pay करें",
-                        "Objection की Last Date से पहले Submit करें",
-                      ].map((step, i) => (
-                        <li key={i} className="flex items-start gap-3">
-                          <span className="w-8 h-8 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold text-sm shrink-0">{i + 1}</span>
-                          <span className="text-slate-700 pt-1">{step}</span>
-                        </li>
-                      ))}
-                    </ol>
-                  ) : (
-                    <ol className="space-y-3">
-                      {[
-                        "पहले Official Notification ध्यान से पढ़ें — Eligibility check करें",
-                        "ऊपर 'Apply Online' button पर click करें",
-                        "Official Website पर New Registration करें — Email और Mobile डालें",
-                        "Online Application Form भरें — सभी details सही भरें",
-                        "Photo और Signature Upload करें (Size और Format Notification में बताया होगा)",
-                        "Application Fee Online Pay करें (Net Banking / UPI / Debit Card)",
-                        "Form Preview check करें और Final Submit करें",
-                        "Application Confirmation / Acknowledgement Print कर लें — भविष्य के लिए रखें",
-                      ].map((step, i) => (
-                        <li key={i} className="flex items-start gap-3">
-                          <span className="w-8 h-8 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold text-sm shrink-0">{i + 1}</span>
-                          <span className="text-slate-700 pt-1">{step}</span>
-                        </li>
-                      ))}
-                    </ol>
-                  )}
-                </div>
-              </div>
-
-              {/* Author Bio - AdSense E-E-A-T Signal */}
-              <AuthorBio
-                authorName="Rahul Sharma"
-                authorRole="Government Job Expert & Editor"
-                authorBio="Rahul Sharma is a former banking professional with 5+ years of experience in government exam preparation guidance. He specializes in SSC, Railway, Banking, and State PSC recruitment analysis. He has helped thousands of aspirants find their dream government job through accurate and timely information."
-                publishedDate={job.postDate}
-                updatedDate={job.lastDate || undefined}
-                readTime="8 min read"
-              />
-
-              {/* Disclaimer */}
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-6">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                  <div>
-                    <h3 className="font-bold text-amber-800 mb-2">Important Disclaimer</h3>
-                    <p className="text-amber-700 text-sm leading-relaxed">
-                      The recruitment information provided above is for immediate information to the candidates and does not constitute a legal document. While efforts have been made to make the information available as authentic as possible, please verify the details from the official website or notification before applying. SarkariJobSeva.com is NOT a government website and is not affiliated with any government department.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Sidebar */}
-            <div className="space-y-6">
-              {/* Related Jobs */}
-              {relatedJobs.length > 0 && (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                  <div className="bg-slate-100 px-6 py-4 border-b border-slate-200">
-                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                      <ChevronRight className="w-4 h-4" />
-                      Similar Jobs
-                    </h3>
-                  </div>
-                  <div className="p-4 space-y-3">
-                    {relatedJobs.map((related) => (
-                      <Link key={related.id} href={`/job/${related.slug}`} className="block p-3 bg-slate-50 rounded-lg hover:bg-blue-50 transition-colors group">
-                        <h4 className="font-semibold text-slate-800 text-sm group-hover:text-blue-700 line-clamp-2">{related.title}</h4>
-                        <p className="text-xs text-slate-500 mt-1">{related.department}</p>
-                        {related.lastDate && (
-                          <p className="text-xs text-red-500 mt-1">Last Date: {related.lastDate}</p>
-                        )}
-                      </Link>
+      {/* Dates & Fees Grid */}
+      {(showDates || showFee) && (
+        <div className="grid md:grid-cols-2 gap-7 job-details-grid">
+          {showDates && (
+            <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-md">
+              <h2 className="bg-[#800000] text-white p-4 text-sm font-bold uppercase tracking-widest">Important Dates</h2>
+              {showDatesHtml ? (
+                <div className="p-5 sarkari-content" dangerouslySetInnerHTML={{ __html: job.importantDatesHtml! }} />
+              ) : (
+                <table className="w-full border-collapse job-details-table">
+                  <tbody className="divide-y divide-slate-100">
+                    {job.importantDates?.filter(d => hasText(d.label) || hasText(d.date)).map((d, i) => (
+                      <tr key={i} className="hover:bg-blue-50/30 transition-colors duration-200">
+                        <td className="p-5 text-xs font-bold uppercase text-slate-500 w-1/2 border-r border-slate-100">{d.label}</td>
+                        <td className="p-5 text-sm font-semibold text-slate-800">{d.date}</td>
+                      </tr>
                     ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+          {showFee && (
+            <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-md">
+              <h2 className="bg-[#006400] text-white p-4 text-sm font-bold uppercase tracking-widest">Application Fee</h2>
+              {showFeeHtml ? (
+                <div className="p-5 sarkari-content" dangerouslySetInnerHTML={{ __html: job.applicationFeeHtml! }} />
+              ) : (
+                <table className="w-full border-collapse job-details-table">
+                  <tbody className="divide-y divide-slate-100">
+                    {job.applicationFee?.filter(f => hasText(f.category) || hasText(f.fee)).map((f, i) => (
+                      <tr key={i} className="hover:bg-blue-50/30 transition-colors duration-200">
+                        <td className="p-5 text-xs font-bold uppercase text-slate-500 w-1/2 border-r border-slate-100">{f.category}</td>
+                        <td className="p-5 text-sm font-semibold text-blue-700">₹{f.fee}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Age Limit */}
+      {showAgeLimit && (
+        <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-md">
+          <h2 className="bg-[#800000] text-white p-4 text-sm font-bold uppercase tracking-widest">Age Limit Details</h2>
+          {showAgeLimitHtml ? (
+            <div className="p-5 sarkari-content" dangerouslySetInnerHTML={{ __html: job.ageLimitHtml! }} />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse job-details-table">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200">
+                    <th className="p-5 text-xs font-bold uppercase text-slate-500 text-left">Category</th>
+                    <th className="p-5 text-xs font-bold uppercase text-slate-500 text-center">Min Age</th>
+                    <th className="p-5 text-xs font-bold uppercase text-slate-500 text-center">Max Age</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {job.ageLimit?.filter(a => hasText(a.category) || hasText(a.minAge) || hasText(a.maxAge)).map((a, i) => (
+                    <tr key={i} className="hover:bg-blue-50/30 transition-colors duration-200">
+                      <td className="p-5 text-sm font-semibold text-slate-700">{a.category}</td>
+                      <td className="p-5 text-sm font-bold text-center text-blue-700">{a.minAge} Years</td>
+                      <td className="p-5 text-sm font-bold text-center text-blue-700">{a.maxAge} Years</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Vacancy Details */}
+      {showVacancy && (
+        <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-md">
+          <h2 className="bg-[#006400] text-white p-4 text-sm font-bold uppercase tracking-widest text-center">Vacancy Details</h2>
+          {showVacancyHtml ? (
+            <div className="p-5 sarkari-content" dangerouslySetInnerHTML={{ __html: job.vacancyDetailsHtml! }} />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse job-details-table">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200">
+                    <th className="p-5 text-xs font-bold uppercase text-slate-500 text-left">Post Name</th>
+                    <th className="p-5 text-xs font-bold uppercase text-slate-500 text-center">Total Posts</th>
+                    <th className="p-5 text-xs font-bold uppercase text-slate-500 text-left">Eligibility</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {job.vacancyDetails?.filter(v => hasText(v.postName) || hasText(v.totalPost) || hasText(v.eligibility)).map((v, i) => (
+                    <tr key={i} className="hover:bg-blue-50/30 transition-colors duration-200">
+                      <td className="p-5 text-sm font-semibold text-slate-700">{v.postName}</td>
+                      <td className="p-5 text-sm font-bold text-center text-blue-700">{v.totalPost}</td>
+                      <td className="p-5 text-sm font-medium text-slate-600 leading-relaxed">{v.eligibility}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Eligibility Details */}
+      {showEligibility && (
+        <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-md">
+          <h2 className="bg-blue-700 text-white p-5 text-sm font-bold uppercase tracking-widest">Eligibility Details</h2>
+          <div className="p-7">
+            <p className="text-sm font-medium text-slate-600 leading-relaxed whitespace-pre-line">{job.eligibilityDetails}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Selection Process */}
+      {showSelection && (
+        <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-md">
+          <h2 className="bg-[#800000] text-white p-4 text-sm font-bold uppercase tracking-widest">Selection Process</h2>
+          {showSelectionHtml ? (
+            <div className="p-5 sarkari-content" dangerouslySetInnerHTML={{ __html: job.selectionProcessHtml! }} />
+          ) : (
+            <div className="p-7">
+              <ul className="space-y-4">
+                {job.selectionProcess?.filter(s => hasText(s)).map((step, i) => (
+                  <li key={i} className="flex gap-4 items-center text-sm font-medium text-slate-600">
+                    <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-xs font-bold shrink-0">{i + 1}</div>
+                    {step}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {showPstHtml && (
+        <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-md">
+          <h2 className="bg-[#006400] text-white p-4 text-sm font-bold uppercase tracking-widest text-center">Physical Standard Test (PST)</h2>
+          <div className="p-5 sarkari-content" dangerouslySetInnerHTML={{ __html: job.physicalStandardHtml! }} />
+        </div>
+      )}
+
+      {showPetHtml && (
+        <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-md">
+          <h2 className="bg-[#006400] text-white p-4 text-sm font-bold uppercase tracking-widest text-center">Physical Efficiency Test (PET)</h2>
+          <div className="p-5 sarkari-content" dangerouslySetInnerHTML={{ __html: job.physicalEfficiencyHtml! }} />
+        </div>
+      )}
+
+      {showPhysicalStructured && (
+        <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-md">
+          <h2 className="bg-[#006400] text-white p-4 text-sm font-bold uppercase tracking-widest text-center">Physical Eligibility Details</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse job-details-table">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200">
+                  <th className="p-5 text-xs font-bold uppercase text-slate-500 text-left">Criteria</th>
+                  <th className="p-5 text-xs font-bold uppercase text-slate-500 text-center">Male</th>
+                  <th className="p-5 text-xs font-bold uppercase text-slate-500 text-center">Female</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {job.physicalEligibility?.filter(p => hasText(p.criteria) || hasText(p.male) || hasText(p.female)).map((p, i) => (
+                  <tr key={i} className="hover:bg-blue-50/30 transition-colors duration-200">
+                    <td className="p-5 text-sm font-semibold text-slate-700">{p.criteria}</td>
+                    <td className="p-5 text-sm font-bold text-center text-slate-800">{p.male}</td>
+                    <td className="p-5 text-sm font-bold text-center text-slate-800">{p.female}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Important Links */}
+      {showLinks && (
+        <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-md">
+          <h2 className="bg-[#800000] text-white p-4 text-sm font-bold uppercase tracking-widest text-center">Important Links</h2>
+          {showLinksHtml ? (
+            <div className="p-5 sarkari-content" dangerouslySetInnerHTML={{ __html: job.importantLinksHtml! }} />
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {job.links?.filter(l => hasText(l.label) && hasText(l.url)).map((l, i) => (
+                <div key={i} className="grid grid-cols-2 items-center p-6 hover:bg-rose-50/30 transition-all duration-200">
+                  <div className="font-bold text-slate-700 text-sm">{l.label}</div>
+                  <div className="text-right">
+                    <a href={l.url} target="_blank" rel="noopener noreferrer" className="inline-block bg-rose-600 text-white px-8 py-3.5 rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-rose-700 transition-all duration-200 shadow-lg shadow-rose-600/20 hover:shadow-xl">
+                      Click Here
+                    </a>
                   </div>
                 </div>
-              )}
-
-              {/* Quick Links */}
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="bg-slate-100 px-6 py-4 border-b border-slate-200">
-                  <h3 className="font-bold text-slate-800">Quick Links</h3>
-                </div>
-                <div className="p-4 space-y-2">
-                  <Link href="/latest-jobs" className="block p-3 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors font-medium text-sm">
-                    🔔 Latest Jobs
-                  </Link>
-                  <Link href="/admit-card" className="block p-3 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors font-medium text-sm">
-                    🪪 Admit Card
-                  </Link>
-                  <Link href="/results" className="block p-3 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors font-medium text-sm">
-                    📊 Results
-                  </Link>
-                  <Link href="/answer-key" className="block p-3 bg-orange-50 text-orange-700 rounded-lg hover:bg-orange-100 transition-colors font-medium text-sm">
-                    🔑 Answer Key
-                  </Link>
-                  <Link href="/salary-calculator" className="block p-3 bg-teal-50 text-teal-700 rounded-lg hover:bg-teal-100 transition-colors font-medium text-sm">
-                    💰 Salary Calculator
-                  </Link>
-                </div>
-              </div>
-
-              {/* Social Links */}
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="bg-slate-100 px-6 py-4 border-b border-slate-200">
-                  <h3 className="font-bold text-slate-800">Join Our Channels</h3>
-                </div>
-                <div className="p-4 space-y-2">
-                  <a href="https://t.me/sarkarijobse" target="_blank" rel="noopener noreferrer" className="block p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium text-sm text-center">
-                    📱 Join Telegram Channel
-                  </a>
-                  <a href="#" className="block p-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium text-sm text-center">
-                    💬 Join WhatsApp Channel
-                  </a>
-                </div>
-              </div>
+              ))}
             </div>
+          )}
+        </div>
+      )}
+
+      {/* Related Jobs */}
+      {relatedJobs.length > 0 && (
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-md">
+          <h2 className="bg-blue-700 text-white p-4 text-sm font-bold uppercase tracking-widest text-center">Similar Jobs</h2>
+          <div className="divide-y divide-slate-100">
+            {relatedJobs.map(related => (
+              <Link key={related.id} href={`/job/${(related as any).slug || related.id}`}>
+                <div className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 cursor-pointer transition-colors">
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-slate-700 leading-snug line-clamp-1">{related.title}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">{related.department}</p>
+                  </div>
+                  {(related as any).lastDate && (
+                    <span className="text-xs text-orange-600 font-bold flex-shrink-0">{(related as any).lastDate}</span>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* More Jobs */}
+
+      {/* WhatsApp & Telegram Join Block */}
+      <div className="bg-gradient-to-r from-green-500 to-sky-500 rounded-2xl p-5 shadow-lg">
+        <p className="text-white font-black text-center text-base mb-1">🔔 सरकारी नौकरी अलर्ट पाएं!</p>
+        <p className="text-white/80 text-center text-xs mb-4">Join करें और सबसे पहले पाएं — Jobs, Results, Admit Cards</p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <a href="https://whatsapp.com/channel/0029Vb7dt842ER6rNwc6eB47" target="_blank" rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 bg-white text-green-600 font-black px-6 py-3 rounded-xl hover:bg-green-50 transition-colors shadow text-sm">
+            <svg className="w-5 h-5 fill-green-500" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            WhatsApp Channel Join करें
+          </a>
+          <a href="https://t.me/sarkarijobse" target="_blank" rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 bg-white text-sky-600 font-black px-6 py-3 rounded-xl hover:bg-sky-50 transition-colors shadow text-sm">
+            <svg className="w-5 h-5 fill-sky-500" viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+            Telegram Channel Join करें
+          </a>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-md">
+        <h2 className="bg-blue-700 text-white p-4 text-sm font-bold uppercase tracking-widest text-center">More Government Jobs</h2>
+        <div className="p-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Link href="/latest-jobs">
+              <div className="bg-blue-50 hover:bg-blue-100 p-4 rounded-lg text-center transition-colors cursor-pointer border border-blue-100">
+                <span className="text-blue-700 font-bold text-sm">Latest Government Jobs</span>
+              </div>
+            </Link>
+            <Link href="/latest-jobs?qualification=10th">
+              <div className="bg-emerald-50 hover:bg-emerald-100 p-4 rounded-lg text-center transition-colors cursor-pointer border border-emerald-100">
+                <span className="text-emerald-700 font-bold text-sm">10th Pass Jobs</span>
+              </div>
+            </Link>
+            <Link href="/search?q=police">
+              <div className="bg-slate-100 hover:bg-slate-200 p-4 rounded-lg text-center transition-colors cursor-pointer border border-slate-200">
+                <span className="text-slate-700 font-bold text-sm">Police Jobs</span>
+              </div>
+            </Link>
+            <Link href="/search?q=ssc">
+              <div className="bg-amber-50 hover:bg-amber-100 p-4 rounded-lg text-center transition-colors cursor-pointer border border-amber-100">
+                <span className="text-amber-700 font-bold text-sm">SSC Jobs</span>
+              </div>
+            </Link>
           </div>
         </div>
       </div>
-    </>
+
+      {/* Fallback: Important Dates missing */}
+      {!showDates && (
+        <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-md">
+          <h2 className="bg-[#800000] text-white p-4 text-sm font-bold uppercase tracking-widest">Important Dates</h2>
+          <div className="p-5">
+            <p className="text-sm text-slate-600 mb-3">इस भर्ती की Important Dates जल्द Update की जाएंगी। Official Notification ज़रूर पढ़ें।</p>
+            <ul className="space-y-2 text-sm text-slate-600">
+              <li className="flex gap-2"><span className="text-blue-500 font-bold">•</span> Notification जारी होने की तारीख — Official Website देखें</li>
+              <li className="flex gap-2"><span className="text-blue-500 font-bold">•</span> Online Form भरने की Start Date — Notification में दी जाएगी</li>
+              <li className="flex gap-2"><span className="text-blue-500 font-bold">•</span> Last Date to Apply — Notification में दी जाएगी</li>
+              <li className="flex gap-2"><span className="text-blue-500 font-bold">•</span> Admit Card Download Date — Exam से 2-3 हफ्ते पहले</li>
+              <li className="flex gap-2"><span className="text-blue-500 font-bold">•</span> Exam Date — Notification में दी जाएगी</li>
+            </ul>
+            <p className="text-xs text-slate-400 mt-3 italic">⚠️ Exact dates ke liye official notification zaroor check karein.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Fallback: Application Fee missing */}
+      {!showFee && (
+        <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-md">
+          <h2 className="bg-[#006400] text-white p-4 text-sm font-bold uppercase tracking-widest">Application Fee</h2>
+          <div className="p-5">
+            <p className="text-sm text-slate-600 mb-3">Application Fee की जानकारी Official Notification में दी जाएगी। आमतौर पर सरकारी भर्तियों में category-wise fee होती है:</p>
+            <table className="w-full border-collapse text-sm">
+              <tbody>
+                {[
+                  ["General / OBC / EWS", "₹100 – ₹1000 (Exam अनुसार)"],
+                  ["SC / ST", "₹0 – ₹500 (Relaxation मिलती है)"],
+                  ["PWD / Ex-Serviceman", "प्रायः निःशुल्क (Free)"],
+                  ["Female Candidates", "कई भर्तियों में Free होती है"],
+                ].map(([cat, fee], i) => (
+                  <tr key={i} className="border-b border-slate-100 hover:bg-blue-50/30">
+                    <td className="p-4 text-slate-600 font-medium w-1/2">{cat}</td>
+                    <td className="p-4 text-blue-700 font-bold">{fee}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="text-xs text-slate-400 mt-3 italic">⚠️ Exact fee ke liye official notification zaroor check karein.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Fallback: Age Limit missing */}
+      {!showAgeLimit && (
+        <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-md">
+          <h2 className="bg-[#800000] text-white p-4 text-sm font-bold uppercase tracking-widest">Age Limit</h2>
+          <div className="p-5">
+            <p className="text-sm text-slate-600 mb-3">इस भर्ती की Age Limit Official Notification में दी जाएगी। सरकारी नौकरियों में आमतौर पर:</p>
+            <table className="w-full border-collapse text-sm">
+              <tbody>
+                {[
+                  ["General", "18 – 27 वर्ष (Post अनुसार)"],
+                  ["OBC", "3 साल की Relaxation"],
+                  ["SC / ST", "5 साल की Relaxation"],
+                  ["PWD", "10 साल की Relaxation"],
+                  ["Ex-Serviceman", "Service Period + 3 साल"],
+                ].map(([cat, age], i) => (
+                  <tr key={i} className="border-b border-slate-100 hover:bg-blue-50/30">
+                    <td className="p-4 text-slate-600 font-medium w-1/2">{cat}</td>
+                    <td className="p-4 text-blue-700 font-bold">{age}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="text-xs text-slate-400 mt-3 italic">⚠️ Exact age limit ke liye official notification zaroor check karein.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Fallback: Vacancy Details missing */}
+      {!showVacancy && (
+        <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-md">
+          <h2 className="bg-[#006400] text-white p-4 text-sm font-bold uppercase tracking-widest text-center">Vacancy Details</h2>
+          <div className="p-5">
+            <p className="text-sm text-slate-600 mb-2">इस भर्ती की Post-wise Vacancy Details Official Notification में दी गई हैं। Apply करने से पहले:</p>
+            <ul className="space-y-2 text-sm text-slate-600">
+              <li className="flex gap-2"><span className="text-green-500 font-bold">✓</span> Notification में Total Vacancy check करें</li>
+              <li className="flex gap-2"><span className="text-green-500 font-bold">✓</span> Category-wise Vacancy (General/OBC/SC/ST/EWS) देखें</li>
+              <li className="flex gap-2"><span className="text-green-500 font-bold">✓</span> अपनी Post के लिए Eligibility check करें</li>
+              <li className="flex gap-2"><span className="text-green-500 font-bold">✓</span> State/Region wise vacancy भी हो सकती है</li>
+            </ul>
+            <p className="text-xs text-slate-400 mt-3 italic">⚠️ Exact vacancy ke liye official notification zaroor padhen.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Fallback: Selection Process missing */}
+      {!showSelection && (
+        <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-md">
+          <h2 className="bg-[#800000] text-white p-4 text-sm font-bold uppercase tracking-widest">Selection Process</h2>
+          <div className="p-7">
+            <p className="text-sm text-slate-600 mb-4">इस भर्ती का Selection Process Official Notification में दिया गया है। सामान्यतः सरकारी भर्ती में ये steps होती हैं:</p>
+            <ul className="space-y-3">
+              {[
+                "Written Exam / Computer Based Test (CBT)",
+                "Physical Test (PST/PET) — Police, Army, Railway जैसी भर्तियों में",
+                "Document Verification (DV)",
+                "Medical Examination",
+                "Final Merit List & Appointment",
+              ].map((step, i) => (
+                <li key={i} className="flex gap-4 items-center text-sm font-medium text-slate-600">
+                  <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-xs font-bold shrink-0">{i + 1}</div>
+                  {step}
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs text-slate-400 mt-4 italic">⚠️ Exact selection process ke liye official notification zaroor check karein.</p>
+          </div>
+        </div>
+      )}
+
+      {/* PERMANENT: How to Apply — always visible on every post */}
+      <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-md">
+        <h2 className="bg-blue-700 text-white p-4 text-sm font-bold uppercase tracking-widest text-center">
+          {job.type === 'admit-card' ? 'Admit Card Download कैसे करें?' :
+           job.type === 'result' ? 'Result कैसे देखें?' :
+           job.type === 'answer-key' ? 'Answer Key Download कैसे करें?' :
+           'Apply Online कैसे करें?'}
+        </h2>
+        <div className="p-6">
+          {job.type === 'admit-card' ? (
+            <ol className="space-y-3">
+              {[
+                "ऊपर दिए 'Download Admit Card' button पर click करें",
+                "Official Website पर जाएं",
+                "Admit Card / Hall Ticket link पर click करें",
+                "Registration Number / Roll Number और Date of Birth डालें",
+                "Submit करें — Admit Card screen पर आ जाएगा",
+                "Download करें और Print निकालें — Color या Black & White दोनों चलते हैं",
+                "Exam वाले दिन Admit Card + Photo ID (Aadhar/Voter Card) साथ ले जाएं",
+              ].map((step, i) => (
+                <li key={i} className="flex gap-3 text-sm text-slate-600">
+                  <span className="w-6 h-6 bg-green-100 text-green-700 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{i+1}</span>
+                  {step}
+                </li>
+              ))}
+            </ol>
+          ) : job.type === 'result' ? (
+            <ol className="space-y-3">
+              {[
+                "ऊपर दिए 'Download Result' button पर click करें",
+                "Official Website पर जाएं",
+                "Result / Score Card link पर click करें",
+                "Roll Number / Registration Number डालें",
+                "Submit करें — Result screen पर दिखेगा",
+                "Score Card Download करें और Print कर लें",
+                "Cut-off check करें — अगर ऊपर हैं तो Next Round के लिए तैयार रहें",
+              ].map((step, i) => (
+                <li key={i} className="flex gap-3 text-sm text-slate-600">
+                  <span className="w-6 h-6 bg-green-100 text-green-700 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{i+1}</span>
+                  {step}
+                </li>
+              ))}
+            </ol>
+          ) : job.type === 'answer-key' ? (
+            <ol className="space-y-3">
+              {[
+                "ऊपर दिए 'Download Answer Key' button पर click करें",
+                "Official Website पर जाएं",
+                "Answer Key PDF Download करें",
+                "अपने Answers से मिलाएं और Marks Calculate करें",
+                "यदि कोई Answer गलत लगे — Objection Portal पर जाएं",
+                "Objection Form भरें, Reference दें और Fee Pay करें",
+                "Objection की Last Date से पहले Submit करें",
+              ].map((step, i) => (
+                <li key={i} className="flex gap-3 text-sm text-slate-600">
+                  <span className="w-6 h-6 bg-green-100 text-green-700 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{i+1}</span>
+                  {step}
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <ol className="space-y-3">
+              {[
+                "पहले Official Notification ध्यान से पढ़ें — Eligibility check करें",
+                "ऊपर 'Apply Online' button पर click करें",
+                "Official Website पर New Registration करें — Email और Mobile डालें",
+                "Online Application Form भरें — सभी details सही भरें",
+                "Photo और Signature Upload करें (Size और Format Notification में बताया होगा)",
+                "Application Fee Online Pay करें (Net Banking / UPI / Debit Card)",
+                "Form Preview check करें और Final Submit करें",
+                "Application Confirmation / Acknowledgement Print कर लें — भविष्य के लिए रखें",
+              ].map((step, i) => (
+                <li key={i} className="flex gap-3 text-sm text-slate-600">
+                  <span className="w-6 h-6 bg-green-100 text-green-700 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{i+1}</span>
+                  {step}
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+      </div>
+
+      {/* Disclaimer */}
+      <div className="bg-amber-50 p-8 rounded-xl border border-amber-200">
+        <h4 className="text-xs font-bold uppercase tracking-widest text-amber-700 mb-3 flex items-center gap-2">
+          <ShieldCheck className="w-5 h-5" /> Important Disclaimer
+        </h4>
+        <p className="text-sm font-medium text-amber-800/80 leading-relaxed">
+          The recruitment information provided above is for immediate information to the candidates and does not constitute a legal document. While efforts have been made to make the information available as authentic as possible, please verify the details from the official website or notification before applying.
+        </p>
+      </div>
+    </div>
   );
 }
