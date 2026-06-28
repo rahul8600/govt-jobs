@@ -29,6 +29,11 @@ const initialFormData: Partial<Job> = {
   featured: false,
   trending: false,
   rawJobContent: '',
+  examPattern: '',
+  syllabus: '',
+  salaryBreakdown: '',
+  preparationTips: '',
+  faqs: '',
   applyOnlineUrl: '',
   admitCardUrl: '',
   resultUrl: '',
@@ -1113,6 +1118,68 @@ Visit https://ssc.nic.in and apply online...`}
                     placeholder="Paste full notification content here... Supports HTML tables, headings, lists etc."
                     data-testid="input-full-notification"
                   />
+                </div>
+              </div>
+
+              {/* ADSENSE CONTENT FIELDS */}
+              <div className="space-y-6 pt-6 border-t-4 border-green-200 bg-gradient-to-b from-green-50/50 to-transparent -mx-8 px-8 pb-6">
+                <div className="flex items-center gap-2 text-green-700">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <h4 className="text-[11px] font-black uppercase tracking-widest">AdSense Content — Manually Likho (Unique Content)</h4>
+                </div>
+                <p className="text-xs text-slate-500 font-medium bg-green-100/50 p-3 rounded-lg">
+                  ⚡ Yeh fields AdSense ke liye zaroori hain. Har job ke liye alag alag content likho. Agar khaali chhoda toh section show nahi hoga.
+                </p>
+                <div className="space-y-5">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-green-600 ml-1">📝 Exam Pattern (is specific exam ka)</label>
+                    <textarea
+                      className="w-full bg-slate-50 border border-green-200 p-4 rounded-xl outline-none focus:border-green-500 font-medium text-sm min-h-[120px]"
+                      value={formData.examPattern || ''}
+                      onChange={e => setFormData({...formData, examPattern: e.target.value})}
+                      placeholder="Jaise: Is exam mein 2 stages hain. Stage 1 mein 100 MCQ questions hote hain — 90 minutes. Subjects: Math (30), Reasoning (30), GK (20), Hindi (20). Negative marking 0.25 marks hai. Stage 2 mein..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-green-600 ml-1">📚 Syllabus (is exam ka specific syllabus)</label>
+                    <textarea
+                      className="w-full bg-slate-50 border border-green-200 p-4 rounded-xl outline-none focus:border-green-500 font-medium text-sm min-h-[120px]"
+                      value={formData.syllabus || ''}
+                      onChange={e => setFormData({...formData, syllabus: e.target.value})}
+                      placeholder="Jaise: Math: Number System, Percentage, Ratio, Average, Time-Work, Mensuration. Reasoning: Series, Analogy, Coding-Decoding, Blood Relations. GK: UP History, Geography, Current Affairs..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-green-600 ml-1">💰 Salary Breakdown (in-hand salary detail)</label>
+                    <textarea
+                      className="w-full bg-slate-50 border border-green-200 p-4 rounded-xl outline-none focus:border-green-500 font-medium text-sm min-h-[100px]"
+                      value={formData.salaryBreakdown || ''}
+                      onChange={e => setFormData({...formData, salaryBreakdown: e.target.value})}
+                      placeholder="Jaise: Basic Pay ₹35,400 (Pay Level 6). DA (46%): ₹16,284. HRA (metro 27%): ₹9,558. Total Gross: ₹61,242. In-hand after deductions: ₹52,000-55,000 approx..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-green-600 ml-1">💡 Preparation Tips & Books (is exam ke liye specific)</label>
+                    <textarea
+                      className="w-full bg-slate-50 border border-green-200 p-4 rounded-xl outline-none focus:border-green-500 font-medium text-sm min-h-[100px]"
+                      value={formData.preparationTips || ''}
+                      onChange={e => setFormData({...formData, preparationTips: e.target.value})}
+                      placeholder="Jaise: Best Books: [Book name] for Math, [Book name] for GK. Strategy: Pehle syllabus padho, previous papers solve karo, daily 3 ghante practice karo..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-green-600 ml-1">❓ FAQs (is job ke baare mein common questions)</label>
+                    <textarea
+                      className="w-full bg-slate-50 border border-green-200 p-4 rounded-xl outline-none focus:border-green-500 font-medium text-sm min-h-[150px]"
+                      value={formData.faqs || ''}
+                      onChange={e => setFormData({...formData, faqs: e.target.value})}
+                      placeholder={`Format (ek line mein ek Q&A):
+Q: Is exam mein negative marking hai?
+A: Haan, 0.25 marks katenge har galat answer pe.
+Q: Age limit kya hai?
+A: 18-27 years. OBC ko 3 saal, SC/ST ko 5 saal relaxation.`}
+                    />
+                  </div>
                 </div>
               </div>
 
