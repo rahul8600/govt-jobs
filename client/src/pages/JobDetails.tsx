@@ -672,23 +672,7 @@ export default function JobDetails() {
               ))}
             </ol>
           ) : (
-            <ol className="space-y-3">
-              {[
-                "पहले Official Notification ध्यान से पढ़ें — Eligibility check करें",
-                "ऊपर 'Apply Online' button पर click करें",
-                "Official Website पर New Registration करें — Email और Mobile डालें",
-                "Online Application Form भरें — सभी details सही भरें",
-                "Photo और Signature Upload करें (Size और Format Notification में बताया होगा)",
-                "Application Fee Online Pay करें (Net Banking / UPI / Debit Card)",
-                "Form Preview check करें और Final Submit करें",
-                "Application Confirmation / Acknowledgement Print कर लें — भविष्य के लिए रखें",
-              ].map((step, i) => (
-                <li key={i} className="flex gap-3 text-sm text-slate-600">
-                  <span className="w-6 h-6 bg-green-100 text-green-700 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{i+1}</span>
-                  {step}
-                </li>
-              ))}
-            </ol>
+            <p className="text-sm text-slate-500 italic">Selection process details official notification mein available hain. Upar diye gaye Official Notification link se check karein.</p>
           )}
         </div>
       </div>
