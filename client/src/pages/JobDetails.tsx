@@ -67,12 +67,198 @@ function isJobExpired(lastDate: string | null | undefined): boolean {
   return false;
 }
 
+
+// ===== DEPARTMENT-SPECIFIC CONTENT =====
+// Har department ka alag exam pattern, syllabus, salary info
+function getDepartmentContent(department: string, type: string, title: string) {
+  const dept = (department + ' ' + title).toLowerCase();
+
+  // EXAM PATTERN
+  let examPattern = '';
+  // SYLLABUS  
+  let syllabus = '';
+  // SALARY
+  let salaryBreakdown = '';
+  // PREPARATION TIPS
+  let preparationTips = '';
+  // APPLY STEPS (department specific)
+  let applySteps: string[] = [];
+  // FAQS
+  let faqs: {q: string; a: string}[] = [];
+
+  if (dept.includes('ssc') || dept.includes('staff selection')) {
+    examPattern = `SSC exams mein generally 2 tiers hote hain. Tier-1 (Preliminary) mein 100 questions, 200 marks, 60 minutes hote hain — General Intelligence & Reasoning (25), General Awareness (25), Quantitative Aptitude (25), English Comprehension (25). Tier-2 mein Mathematical Abilities aur English Language & Comprehension papers hote hain. Negative marking 0.50 marks per wrong answer hai Tier-1 mein. Exam Computer Based Test (CBT) format mein hota hai.`;
+    syllabus = `Reasoning: Analogy, Classification, Series, Coding-Decoding, Blood Relations, Direction Sense, Venn Diagrams, Syllogism. Quantitative: Number System, Percentage, Ratio & Proportion, Average, Time & Work, Speed Distance, Algebra, Geometry, Trigonometry, Statistics. English: Spotting Errors, Fill in the Blanks, Synonyms/Antonyms, Idioms & Phrases, Comprehension, Para Jumbles. General Awareness: History, Geography, Polity, Economics, Current Affairs, Science & Technology.`;
+    salaryBreakdown = `SSC posts mein salary Pay Level ke hisaab se hoti hai. MTS/Chowkidar: Pay Level 1 — Basic ₹18,000, Gross ₹22,000-25,000. CHSL: Pay Level 4/5 — Basic ₹25,500-29,200, Gross ₹32,000-38,000. CGL posts: Pay Level 6/7/8 — Basic ₹35,400-47,600, Gross ₹45,000-65,000. In-hand salary mein HRA (8-27%), TA, DA add hota hai. 7th Pay Commission ke hisaab se sab allowances milte hain.`;
+    preparationTips = `Best Books: Quantitative Aptitude by R.S. Aggarwal, English by S.P. Bakshi (Arihant), Reasoning by Dr. M.K. Pandey, Lucent GK for General Awareness. Strategy: Pehle syllabus samjho, phir topic-wise practice karo. Previous year papers zaroor solve karo — SSC ke questions repeat hote hain. Mock tests daily do, time management improve hoga. Current Affairs ke liye daily newspaper padho ya monthly magazine lo.`;
+    applySteps = [
+      `SSC Official Website ssc.gov.in par jao`,
+      `"Apply" section mein is recruitment ka link dhundho`,
+      `Pehli baar ho toh One-Time Registration (OTR) karo — naam, DOB, email, mobile`,
+      `Login karke application form bharo — sab details dhyan se bharo`,
+      `Recent photo (20-50 KB) aur signature (10-20 KB) upload karo`,
+      `Application fee pay karo — UPI/Net Banking/Debit Card se (SC/ST/Female/PH exempt)`,
+      `Final preview check karo aur Submit karo`,
+      `Confirmation page download karo aur print rakho`
+    ];
+    faqs = [
+      {q: "SSC exam attempt limit kitni hai?", a: "SSC CGL mein age limit tak unlimited attempts. MTS mein bhi age limit tak attempt kar sakte ho."},
+      {q: "SSC exam mein negative marking hai?", a: "Haan, Tier-1 mein 0.5 marks katenge har galat answer pe. Tier-2 mein bhi negative marking hoti hai."},
+      {q: "SSC ki preparation kitne mahine mein ho sakti hai?", a: "Agar regular 4-6 ghante padho toh 6-8 mahine mein CGL crack ho sakta hai. MTS/CHSL ke liye 3-4 mahine kaafi hain."}
+    ];
+  } else if (dept.includes('railway') || dept.includes('rrb') || dept.includes('rrb') || dept.includes('rrc')) {
+    examPattern = `Railway exams mein CBT-1 (Preliminary) mein 100 questions, 90 minutes hote hain — Mathematics (30), General Intelligence & Reasoning (30), General Science (30), General Awareness (10). CBT-2 mein post-specific subjects hote hain. Group D mein CBT ke baad Physical Efficiency Test (PET) hota hai. Negative marking: 1/3 marks per wrong answer. Exam Hindi aur English dono mein hota hai.`;
+    syllabus = `Mathematics: Number System, Decimals, Fractions, LCM/HCF, Ratio & Proportion, Percentage, Mensuration, Time & Work, Simple & Compound Interest, Profit/Loss, Algebra, Geometry, Trigonometry. Reasoning: Analogies, Venn Diagrams, Coding-Decoding, Syllogism, Number Series. General Science: Physics, Chemistry, Biology (10th level). Current Affairs: Railway, Science & Tech, Sports, Awards.`;
+    salaryBreakdown = `Railway Group D: Pay Level 1 — Basic ₹18,000, Gross ₹22,000-26,000 + Free Railway Pass. NTPC JSA/Accounts Clerk: Pay Level 2 — Basic ₹19,900, Gross ₹25,000-29,000. NTPC ASM/CA: Pay Level 4-6 — Basic ₹25,500-35,400, Gross ₹32,000-48,000. ALP/Technician: Pay Level 2-5, Basic ₹19,900-29,200. Railway jobs mein HRA, TA, DA plus free medical + pass facilities milti hain.`;
+    preparationTips = `Best Books: RRB NTPC/Group D Guide by Arihant, Railway Math by Rakesh Yadav, General Science by Lucent. Previous year papers 2015-2024 zaroor solve karo. CBT-1 mein General Science bahut important hai — NCERT 6th to 10th padho. Physical test ke liye pehle se stamina build karo. Speed aur accuracy dono improve karo — 100 questions, 90 minutes mein 1 minute per question.`;
+    applySteps = [
+      `RRB Official Website rrbcdg.gov.in ya apne zone ki RRB site par jao`,
+      `"New Registration" karke account banao — Email aur Mobile se`,
+      `Application form mein personal details, education, community sab bharo`,
+      `Exam city preference choose karo`,
+      `Photo (20-50 KB, JPEG) aur Signature (10-40 KB) upload karo`,
+      `Application fee pay karo — UPI/Net Banking/SBI Challan se (SC/ST/Female/Ex-SM/PwBD exempt)`,
+      `Form submit karo aur Application Number note karo`,
+      `PDF download karo — Admit Card ke liye zaroori hai`
+    ];
+    faqs = [
+      {q: "Railway exam mein medical test hota hai?", a: "Haan, selected candidates ko medical fitness test pass karna hota hai. Vision, hearing aur overall fitness check hoti hai."},
+      {q: "RRB NTPC aur Group D mein kya fark hai?", a: "NTPC mein 12th/Graduate level ke clerical/accounts posts hain. Group D mein 10th pass ke liye physical/maintenance posts hain."},
+      {q: "Railway job mein transfer hota hai?", a: "Haan, posting Railway Zone ke andar kisi bhi station par ho sakti hai. Seniority ke baad preference milti hai."}
+    ];
+  } else if (dept.includes('upsc') || dept.includes('civil service') || dept.includes('ias') || dept.includes('ips')) {
+    examPattern = `UPSC Civil Services 3 stages mein hoti hai. Prelims: 2 papers — GS Paper 1 (200 marks, 2 hrs, 100 MCQ) aur CSAT Paper 2 (200 marks, 2 hrs, qualifying 33%). Mains: 9 papers — Essay (250), GS 1-4 (250 each), Optional Subject (2 papers x 250), English & Indian Language (qualifying). Interview: 275 marks. Total: 1750+275 = 2025 marks. Negative marking 1/3 Prelims mein.`;
+    syllabus = `Prelims GS1: History, Geography, Polity, Economy, Environment, Science & Tech, Current Affairs. CSAT: Reading Comprehension, Logical Reasoning, Math (10th level). Mains GS1: Indian Heritage, History, Geography. GS2: Governance, Polity, International Relations. GS3: Economy, Agriculture, Environment, Disaster Management, Internal Security. GS4: Ethics, Integrity, Aptitude. Optional: Choose any 1 subject from list of 48.`;
+    salaryBreakdown = `IAS/IPS/IFS — Pay Level 10 — Basic ₹56,100 (Junior Scale). Pay Level 11 — Basic ₹67,700 (Senior Scale). Pay Level 13 — Basic ₹1,18,500 (Director level). Cabinet Secretary: Basic ₹2,50,000. In-hand mein DA, HRA, TA plus free government bungalow, vehicle, staff, medical, LTC sab milta hai. Total package entry level par ₹70,000-90,000 per month effective.`;
+    preparationTips = `Best Books: NCERT 6-12 sab subjects, Indian Polity by Laxmikant, Geography by Majid Husain, Modern India by Bipan Chandra, Economy by Ramesh Singh, Ethics by Lexicon. Strategy: NCERT se foundation banao, standard books padho, answer writing daily practice karo. Mains ke liye Current Affairs The Hindu/Indian Express se. Optional wisely choose karo — jo comfortable ho. Mock interviews must.`;
+    applySteps = [
+      `UPSC Official Website upsc.gov.in par jao`,
+      `"Online Application for Various Examinations" section mein jao`,
+      `Pehli baar hai toh Part-1 Registration karo — basic details bharo`,
+      `Part-2 mein complete application bharo — education, photo, signature`,
+      `Optional subject select karo`,
+      `Application fee ₹100 pay karo (SC/ST/Female/PwBD exempt)`,
+      `Print out aur registration ID save karo`,
+      `Admit card UPSC website se download hoga exam se 3 weeks pehle`
+    ];
+    faqs = [
+      {q: "UPSC mein kitne attempts milte hain?", a: "General: 6 attempts (32 years tak). OBC: 9 attempts (35 years tak). SC/ST: unlimited attempts (37 years tak). PwBD: General+3 extra."},
+      {q: "Optional subject kaun sa lena chahiye?", a: "Woh subject lo jo tumhe pasand ho aur jisme previous year papers mein high scoring ho. Popular options: Geography, History, Public Administration, Sociology, PSIR."},
+      {q: "UPSC ki preparation job ke saath ho sakti hai?", a: "Ho sakti hai lekin mushkil hai. Roz 4-5 ghante dedicated study aur weekends par extra time do. Job leave lekar padhe toh better results milte hain."}
+    ];
+  } else if (dept.includes('bank') || dept.includes('ibps') || dept.includes('sbi') || dept.includes('rbi')) {
+    examPattern = `Bank exams mein 2 phases hote hain. Prelims: 3 sections — English (30 Q, 20 min), Quantitative Aptitude (35 Q, 20 min), Reasoning (35 Q, 20 min). Total 100 Q, 60 min, 100 marks. Mains: 4-5 sections — Reasoning & Computer (45 Q, 60 min), English (35 Q, 40 min), Quant (35 Q, 45 min), General/Financial Awareness (40 Q, 35 min). Sectional cutoff hoti hai. Negative marking 0.25 marks.`;
+    syllabus = `Quantitative Aptitude: Number Series, Simplification, Data Interpretation (Tables, Graphs, Charts), Quadratic Equations, Percentage, Profit/Loss, SI/CI, Time-Work, Speed-Distance. Reasoning: Puzzles & Seating Arrangement, Syllogism, Coding-Decoding, Blood Relations, Inequality, Input-Output, Alphanumeric Series. English: Reading Comprehension, Cloze Test, Error Detection, Para Jumbles, Fill in Blanks. Banking Awareness: RBI, SEBI, Types of Accounts, Monetary Policy, Financial Institutions.`;
+    salaryBreakdown = `Bank Clerk (IBPS): Pay Scale ₹11,765-42,020, Gross ₹26,000-29,000 in metro cities. Bank PO (IBPS): Pay Scale ₹23,700-42,020, Gross ₹52,000-55,000 with allowances. SBI Clerk: Basic ₹17,900, Gross ₹26,000+. SBI PO: Basic ₹27,620, Gross ₹52,000+. RBI Grade B: Basic ₹35,150, Gross ₹77,000+. Bank jobs mein DA, HRA, CCA, Medical, Leave Travel allowances milte hain plus pension.`;
+    preparationTips = `Best Books: Quantitative Aptitude by R.S. Aggarwal, Reasoning by M.K. Pandey, English by S.P. Bakshi, Banking Awareness by Arihant. Online Resources: Testbook, Gradeup, Oliveboard mock tests best hain. Strategy: DI aur Puzzles mein sabse zyada time lagao — yeh scoring areas hain. Sectional cutoff pe dhyan do — koi section ignore mat karo. 50+ mock tests zaroor do Mains se pehle. Current Banking Affairs roz padho.`;
+    applySteps = [
+      `IBPS: ibps.in ya SBI: sbi.co.in par jao`,
+      `"Careers" ya "Recruitment" section mein notification dhundho`,
+      `"Apply Online" link par click karo`,
+      `Registration karke Login ID/Password banao`,
+      `Personal, educational aur category details bharo`,
+      `Photo (4.5x3.5 cm, 20-50 KB) aur Signature (3.5x1.5 cm, 10-20 KB) upload karo`,
+      `Application fee pay karo — SC/ST/PwBD exempt hain`,
+      `Form submit karo, confirmation email aayegi — screenshot lo`
+    ];
+    faqs = [
+      {q: "Bank PO aur Clerk mein kya fark hai?", a: "PO (Probationary Officer) — management cadre, promotion fast, zyada responsibility, higher salary. Clerk — clerical work, counter service, thodi slow growth but stable job."},
+      {q: "IBPS exam attempt limit hai?", a: "Koi official attempt limit nahi hai — age limit (General 28 years, OBC 31, SC/ST 33) tak appear kar sakte ho."},
+      {q: "Bank job mein kaunsa subject important hai?", a: "Quantitative Aptitude aur Reasoning sabse zyada weightage wale hain. Banking Awareness Mains mein important hai. English bhi ignore mat karo."}
+    ];
+  } else if (dept.includes('police') || dept.includes('constable') || dept.includes('si ') || dept.includes('sub inspector')) {
+    examPattern = `Police recruitment mein Written Exam + Physical Test + Medical hota hai. Written: 100-150 questions, 2 ghante — General Knowledge (40-50 Q), Reasoning (20-30 Q), Math (20-30 Q), Hindi/English (20-30 Q). Negative marking 0.25 marks (varies by state). Physical Test: Male — 1600m run 5 min 45 sec, Long Jump 12 ft, High Jump 3.5 ft, Shot Put. Female — 800m run, alag standards. Medical mein eyesight, height, weight check hoti hai.`;
+    syllabus = `General Knowledge: Uttar Pradesh/State History, Geography, Constitution, Current Affairs, Police Acts, Famous Personalities. Reasoning: Series, Analogy, Coding-Decoding, Classification, Direction Sense, Blood Relations. Mathematics: Number System, Percentage, Average, Simple Interest, Profit-Loss, Time-Work, Mensuration. Hindi: Vyakaran, Sandhi, Samas, Ras, Alankar, Muhaware, Translation. State-specific Acts aur Laws bhi syllabus mein hote hain.`;
+    salaryBreakdown = `Police Constable: Pay Level 3 — Basic ₹21,700, Gross ₹28,000-33,000 + Uniform Allowance. Sub Inspector: Pay Level 6 — Basic ₹35,400, Gross ₹45,000-52,000. Inspector: Pay Level 7 — Basic ₹44,900, Gross ₹58,000-65,000. Police jobs mein Risk Allowance, Uniform Allowance, Ration, Free Quarter (in some posts) milta hai. Sarkari quarters ya HRA milta hai.`;
+    preparationTips = `Best Books: Lucent GK, Arihant Police Constable Guide (state-specific), Math by RS Aggarwal. Physical Preparation: 3-4 mahine pehle se running shuru karo. Daily 5-6 km running karo stamina ke liye. State ka current GK padho — CM, Governor, famous places, recent events. Previous year papers solve karo — Police exams mein repeat questions aate hain. Hindi grammar strong rakhna zaroori hai.`;
+    applySteps = [
+      `State Police Recruitment Board ki official website par jao`,
+      `"New Recruitment" ya "Apply Online" section mein jaao`,
+      `Registration karke account banao`,
+      `Application form mein personal details, education, category fill karo`,
+      `Photo aur Signature upload karo (size notification mein dekho)`,
+      `Application fee pay karo — OBC/General ke liye fee hoti hai, SC/ST mein kabhi kabhi exemption`,
+      `Form submit karo aur Application Number note karo`,
+      `Physical date par original documents aur Admit Card saath lao`
+    ];
+    faqs = [
+      {q: "Police constable ke liye height kitni chahiye?", a: "Generally Male: General/OBC 168 cm, SC/ST 160 cm. Female: General/OBC 152 cm, SC/ST 147 cm. State ke hisaab se vary karta hai."},
+      {q: "Police exam mein age relaxation milti hai?", a: "Haan — OBC: +3 years, SC/ST: +5 years, Ex-Servicemen: years of service + 3, PwBD: +10 years. State-specific relaxation bhi hoti hai."},
+      {q: "Police job mein promotion kaise hoti hai?", a: "Constable se Head Constable, phir ASI, SI, Inspector — DPC (Departmental Promotion Committee) ke through. Seniority aur departmental exam se promotion milti hai."}
+    ];
+  } else if (dept.includes('teacher') || dept.includes('ctet') || dept.includes('tet') || dept.includes('school') || dept.includes('vidyalaya')) {
+    examPattern = `Teaching exams (CTET/State TET) mein 2 papers hote hain. Paper 1 (Class 1-5): Child Development (30 Q), Language 1 (30 Q), Language 2 (30 Q), Mathematics (30 Q), Environmental Studies (30 Q) — Total 150 Q, 150 marks, 2.5 hrs. Paper 2 (Class 6-8): Child Development (30 Q), Language 1 (30 Q), Language 2 (30 Q), Subject (60 Q — Math/Science ya Social Studies). Qualifying marks: General 60%, SC/ST 55%. No negative marking in CTET.`;
+    syllabus = `Child Development & Pedagogy: Growth & Development theories (Piaget, Vygotsky), Learning theories, Inclusive Education, Child Psychology, Assessment. Mathematics: Number System, Geometry, Shapes, Measurement, Data Handling (primary level pedagogy). Environmental Studies: Family, Food, Shelter, Water, Plants, Animals, Travel, Things We Make. Language: Reading Comprehension, Grammar, Pedagogy of Language teaching. For Paper 2 — Higher level subject content + Pedagogy.`;
+    salaryBreakdown = `Primary Teacher (PRT): Pay Level 6 — Basic ₹35,400, Gross ₹45,000-50,000. Trained Graduate Teacher (TGT): Pay Level 7 — Basic ₹44,900, Gross ₹55,000-62,000. Post Graduate Teacher (PGT): Pay Level 8 — Basic ₹47,600, Gross ₹62,000-70,000. KVS/NVS mein HRA, TA, Medical, Gratuity, Pension sab milta hai. Government school teachers ko quarters ya HRA milta hai.`;
+    preparationTips = `Best Books: Child Development by Disha Experts, NCERT books of respective class level, CTET/State TET previous years Arihant/Disha. Strategy: Child Development mein theories aur pedagogy samjho — sirf yaad mat karo. Mathematics ke basic concepts strong karo. Environmental Studies mein NCERT Science & Social Science 3-5 padho. Language mein grammar + reading comprehension practice. 50+ mock tests do timing ke liye.`;
+    applySteps = [
+      `CTET ke liye: ctet.nic.in par jao. State TET ke liye state board ki website par jao`,
+      `"Apply Online" link click karo`,
+      `Registration karke Login banao — Email aur Mobile se`,
+      `Paper 1 ya Paper 2 ya dono choose karo`,
+      `Personal details, education, teaching preference bharo`,
+      `Photo (10-100 KB, JPEG) aur Signature upload karo`,
+      `Exam fee pay karo — ₹1000 (1 paper) ya ₹1200 (dono papers)`,
+      `Confirmation page download aur print karo`
+    ];
+    faqs = [
+      {q: "CTET certificate kitne saal valid hai?", a: "2021 ke baad se CTET certificate lifetime valid ho gayi hai. Pehle sirf 7 saal valid thi."},
+      {q: "TET pass karne ke baad job pakki hai?", a: "Nahi — TET sirf eligibility certificate hai. Iske baad state-wise teacher recruitment exam (like BPSC TRE, DSSSB, KVS) dena hota hai."},
+      {q: "CTET mein kitni baar appear kar sakte hain?", a: "CTET mein koi attempt limit nahi hai. Jab tak pass na ho ya improve karna ho, appear kar sakte ho."}
+    ];
+  } else if (dept.includes('army') || dept.includes('navy') || dept.includes('air force') || dept.includes('nda') || dept.includes('defence') || dept.includes('agniveer')) {
+    examPattern = `Defence exams (Agniveer/NDA) mein Written + Physical + Medical hota hai. Agniveer Written: 100 Q, 60 min — General Knowledge, Math, Physics. NDA Written: Mathematics (300 marks, 2.5 hrs) + General Ability Test (600 marks — English 200, GK 400). Physical: 1.6 km run, Pull-ups, Sit-ups, Jump. Medical mein strict physical fitness check hoti hai.`;
+    syllabus = `Math: Algebra, Matrices, Determinants, Trigonometry, Calculus, Statistics, Probability. Physics: Motion, Laws, Work/Energy, Heat, Waves, Electricity, Magnetism. Chemistry: Basic concepts, Acids/Bases, Metals/Non-metals. GK: Indian History, Geography, Polity, Current Affairs. English: Grammar, Comprehension, Vocabulary. Reasoning: Series, Analogy, Spatial Ability.`;
+    salaryBreakdown = `Agniveer: ₹30,000-40,000 per month + free ration, clothing, medical. 4 saal baad ₹11.71 lakh Seva Nidhi package. Permanent Commission: JCO — Pay Level 6 — ₹35,400+ with Military Service Pay. Officer entry: Lieutenant — Pay Level 10 — ₹56,100+. Defence jobs mein CSD canteen, free medical, pension (for permanent), group housing sab milta hai.`;
+    preparationTips = `Best Books: NDA/CDS Guide by Pathfinder, Mathematics by RS Aggarwal, GK by Lucent. Physical: Running stamina build karo — daily 5 km compulsory. Pull-ups aur strength training daily. Medical ke liye eyesight strong rakhna zaroori hai — screen time kam karo. NDA ke liye 10+2 Physics/Math strong karo — NDA Math paper tough hota hai. Previous 10 years papers zaroor solve karo.`;
+    applySteps = [
+      `joinindianarmy.nic.in / joinindiannavy.gov.in / agnipathvayu.cdac.in par jao`,
+      `Relevant recruitment link par click karo`,
+      `Registration karo — Aadhar se link karke`,
+      `Personal details, education, physical measurements bharo`,
+      `Documents scan karke upload karo — Education, Domicile, Caste`,
+      `Application fee pay karo (agar applicable ho)`,
+      `Form submit karo aur Roll Number note karo`,
+      `Physical test date par fit hokar aao — medical docs saath lo`
+    ];
+    faqs = [
+      {q: "Agniveer aur regular army mein kya fark hai?", a: "Agniveer 4 saal ki temporary service hai. 4 saal baad 25% ko permanent rakha jaata hai, baaki Seva Nidhi leke civilian life mein jaate hain."},
+      {q: "Defence job mein age limit kya hai?", a: "Agniveer: 17.5 to 21 years. NDA: 16.5 to 19.5 years. CDS: Graduate ke liye 20-24 years (varies by entry). Age relaxation SC/ST ko milti hai."},
+      {q: "Kya glasses wale defence join kar sakte hain?", a: "Depends on post — Pilot ke liye strict eyesight chahiye. Infantry mein corrected vision acceptable hai. Medical standards post ke hisaab se vary karte hain."}
+    ];
+  } else {
+    // Generic but still useful default
+    examPattern = `Is recruitment mein Written Exam hota hai. Generally Objective type (MCQ) questions hote hain — General Knowledge, Reasoning, Mathematics, aur subject-specific questions. Exam ki duration 1.5 to 2 ghante hoti hai. Negative marking ho sakti hai — official notification confirm karo. Exam CBT (Computer Based) ya OMR sheet format mein ho sakta hai.`;
+    syllabus = `General Knowledge: Indian History, Geography, Constitution, Current Affairs, Economy, Science & Technology. Reasoning: Series, Analogy, Coding-Decoding, Blood Relations, Direction Sense, Logical Reasoning. Mathematics: Basic Arithmetic, Percentage, Ratio, Average, Profit-Loss, Time & Work, Mensuration. Subject-specific: Department ke hisaab se technical/professional questions bhi ho sakte hain — official notification mein syllabus zaroor dekho.`;
+    salaryBreakdown = `Government jobs mein 7th Pay Commission ke hisaab se salary milti hai. Pay Level 1-3 (entry level): Basic ₹18,000-21,700, Gross ₹23,000-28,000. Pay Level 4-6 (mid level): Basic ₹25,500-35,400, Gross ₹33,000-46,000. Pay Level 7-8 (senior level): Basic ₹44,900-47,600, Gross ₹58,000-65,000. Salary mein DA, HRA (8-27% based on city), TA aur other allowances add hote hain. Exact pay scale official notification mein confirm karo.`;
+    preparationTips = `Is exam ki preparation ke liye: Official notification mein diya syllabus follow karo. Previous year question papers zaroor solve karo — pattern samajhne ke liye. Lucent GK aur RS Aggarwal Math standard books hain. Reasoning ke liye M.K. Pandey helpful hai. Daily current affairs padho. Mock tests time management ke liye zaroori hain. Coaching zaroor nahi — self-study se bhi crack ho sakta hai agar dedicated ho.`;
+    applySteps = [
+      `${department} ki official website par jao ya notification mein diye link par click karo`,
+      `"Apply Online" ya "Online Application" link dhundho`,
+      `Pehli baar hai toh registration karo — Email aur Mobile se`,
+      `Application form carefully bharo — personal, educational, category details`,
+      `Recent passport size photo aur signature scan karke upload karo`,
+      `Application fee pay karo — notification mein category-wise fee dekho`,
+      `Form submit karo aur Application Number/ID note karo`,
+      `Acknowledgement print karo — Admit Card ke liye zaroori hoga`
+    ];
+    faqs = [
+      {q: "Kya online apply karna compulsory hai?", a: "Haan, aajkal zyaatar government recruitments mein online application hi accepted hoti hai. Kuch cases mein offline bhi hoti hai — notification mein check karo."},
+      {q: "Age relaxation kise milti hai?", a: "OBC ko generally 3 saal, SC/ST ko 5 saal, PwBD ko 10 saal relaxation milti hai. Ex-Servicemen aur Women ke liye bhi relaxation hoti hai — notification mein confirm karo."},
+      {q: "Admit Card kaise milega?", a: "Admit Card official website par exam se 2-3 weeks pehle available hoga. Registration number aur DOB se download hoga. SMS/Email bhi aa sakta hai."}
+    ];
+  }
+
+  return { examPattern, syllabus, salaryBreakdown, preparationTips, applySteps, faqs };
+}
+
 export default function JobDetails() {
   const [match, params] = useRoute("/job/:id");
   const { jobs, loading } = useJobs();
   const [showFullNotification, setShowFullNotification] = useState(false);
 
   const job = jobs.find(j => j.id === params?.id || j.slug === params?.id);
+  const deptContent = job ? getDepartmentContent(job.department || '', job.type || '', job.title || '') : null;
   
   const seoProps = job ? generateJobMeta(job) : { title: 'Loading...', description: '' };
   useSEO(seoProps);
@@ -672,10 +858,89 @@ export default function JobDetails() {
               ))}
             </ol>
           ) : (
-            <p className="text-sm text-slate-500 italic">Selection process details official notification mein available hain. Upar diye gaye Official Notification link se check karein.</p>
+            <ol className="space-y-3">
+              {(deptContent?.applySteps || [
+                "पहले Official Notification ध्यान से पढ़ें — Eligibility check करें",
+                `${job.department} की Official Website पर जाएं`,
+                "New Registration करें — Email और Mobile Number डालें",
+                "Online Application Form सही-सही भरें — सभी details verify करें",
+                "Recent Photo और Signature Upload करें (Notification में size देखें)",
+                "Application Fee Online Pay करें (Net Banking / UPI / Debit Card)",
+                "Form Preview check करें और Final Submit करें",
+                "Application Confirmation Print कर लें — भविष्य के लिए रखें",
+              ]).map((step, i) => (
+                <li key={i} className="flex gap-3 text-sm text-slate-600">
+                  <span className="w-6 h-6 bg-green-100 text-green-700 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{i+1}</span>
+                  {step}
+                </li>
+              ))}
+            </ol>
           )}
         </div>
       </div>
+
+
+            {/* Department-Specific Content Sections */}
+      {deptContent && (
+        <div className="space-y-4">
+          {/* Exam Pattern */}
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+            <h2 className="bg-indigo-700 text-white px-5 py-3 text-sm font-bold uppercase tracking-widest">
+              📝 Exam Pattern
+            </h2>
+            <div className="p-5">
+              <p className="text-sm text-slate-700 leading-relaxed">{deptContent.examPattern}</p>
+            </div>
+          </div>
+
+          {/* Syllabus */}
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+            <h2 className="bg-purple-700 text-white px-5 py-3 text-sm font-bold uppercase tracking-widest">
+              📚 Syllabus Details
+            </h2>
+            <div className="p-5">
+              <p className="text-sm text-slate-700 leading-relaxed">{deptContent.syllabus}</p>
+            </div>
+          </div>
+
+          {/* Salary Breakdown */}
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+            <h2 className="bg-green-700 text-white px-5 py-3 text-sm font-bold uppercase tracking-widest">
+              💰 Salary Breakdown
+            </h2>
+            <div className="p-5">
+              <p className="text-sm text-slate-700 leading-relaxed">{deptContent.salaryBreakdown}</p>
+            </div>
+          </div>
+
+          {/* Preparation Tips */}
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+            <h2 className="bg-orange-600 text-white px-5 py-3 text-sm font-bold uppercase tracking-widest">
+              💡 Preparation Tips & Best Books
+            </h2>
+            <div className="p-5">
+              <p className="text-sm text-slate-700 leading-relaxed">{deptContent.preparationTips}</p>
+            </div>
+          </div>
+
+          {/* FAQs */}
+          {deptContent.faqs.length > 0 && (
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+              <h2 className="bg-slate-700 text-white px-5 py-3 text-sm font-bold uppercase tracking-widest">
+                ❓ Frequently Asked Questions
+              </h2>
+              <div className="p-5 space-y-4">
+                {deptContent.faqs.map((faq, i) => (
+                  <div key={i} className="border-b border-slate-100 pb-4 last:border-0 last:pb-0">
+                    <p className="font-semibold text-sm text-slate-800 mb-1">Q: {faq.q}</p>
+                    <p className="text-sm text-slate-600 leading-relaxed">A: {faq.a}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Disclaimer */}
       <div className="bg-amber-50 p-8 rounded-xl border border-amber-200">
