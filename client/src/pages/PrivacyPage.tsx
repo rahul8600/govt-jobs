@@ -4,15 +4,7 @@ import { Shield, Cookie, Eye, Lock, UserCheck, Baby, Mail } from "lucide-react";
 
 export default function PrivacyPage() {
   useEffect(() => {
-    document.title = "Privacy Policy | SarkariJobSeva - How We Protect Your Data";
-    const metaDesc = document.querySelector('meta[name="description"]');
-    if (metaDesc) {
-      metaDesc.setAttribute('content', "SarkariJobSeva Privacy Policy: Learn how we collect, use, and protect your personal information. We use Google AdSense and Google Analytics. Read our full privacy policy.");
-    }
-    const canonical = document.querySelector('link[rel="canonical"]');
-    if (canonical) {
-      canonical.setAttribute('href', "https://www.sarkarijobseva.com/privacy-policy");
-    }
+    // Meta tags injected server-side
   }, []);
 
   return (
