@@ -53,6 +53,11 @@ export const posts = pgTable("posts", {
   physicalStandardHtml: text("physical_standard_html"),
   physicalEfficiencyHtml: text("physical_efficiency_html"),
   selectionProcessHtml: text("selection_process_html"),
+  examPattern: text("exam_pattern"),
+  syllabus: text("syllabus"),
+  salaryBreakdown: text("salary_breakdown"),
+  preparationTips: text("preparation_tips"),
+  faqs: text("faqs"),
   importantLinksHtml: text("important_links_html"),
   createdAt: timestamp("created_at").defaultNow(),
 });
