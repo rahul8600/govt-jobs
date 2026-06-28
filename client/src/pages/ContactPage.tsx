@@ -10,15 +10,7 @@ export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    document.title = "Contact Us | SarkariJobSeva - Get in Touch";
-    const metaDesc = document.querySelector('meta[name="description"]');
-    if (metaDesc) {
-      metaDesc.setAttribute('content', "Contact SarkariJobSeva team for queries, feedback, or incorrect information. Email: supportsarkarijobseva@gmail.com. We typically respond within 24-48 hours.");
-    }
-    const canonical = document.querySelector('link[rel="canonical"]');
-    if (canonical) {
-      canonical.setAttribute('href', "https://www.sarkarijobseva.com/contact");
-    }
+    // Meta tags injected server-side
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
