@@ -3,17 +3,7 @@ import { useEffect } from "react";
 import { Users, Target, Shield, Award, Mail, Globe, MapPin } from "lucide-react";
 
 export default function AboutPage() {
-  useEffect(() => {
-    document.title = "About Us | SarkariJobSeva - India's Trusted Government Job Portal";
-    const metaDesc = document.querySelector('meta[name="description"]');
-    if (metaDesc) {
-      metaDesc.setAttribute('content', "SarkariJobSeva.com ek independent government job information portal hai. Yahan SSC, Railway, UPSC, Bank, Police aur State Government jobs ki latest updates milti hain.");
-    }
-    const canonical = document.querySelector('link[rel="canonical"]');
-    if (canonical) {
-      canonical.setAttribute('href', "https://www.sarkarijobseva.com/about-us");
-    }
-  }, []);
+  // Meta tags are injected server-side via static.ts
 
   return (
     <div className="min-h-screen bg-white">
