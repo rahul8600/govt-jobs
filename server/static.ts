@@ -1273,17 +1273,32 @@ export function serveStatic(app: Express) {
         let title = 'SarkariJobSeva – Latest Sarkari Naukri, Admit Card, Result 2026';
         let description = 'SarkariJobSeva.com par latest government jobs, admit card, result aur answer key ki verified jankari milti hai. SSC, Railway, UPSC, Bank, Police jobs — daily updated, bilkul free.';
 
-        // Job page
+        // Job page — numeric ID redirect + meta inject
         const jobMatch = urlPath.match(/^\/job\/([^/?]+)/);
         if (jobMatch) {
+          const jobParam = jobMatch[1];
           try {
             let job: any = null;
-            const r1 = await fetch(`${baseUrl}/api/posts/slug/${jobMatch[1]}`);
-            if (r1.ok) job = await r1.json();
-            if (!job) {
-              const r2 = await fetch(`${baseUrl}/api/posts/${jobMatch[1]}`);
-              if (r2.ok) job = await r2.json();
+
+            // If it's a pure numeric ID, fetch and redirect to slug URL
+            if (/^\d+$/.test(jobParam)) {
+              const r = await fetch(`${baseUrl}/api/posts/${jobParam}`);
+              if (r.ok) {
+                job = await r.json();
+                if (job && job.slug && job.slug !== jobParam) {
+                  return res.redirect(301, `/job/${job.slug}`);
+                }
+              }
+            } else {
+              // Try slug first
+              const r1 = await fetch(`${baseUrl}/api/posts/slug/${jobParam}`);
+              if (r1.ok) job = await r1.json();
+              if (!job) {
+                const r2 = await fetch(`${baseUrl}/api/posts/${jobParam}`);
+                if (r2.ok) job = await r2.json();
+              }
             }
+
             if (job && job.title) {
               title = `${job.title.slice(0, 60)} | SarkariJobSeva`;
               description = (job.shortInfo || `${job.title} – ${job.department || 'Govt'}. Eligibility, important dates, apply link.`).slice(0, 155);
@@ -1306,7 +1321,7 @@ export function serveStatic(app: Express) {
           } catch {}
         }
 
-        // Category pages
+        // Category + static pages
         const catTitles: Record<string, {t: string; d: string}> = {
           '/latest-jobs': { t: 'Latest Government Jobs 2026 | SarkariJobSeva', d: 'Latest sarkari naukri 2026 – SSC, Railway, UPSC, Bank, Police jobs. Daily updated at SarkariJobSeva.' },
           '/admit-card': { t: 'Admit Card Download 2026 | SarkariJobSeva', d: 'Download admit card 2026 for all government exams. Hall ticket direct download link at SarkariJobSeva.' },
@@ -1314,18 +1329,23 @@ export function serveStatic(app: Express) {
           '/answer-key': { t: 'Answer Key 2026 | SarkariJobSeva', d: 'Download answer key 2026 for government exams. Objection details at SarkariJobSeva.' },
           '/admission': { t: 'Admission Form 2026 | SarkariJobSeva', d: 'Government college admission 2026. B.Ed, University, ITI admission at SarkariJobSeva.' },
           '/blog': { t: 'Sarkari Job Blog – Tips & Updates | SarkariJobSeva', d: 'Government job preparation tips, syllabus, exam strategy at SarkariJobSeva blog.' },
-          '/about-us': { t: 'About Us | SarkariJobSeva', d: 'SarkariJobSeva.com ke baare mein – India ka trusted free sarkari naukri information portal.' },
-          '/contact': { t: 'Contact Us | SarkariJobSeva', d: 'Contact SarkariJobSeva team for queries, corrections or feedback. Email: supportsarkarijobseva@gmail.com' },
-          '/privacy-policy': { t: 'Privacy Policy | SarkariJobSeva', d: 'SarkariJobSeva privacy policy – how we collect, use and protect your data including Google AdSense cookies.' },
-          '/disclaimer': { t: 'Disclaimer | SarkariJobSeva', d: 'SarkariJobSeva.com is not a government website. Read our full disclaimer before using our services.' },
+          '/about-us': { t: 'About SarkariJobSeva – India's Trusted Government Job Portal', d: 'Learn about SarkariJobSeva.com, India's trusted platform for free government job alerts, admit cards, results and exam updates.' },
+          '/about': { t: 'About SarkariJobSeva – India's Trusted Government Job Portal', d: 'Learn about SarkariJobSeva.com, India's trusted platform for free government job alerts, admit cards, results and exam updates.' },
+          '/contact': { t: 'Contact Us | SarkariJobSeva', d: 'Contact SarkariJobSeva for queries, corrections or feedback. Email: supportsarkarijobseva@gmail.com. Response within 24-48 hours.' },
+          '/privacy-policy': { t: 'Privacy Policy | SarkariJobSeva', d: 'SarkariJobSeva privacy policy – how we collect, use and protect your data including Google AdSense and Analytics cookies.' },
+          '/disclaimer': { t: 'Disclaimer | SarkariJobSeva', d: 'SarkariJobSeva.com is not a government website. Independent information portal. Read full disclaimer before using our services.' },
+          '/terms-of-service': { t: 'Terms of Service | SarkariJobSeva', d: 'Terms and conditions for using SarkariJobSeva.com. Read before using our government job information portal.' },
+          '/terms': { t: 'Terms of Service | SarkariJobSeva', d: 'Terms and conditions for using SarkariJobSeva.com. Read before using our government job information portal.' },
           '/salary-calculator': { t: 'Government Salary Calculator 2026 | SarkariJobSeva', d: '7th Pay Commission salary calculator for government jobs. Calculate in-hand salary, HRA, DA at SarkariJobSeva.' },
+          '/sitemap': { t: 'Sitemap | SarkariJobSeva – Complete Website Navigation', d: 'Complete sitemap of SarkariJobSeva.com. Find all pages including Latest Jobs, Admit Card, Results, Answer Key, Blog and more.' },
+          '/search': { t: 'Search Sarkari Jobs 2026 | SarkariJobSeva', d: 'Search latest sarkari jobs, admit cards, results 2026 at SarkariJobSeva. Find SSC, Railway, UPSC, Bank government jobs.' },
         };
         if (catTitles[urlPath]) {
           title = catTitles[urlPath].t;
           description = catTitles[urlPath].d;
         }
 
-        // Inject unique title and meta into index.html
+        // Inject unique title, meta AND canonical into index.html
         const escapedTitle = title.replace(/</g, '&lt;').replace(/>/g, '&gt;');
         const escapedDesc = description.replace(/"/g, '&quot;').replace(/</g, '&lt;');
         html = html.replace(/<title>[^<]*<\/title>/, `<title>${escapedTitle}</title>`);
@@ -1335,6 +1355,8 @@ export function serveStatic(app: Express) {
         html = html.replace(/<meta property="og:url" content="[^"]*"/, `<meta property="og:url" content="${canonical}"`);
         html = html.replace(/<meta name="twitter:title" content="[^"]*"/, `<meta name="twitter:title" content="${escapedTitle}"`);
         html = html.replace(/<meta name="twitter:description" content="[^"]*"/, `<meta name="twitter:description" content="${escapedDesc}"`);
+        // FIX: Inject correct canonical tag for every page
+        html = html.replace(/<link rel="canonical" href="[^"]*"/, `<link rel="canonical" href="${canonical}"`);
 
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -1348,21 +1370,30 @@ export function serveStatic(app: Express) {
     // === STEP 2: Bots get full prerendered HTML ===
 
     try {
-      // 1. Job/Post pages
+      // 1. Job/Post pages — numeric redirect + full prerender
       const jobMatch = urlPath.match(/^\/job\/([^/?]+)/);
       if (jobMatch) {
-        const slug = jobMatch[1];
+        const jobParam = jobMatch[1];
         let job: any = null;
         try {
-          const r1 = await fetch(`${baseUrl}/api/posts/slug/${slug}`);
-          if (r1.ok) job = await r1.json();
+          // Numeric ID — redirect to slug
+          if (/^\d+$/.test(jobParam)) {
+            const r = await fetch(`${baseUrl}/api/posts/${jobParam}`);
+            if (r.ok) {
+              job = await r.json();
+              if (job && job.slug && job.slug !== jobParam) {
+                return res.redirect(301, `/job/${job.slug}`);
+              }
+            }
+          } else {
+            const r1 = await fetch(`${baseUrl}/api/posts/slug/${jobParam}`);
+            if (r1.ok) job = await r1.json();
+            if (!job) {
+              const r2 = await fetch(`${baseUrl}/api/posts/${jobParam}`);
+              if (r2.ok) job = await r2.json();
+            }
+          }
         } catch {}
-        if (!job) {
-          try {
-            const r2 = await fetch(`${baseUrl}/api/posts/${slug}`);
-            if (r2.ok) job = await r2.json();
-          } catch {}
-        }
         if (job && job.title) {
           res.setHeader('Content-Type', 'text/html; charset=utf-8');
           res.setHeader('X-Prerendered', '1');
