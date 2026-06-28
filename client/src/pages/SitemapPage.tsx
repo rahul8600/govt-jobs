@@ -4,15 +4,7 @@ import { Map, Briefcase, FileText, CheckSquare, Key, GraduationCap, Calculator, 
 
 export default function SitemapPage() {
   useEffect(() => {
-    document.title = "Sitemap | SarkariJobSeva - Complete Website Navigation";
-    const metaDesc = document.querySelector('meta[name="description"]');
-    if (metaDesc) {
-      metaDesc.setAttribute('content', "Complete sitemap of SarkariJobSeva.com. Find all pages including Latest Jobs, Admit Card, Results, Answer Key, Blog, Salary Calculator, and more.");
-    }
-    const canonical = document.querySelector('link[rel="canonical"]');
-    if (canonical) {
-      canonical.setAttribute('href', "https://www.sarkarijobseva.com/sitemap");
-    }
+    // Meta tags injected server-side
   }, []);
 
   const sections = [
