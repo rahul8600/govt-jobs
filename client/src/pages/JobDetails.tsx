@@ -693,6 +693,106 @@ export default function JobDetails() {
         </div>
       </div>
 
+      {/* Structured Content Sections from DB */}
+      {(() => {
+        if (!job.rawJobContent) return null;
+        try {
+          const data = JSON.parse(job.rawJobContent);
+          if (!data.examPattern) return null; // old format
+          return (
+            <div className="space-y-4">
+
+              {/* Exam Pattern */}
+              {data.examPattern && (
+                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                  <div className="bg-indigo-700 text-white px-5 py-3">
+                    <h2 className="text-sm font-bold uppercase tracking-widest">📝 Exam Pattern</h2>
+                  </div>
+                  <div className="p-5">
+                    <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{data.examPattern}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Syllabus */}
+              {data.syllabus && (
+                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                  <div className="bg-purple-700 text-white px-5 py-3">
+                    <h2 className="text-sm font-bold uppercase tracking-widest">📚 Syllabus</h2>
+                  </div>
+                  <div className="p-5">
+                    <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{data.syllabus}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Salary */}
+              {data.salary && (
+                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                  <div className="bg-green-700 text-white px-5 py-3">
+                    <h2 className="text-sm font-bold uppercase tracking-widest">💰 Salary Breakdown</h2>
+                  </div>
+                  <div className="p-5">
+                    <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{data.salary}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Preparation Tips */}
+              {data.preparationTips && (
+                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                  <div className="bg-orange-600 text-white px-5 py-3">
+                    <h2 className="text-sm font-bold uppercase tracking-widest">💡 Preparation Tips & Books</h2>
+                  </div>
+                  <div className="p-5">
+                    <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{data.preparationTips}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Apply Steps */}
+              {data.applySteps && data.applySteps.length > 0 && (
+                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                  <div className="bg-teal-700 text-white px-5 py-3">
+                    <h2 className="text-sm font-bold uppercase tracking-widest">✅ Apply Online — Step by Step</h2>
+                  </div>
+                  <div className="p-5">
+                    <ol className="space-y-3">
+                      {data.applySteps.map((step: string, i: number) => (
+                        <li key={i} className="flex gap-3 text-sm text-slate-600">
+                          <span className="w-6 h-6 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{i+1}</span>
+                          {step}
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                </div>
+              )}
+
+              {/* FAQs */}
+              {data.faqs && data.faqs.length > 0 && (
+                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                  <div className="bg-slate-700 text-white px-5 py-3">
+                    <h2 className="text-sm font-bold uppercase tracking-widest">❓ Frequently Asked Questions</h2>
+                  </div>
+                  <div className="p-5 space-y-4">
+                    {data.faqs.map((faq: {q: string; a: string}, i: number) => (
+                      <div key={i} className="border-b border-slate-100 pb-4 last:border-0 last:pb-0">
+                        <p className="font-semibold text-sm text-slate-800 mb-1">Q: {faq.q}</p>
+                        <p className="text-sm text-slate-600 leading-relaxed">A: {faq.a}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+            </div>
+          );
+        } catch {
+          return null;
+        }
+      })()}
+
       {/* Disclaimer */}
       <div className="bg-amber-50 p-8 rounded-xl border border-amber-200">
         <h4 className="text-xs font-bold uppercase tracking-widest text-amber-700 mb-3 flex items-center gap-2">
